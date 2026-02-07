@@ -1,0 +1,131 @@
+{
+  "nav": {
+    "feed": "Стрічка",
+    "watchlist": "Список",
+    "search": "Пошук",
+    "profile": "Профіль"
+  },
+  "feed": {
+    "movies": "Фільми",
+    "series": "Серіали",
+    "animation": "Анімація",
+    "filters": "Фільтри",
+    "noMore": "Більше нічого не знайдено!",
+    "noMoreHint": "Змініть фільтри або поверніться пізніше.",
+    "loading": "Завантаження...",
+    "undo": "Скасувати"
+  },
+  "card": {
+    "runtime": "{{hours}}г {{minutes}}хв",
+    "rating": "Рейтинг",
+    "cast": "Акторський склад",
+    "director": "Режисер",
+    "overview": "Огляд",
+    "providers": "Де дивитись",
+    "awards": "Нагороди",
+    "winner": "Переможець",
+    "nominated": "Номінант"
+  },
+  "filters": {
+    "title": "Фільтри",
+    "genres": "Жанри",
+    "year": "Рік випуску",
+    "rating": "Рейтинг",
+    "awards": "Нагороди",
+    "awardsAny": "Будь-які",
+    "awardsWinner": "Переможці",
+    "awardsNominated": "Номінанти",
+    "providers": "Де дивитись",
+    "certification": "Вікова категорія",
+    "person": "Актор / Режисер",
+    "personSearch": "Пошук за ім'ям...",
+    "collections": "Колекції",
+    "apply": "Застосувати",
+    "reset": "Скинути"
+  },
+  "watchlist": {
+    "title": "Список перегляду",
+    "all": "Усі",
+    "unwatched": "Не переглянуті",
+    "watched": "Переглянуті",
+    "sortAdded": "За датою",
+    "sortRating": "За рейтингом",
+    "sortYear": "За роком",
+    "sortTitle": "За назвою",
+    "empty": "Ваш список поки порожній",
+    "emptyHint": "Свайпніть вправо, щоб додати фільм.",
+    "markWatched": "Переглянуто",
+    "rate": "Оцінити",
+    "remove": "Видалити"
+  },
+  "search": {
+    "placeholder": "Пошук фільмів та акторів...",
+    "movies": "Фільми та серіали",
+    "people": "Люди",
+    "noResults": "Нічого не знайдено",
+    "noResultsHint": "Спробуйте інший запит."
+  },
+  "profile": {
+    "title": "Профіль",
+    "language": "Мова",
+    "theme": "Тема",
+    "dark": "Темна",
+    "light": "Світла",
+    "stats": "Статистика",
+    "totalSwiped": "Переглянуто карток",
+    "likes": "Вподобання",
+    "dislikes": "Відхилення",
+    "superlikes": "Суперлайки",
+    "watchlistSize": "У списку",
+    "watchedCount": "Переглянуто",
+    "topGenres": "Улюблені жанри",
+    "topDirectors": "Улюблені режисери",
+    "topActors": "Улюблені актори",
+    "resetPreferences": "Скинути вподобання",
+    "resetConfirm": "Ви впевнені? Всі ваші вподобання буде скинуто. Історія свайпів та список збережуться.",
+    "resetConfirmAction": "Скинути",
+    "exportWatchlist": "Експортувати список",
+    "logout": "Вийти"
+  },
+  "person": {
+    "biography": "Біографія",
+    "filmography": "Фільмографія",
+    "awards": "Нагороди",
+    "browseAll": "Показати всі у стрічці",
+    "showMore": "Показати більше"
+  },
+  "content": {
+    "whyRecommended": "Чому рекомендуємо",
+    "keywords": "Ключові слова",
+    "writers": "Сценаристи",
+    "addToWatchlist": "Додати до списку",
+    "inWatchlist": "У списку",
+    "markWatched": "Переглянуто",
+    "yourRating": "Ваша оцінка"
+  },
+  "onboarding": {
+    "genreTitle": "Оберіть 3-5 жанрів",
+    "genreSubtitle": "Які жанри вам подобаються?",
+    "next": "Далі",
+    "back": "Назад",
+    "rateTitle": "Оцініть ці фільми",
+    "rateSubtitle": "Подобається чи ні? Це допоможе нам підібрати фільми для вас.",
+    "rateProgress": "{{current}} / {{total}}",
+    "readyTitle": "Ваша стрічка готова!",
+    "readySubtitle": "Ми підготували персональні рекомендації на основі ваших вподобань.",
+    "startSwiping": "Почати"
+  },
+  "login": {
+    "title": "pickme.mov",
+    "subtitle": "Відкривай фільми. Свайпай. Дивись.",
+    "google": "Увійти через Google"
+  },
+  "common": {
+    "cancel": "Скасувати",
+    "confirm": "Підтвердити",
+    "close": "Закрити",
+    "loading": "Завантаження...",
+    "error": "Щось пішло не так",
+    "retry": "Спробувати знову"
+  }
+}

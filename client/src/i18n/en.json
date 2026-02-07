@@ -1,0 +1,131 @@
+{
+  "nav": {
+    "feed": "Feed",
+    "watchlist": "Watchlist",
+    "search": "Search",
+    "profile": "Profile"
+  },
+  "feed": {
+    "movies": "Movies",
+    "series": "Series",
+    "animation": "Animation",
+    "filters": "Filters",
+    "noMore": "No more movies to discover!",
+    "noMoreHint": "Adjust your filters or check back later.",
+    "loading": "Loading...",
+    "undo": "Undo"
+  },
+  "card": {
+    "runtime": "{{hours}}h {{minutes}}m",
+    "rating": "Rating",
+    "cast": "Cast",
+    "director": "Director",
+    "overview": "Overview",
+    "providers": "Where to watch",
+    "awards": "Awards",
+    "winner": "Winner",
+    "nominated": "Nominated"
+  },
+  "filters": {
+    "title": "Filters",
+    "genres": "Genres",
+    "year": "Release year",
+    "rating": "Rating",
+    "awards": "Awards",
+    "awardsAny": "Any",
+    "awardsWinner": "Winners",
+    "awardsNominated": "Nominated",
+    "providers": "Where to watch",
+    "certification": "Certification",
+    "person": "Actor / Director",
+    "personSearch": "Search by name...",
+    "collections": "Collections",
+    "apply": "Apply",
+    "reset": "Reset"
+  },
+  "watchlist": {
+    "title": "Watchlist",
+    "all": "All",
+    "unwatched": "Unwatched",
+    "watched": "Watched",
+    "sortAdded": "Date added",
+    "sortRating": "Rating",
+    "sortYear": "Year",
+    "sortTitle": "Title",
+    "empty": "Your watchlist is empty",
+    "emptyHint": "Swipe right on movies you want to watch.",
+    "markWatched": "Mark watched",
+    "rate": "Rate",
+    "remove": "Remove"
+  },
+  "search": {
+    "placeholder": "Search movies and people...",
+    "movies": "Movies & Series",
+    "people": "People",
+    "noResults": "No results found",
+    "noResultsHint": "Try a different search term."
+  },
+  "profile": {
+    "title": "Profile",
+    "language": "Language",
+    "theme": "Theme",
+    "dark": "Dark",
+    "light": "Light",
+    "stats": "Statistics",
+    "totalSwiped": "Total swiped",
+    "likes": "Likes",
+    "dislikes": "Dislikes",
+    "superlikes": "Superlikes",
+    "watchlistSize": "In watchlist",
+    "watchedCount": "Watched",
+    "topGenres": "Top genres",
+    "topDirectors": "Top directors",
+    "topActors": "Top actors",
+    "resetPreferences": "Reset preferences",
+    "resetConfirm": "Are you sure? All your preferences will be reset. Swipe history and watchlist will be kept.",
+    "resetConfirmAction": "Reset",
+    "exportWatchlist": "Export watchlist",
+    "logout": "Log out"
+  },
+  "person": {
+    "biography": "Biography",
+    "filmography": "Filmography",
+    "awards": "Awards",
+    "browseAll": "Browse all in feed",
+    "showMore": "Show more"
+  },
+  "content": {
+    "whyRecommended": "Why recommended",
+    "keywords": "Keywords",
+    "writers": "Writers",
+    "addToWatchlist": "Add to watchlist",
+    "inWatchlist": "In watchlist",
+    "markWatched": "Mark watched",
+    "yourRating": "Your rating"
+  },
+  "onboarding": {
+    "genreTitle": "Pick 3-5 genres",
+    "genreSubtitle": "What genres do you enjoy?",
+    "next": "Next",
+    "back": "Back",
+    "rateTitle": "Rate these movies",
+    "rateSubtitle": "Like or dislike? This helps us personalize your feed.",
+    "rateProgress": "{{current}} / {{total}}",
+    "readyTitle": "Your feed is ready!",
+    "readySubtitle": "We've prepared personalized recommendations based on your taste.",
+    "startSwiping": "Start swiping"
+  },
+  "login": {
+    "title": "pickme.mov",
+    "subtitle": "Discover movies. Swipe. Watch.",
+    "google": "Sign in with Google"
+  },
+  "common": {
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "close": "Close",
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "retry": "Try again"
+  }
+}

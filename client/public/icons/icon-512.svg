@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="64" fill="#0a0a0f"/>
+  <g transform="translate(256,256)">
+    <!-- Film reel circle -->
+    <circle cx="0" cy="0" r="140" fill="none" stroke="#d4a843" stroke-width="8"/>
+    <circle cx="0" cy="0" r="28" fill="#d4a843"/>
+    <!-- Sprocket holes -->
+    <circle cx="0" cy="-100" r="18" fill="#d4a843" opacity="0.7"/>
+    <circle cx="86.6" cy="50" r="18" fill="#d4a843" opacity="0.7"/>
+    <circle cx="-86.6" cy="50" r="18" fill="#d4a843" opacity="0.7"/>
+    <circle cx="0" cy="100" r="18" fill="#d4a843" opacity="0.7"/>
+    <circle cx="86.6" cy="-50" r="18" fill="#d4a843" opacity="0.7"/>
+    <circle cx="-86.6" cy="-50" r="18" fill="#d4a843" opacity="0.7"/>
+  </g>
+  <!-- Text -->
+  <text x="256" y="440" text-anchor="middle" fill="#d4a843" font-family="Inter, sans-serif" font-size="48" font-weight="600">pickme.mov</text>
+</svg>

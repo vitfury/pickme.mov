@@ -1,0 +1,34 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: pickme-app-dev
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/client/node_modules
+      - /app/server/node_modules
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://pickme:${DB_PASSWORD:-pickme_dev}@postgres:5432/pickme
+      - JWT_SECRET=${JWT_SECRET:-dev_jwt_secret_change_me}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-dev_jwt_refresh_secret_change_me}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_CALLBACK_URL=${GOOGLE_CALLBACK_URL:-http://localhost:3001/api/v1/auth/google/callback}
+      - TMDB_API_KEY=${TMDB_API_KEY}
+      - TMDB_IMAGE_BASE_URL=https://image.tmdb.org/t/p
+      - APP_URL=http://localhost:5173
+      - PORT=3001
+    ports:
+      - "3001:3001"
+      - "5173:5173"
+      - "9229:9229"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    ports:
+      - "5432:5432"

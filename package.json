@@ -1,0 +1,22 @@
+{
+  "name": "pickme-mov",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Tinder-style movie discovery PWA",
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev -w server\" \"npm run dev -w client\"",
+    "build": "npm run build -w server && npm run build -w client",
+    "seed": "tsx scripts/seed.ts",
+    "db:generate": "npm run db:generate -w server",
+    "db:migrate": "npm run db:migrate -w server"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}
