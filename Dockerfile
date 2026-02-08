@@ -24,6 +24,7 @@ COPY --from=builder /app/server/package.json ./server/
 COPY --from=builder /app/server/drizzle ./server/drizzle
 COPY --from=builder /app/client/dist ./client/dist
 COPY --from=builder /app/package.json ./
+COPY --from=builder /app/package-lock.json ./
 
 RUN npm ci --workspace=server --omit=dev
 
