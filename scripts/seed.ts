@@ -20,7 +20,7 @@ import * as path from 'node:path';
 const TMDB_API_KEY = process.env.TMDB_API_KEY;
 const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://pickme:pickme_dev@localhost:5432/pickme';
 const TMDB_BASE = 'https://api.themoviedb.org/3';
-const OSCAR_CSV_URL = 'https://raw.githubusercontent.com/DLu/oscar_data/master/oscar_data.csv';
+const OSCAR_CSV_URL = 'https://raw.githubusercontent.com/DLu/oscar_data/master/oscars.csv';
 
 const PROGRESS_FILE = path.join(import.meta.dirname ?? path.dirname(new URL(import.meta.url).pathname), '.seed-progress.json');
 
@@ -1023,16 +1023,18 @@ async function phaseOscars(progress: SeedProgress): Promise<void> {
     return;
   }
 
-  // Parse header to find column indices
-  const header = parseCSVLine(lines[0]);
+  // Parse header to find column indices (CSV may be tab-separated or comma-separated)
+  const isTabSeparated = lines[0].includes('\t');
+  const parseLine = isTabSeparated ? (line: string) => line.split('\t').map((f) => f.trim()) : parseCSVLine;
+  const header = parseLine(lines[0]);
   const colIndex: Record<string, number> = {};
   header.forEach((col, idx) => { colIndex[col.toLowerCase()] = idx; });
 
-  // We need: year_ceremony (or year), category, name (film), film, winner (or won)
-  // The oscar_data CSV from DLu uses: year_ceremony, year_film, ceremony, category, name, film, winner
+  // New CSV format: Ceremony, Year, Class, CanonicalCategory, Category, Film, FilmId, Name, Nominees, NomineeIds, Winner, ...
   const yearCol = colIndex['year_ceremony'] ?? colIndex['year'] ?? -1;
-  const categoryCol = colIndex['category'] ?? -1;
+  const categoryCol = colIndex['canonicalcategory'] ?? colIndex['category'] ?? -1;
   const filmCol = colIndex['film'] ?? colIndex['name'] ?? -1;
+  const filmIdCol = colIndex['filmid'] ?? -1;
   const nomineeCol = colIndex['name'] ?? colIndex['nominee'] ?? -1;
   const winnerCol = colIndex['winner'] ?? colIndex['won'] ?? -1;
 
@@ -1072,14 +1074,18 @@ async function phaseOscars(progress: SeedProgress): Promise<void> {
   let skipped = 0;
 
   for (let li = 1; li < lines.length; li++) {
-    const fields = parseCSVLine(lines[li]);
+    const fields = parseLine(lines[li]);
     if (fields.length <= Math.max(yearCol, categoryCol, filmCol)) continue;
 
-    const yearRaw = yearCol >= 0 ? parseInt(fields[yearCol], 10) : 0;
+    const yearStr = yearCol >= 0 ? (fields[yearCol] || '') : '';
+    // Handle "1927/28" format — extract first 4-digit year
+    const yearMatch = yearStr.match(/(\d{4})/);
+    const yearRaw = yearMatch ? parseInt(yearMatch[1], 10) : 0;
     if (yearRaw < 1970) continue; // Only 1970+
 
     const category = fields[categoryCol] || '';
     const film = fields[filmCol] || '';
+    const filmIds = filmIdCol >= 0 ? (fields[filmIdCol] || '') : '';
     const nominee = nomineeCol >= 0 ? (fields[nomineeCol] || '') : '';
     const won = winnerCol >= 0 ? (fields[winnerCol]?.toLowerCase() === 'true' || fields[winnerCol] === '1') : false;
 
@@ -1088,9 +1094,26 @@ async function phaseOscars(progress: SeedProgress): Promise<void> {
     // Match film to content
     let contentId: number | undefined;
 
-    // Try title match (case-insensitive)
+    // Try IMDB ID match first (pipe-separated in new format)
+    if (!contentId && filmIds) {
+      for (const fid of filmIds.split('|')) {
+        const trimmed = fid.trim();
+        if (trimmed && imdbToContentId.has(trimmed)) {
+          contentId = imdbToContentId.get(trimmed);
+          break;
+        }
+      }
+    }
+
+    // Try title match (pipe-separated films in new format)
     if (!contentId && film) {
-      contentId = titleToContentId.get(film.toLowerCase());
+      for (const f of film.split('|')) {
+        const trimmed = f.trim().toLowerCase();
+        if (trimmed && titleToContentId.has(trimmed)) {
+          contentId = titleToContentId.get(trimmed);
+          break;
+        }
+      }
     }
 
     if (!contentId) {

@@ -118,7 +118,8 @@
   "login": {
     "title": "pickme.mov",
     "subtitle": "Discover movies. Swipe. Watch.",
-    "google": "Sign in with Google"
+    "google": "Sign in with Google",
+    "apple": "Sign in with Apple"
   },
   "common": {
     "cancel": "Cancel",

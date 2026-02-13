@@ -12,7 +12,9 @@
     "build": "npm run build -w server && npm run build -w client",
     "seed": "tsx scripts/seed.ts",
     "db:generate": "npm run db:generate -w server",
-    "db:migrate": "npm run db:migrate -w server"
+    "db:migrate": "npm run db:migrate -w server",
+    "db:export": "bash scripts/db-export.sh",
+    "db:import": "bash scripts/db-import.sh"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",

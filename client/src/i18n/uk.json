@@ -118,7 +118,8 @@
   "login": {
     "title": "pickme.mov",
     "subtitle": "Відкривай фільми. Свайпай. Дивись.",
-    "google": "Увійти через Google"
+    "google": "Увійти через Google",
+    "apple": "Увійти через Apple"
   },
   "common": {
     "cancel": "Скасувати",
