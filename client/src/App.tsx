@@ -10,12 +10,14 @@ import Search from '@/pages/Search';
 import Profile from '@/pages/Profile';
 import Person from '@/pages/Person';
 import ContentDetail from '@/pages/ContentDetail';
+import AuthCallback from '@/pages/AuthCallback';
 
 export default function App() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   return (
     <Routes>
+      <Route path="/auth/callback" element={<AuthCallback />} />
       <Route
         path="/login"
         element={isAuthenticated ? <Navigate to="/" replace /> : <Login />}
