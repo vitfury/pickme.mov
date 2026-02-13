@@ -14,8 +14,8 @@ COPY server/ ./server/
 RUN npm run build -w server
 RUN npm run build -w client
 
-# Stage 2: Production
-FROM node:20-alpine AS runner
+# Stage 2: API server
+FROM node:20-alpine AS app
 
 RUN apk add --no-cache postgresql16-client
 
@@ -24,7 +24,6 @@ WORKDIR /app
 COPY --from=builder /app/server/dist ./server/dist
 COPY --from=builder /app/server/package.json ./server/
 COPY --from=builder /app/server/drizzle ./server/drizzle
-COPY --from=builder /app/client/dist ./client/dist
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/package-lock.json ./
 
@@ -37,3 +36,8 @@ ENV NODE_ENV=production
 EXPOSE 3000
 
 CMD ["./scripts/docker-entrypoint.sh"]
+
+# Stage 3: Nginx with client assets
+FROM nginx:alpine AS nginx
+
+COPY --from=builder /app/client/dist /usr/share/nginx/html

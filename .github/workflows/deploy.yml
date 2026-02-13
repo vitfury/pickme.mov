@@ -34,8 +34,10 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           script: |
+            set -e
             cd ${{ secrets.APP_DIR }}
-            git pull origin main
+            git fetch origin main
+            git reset --hard origin/main
             cp nginx/default.conf nginx/active.conf
             docker compose up --build -d
             docker compose exec -T -w /app/server app node dist/db/migrate.js || true
