@@ -10,7 +10,6 @@ import EmptyState from '@/components/ui/EmptyState';
 import type { FeedCard, SwipeAction } from '@/types';
 
 const ANIM_DURATION = 500; // ms — transition duration
-const TOUCH_THRESHOLD = 50; // px vertical distance to trigger navigation
 
 export default function Feed() {
   const { t } = useTranslation();
@@ -26,8 +25,6 @@ export default function Feed() {
   const undoTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const containerRef = useRef<HTMLDivElement>(null);
   const isAnimatingRef = useRef(false);
-  const touchStartYRef = useRef(0);
-  const touchStartXRef = useRef(0);
   const actedOnRef = useRef<Set<number>>(new Set()); // card IDs with recorded like/dislike/skip
 
   const filters = { ...activeFilters, contentType };
@@ -177,44 +174,11 @@ export default function Feed() {
     return () => el.removeEventListener('wheel', onWheel);
   }, [goNext, goPrev]);
 
-  // --- Touch handler (vertical swipe to navigate) ---
+  // --- Touch navigation (handled by FeedItem via onNavigate) ---
 
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-
-    const onTouchStart = (e: TouchEvent) => {
-      touchStartYRef.current = e.touches[0]!.clientY;
-      touchStartXRef.current = e.touches[0]!.clientX;
-    };
-
-    const onTouchMove = (e: TouchEvent) => {
-      // Only prevent default for vertical gestures to avoid blocking horizontal swipe
-      const dx = Math.abs(e.touches[0]!.clientX - touchStartXRef.current);
-      const dy = Math.abs(e.touches[0]!.clientY - touchStartYRef.current);
-      if (dy > dx) e.preventDefault();
-    };
-
-    const onTouchEnd = (e: TouchEvent) => {
-      if (isAnimatingRef.current) return;
-      const dy = touchStartYRef.current - (e.changedTouches[0]?.clientY ?? touchStartYRef.current);
-      const dx = Math.abs(touchStartXRef.current - (e.changedTouches[0]?.clientX ?? touchStartXRef.current));
-
-      // Only navigate if vertical gesture is dominant
-      if (Math.abs(dy) < TOUCH_THRESHOLD || Math.abs(dy) < dx) return;
-      if (dy > 0) goNext();
-      else goPrev();
-    };
-
-    el.addEventListener('touchstart', onTouchStart, { passive: true });
-    el.addEventListener('touchmove', onTouchMove, { passive: false });
-    el.addEventListener('touchend', onTouchEnd, { passive: true });
-
-    return () => {
-      el.removeEventListener('touchstart', onTouchStart);
-      el.removeEventListener('touchmove', onTouchMove);
-      el.removeEventListener('touchend', onTouchEnd);
-    };
+  const handleNavigate = useCallback((direction: 'next' | 'prev') => {
+    if (direction === 'next') goNext();
+    else goPrev();
   }, [goNext, goPrev]);
 
   // --- Keyboard ---
@@ -281,6 +245,7 @@ export default function Feed() {
               card={card}
               onSwipe={(action) => handleSwipe(card, action)}
               onOpenDetails={() => setDetailCard(card)}
+              onNavigate={handleNavigate}
             />
           </div>
         ))}

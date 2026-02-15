@@ -9,15 +9,18 @@ interface FeedItemProps {
   card: FeedCard;
   onSwipe: (action: SwipeAction) => void;
   onOpenDetails: () => void;
+  onNavigate?: (direction: 'next' | 'prev') => void;
 }
 
 const SWIPE_THRESHOLD = 120;
 const FLY_DISTANCE = 800;
 const DIRECTION_LOCK_THRESHOLD = 10; // px before locking gesture direction
+const VERTICAL_THRESHOLD = 50; // px vertical distance to trigger navigation
 
-export default function FeedItem({ card, onSwipe, onOpenDetails }: FeedItemProps) {
+export default function FeedItem({ card, onSwipe, onOpenDetails, onNavigate }: FeedItemProps) {
   const { t } = useTranslation();
   const x = useMotionValue(0);
+  const y = useMotionValue(0);
   const cardOpacity = useMotionValue(1);
   const directionRef = useRef<'none' | 'horizontal' | 'vertical'>('none');
 
@@ -39,47 +42,65 @@ export default function FeedItem({ card, onSwipe, onOpenDetails }: FeedItemProps
       }
     }
 
-    // Only move card for confirmed horizontal gestures
     if (directionRef.current === 'horizontal') {
       x.set(info.offset.x);
+    } else if (directionRef.current === 'vertical') {
+      y.set(info.offset.y);
     }
-  }, [x]);
+  }, [x, y]);
 
   const handlePanEnd = useCallback(
     async (_: unknown, info: PanInfo) => {
-      const wasHorizontal = directionRef.current === 'horizontal';
+      const direction = directionRef.current;
       directionRef.current = 'none';
 
-      if (!wasHorizontal) {
-        x.set(0);
+      // Vertical gesture → navigate between cards
+      if (direction === 'vertical') {
+        const offsetY = info.offset.y;
+        if (offsetY < -VERTICAL_THRESHOLD) {
+          y.set(0);
+          onNavigate?.('next');
+        } else if (offsetY > VERTICAL_THRESHOLD) {
+          y.set(0);
+          onNavigate?.('prev');
+        } else {
+          animate(y, 0, { type: 'spring', stiffness: 300, damping: 30 });
+        }
         return;
       }
 
-      const offsetX = info.offset.x;
-
-      if (offsetX > SWIPE_THRESHOLD) {
-        await Promise.all([
-          animate(x, FLY_DISTANCE, { duration: 0.3 }),
-          animate(cardOpacity, 0, { duration: 0.3 }),
-        ]);
-        onSwipe('like');
-      } else if (offsetX < -SWIPE_THRESHOLD) {
-        await Promise.all([
-          animate(x, -FLY_DISTANCE, { duration: 0.3 }),
-          animate(cardOpacity, 0, { duration: 0.3 }),
-        ]);
-        onSwipe('dislike');
-      } else {
-        animate(x, 0, { type: 'spring', stiffness: 300, damping: 25 });
+      // Horizontal gesture → like / dislike
+      if (direction === 'horizontal') {
+        const offsetX = info.offset.x;
+        if (offsetX > SWIPE_THRESHOLD) {
+          await Promise.all([
+            animate(x, FLY_DISTANCE, { duration: 0.3 }),
+            animate(cardOpacity, 0, { duration: 0.3 }),
+          ]);
+          onSwipe('like');
+        } else if (offsetX < -SWIPE_THRESHOLD) {
+          await Promise.all([
+            animate(x, -FLY_DISTANCE, { duration: 0.3 }),
+            animate(cardOpacity, 0, { duration: 0.3 }),
+          ]);
+          onSwipe('dislike');
+        } else {
+          animate(x, 0, { type: 'spring', stiffness: 300, damping: 25 });
+        }
+        return;
       }
+
+      // No direction determined — reset
+      x.set(0);
+      y.set(0);
     },
-    [x, cardOpacity, onSwipe],
+    [x, y, cardOpacity, onSwipe, onNavigate],
   );
 
   return (
     <div className="h-[100dvh] w-full relative flex-shrink-0">
       <motion.div
-        style={{ x, rotate: rotation, opacity: cardOpacity }}
+        style={{ x, y, rotate: rotation, opacity: cardOpacity }}
         onPanStart={handlePanStart}
         onPan={handlePan}
         onPanEnd={handlePanEnd}
