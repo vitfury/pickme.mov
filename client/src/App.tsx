@@ -1,5 +1,7 @@
+import { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
+import { useUIStore } from '@/stores/uiStore';
 import ProtectedRoute from '@/components/layout/ProtectedRoute';
 import PageShell from '@/components/layout/PageShell';
 import Login from '@/pages/Login';
@@ -14,6 +16,11 @@ import AuthCallback from '@/pages/AuthCallback';
 
 export default function App() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const theme = useUIStore((s) => s.theme);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
 
   return (
     <Routes>

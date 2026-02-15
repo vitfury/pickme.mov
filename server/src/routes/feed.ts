@@ -14,8 +14,11 @@ const feedQuerySchema = z.object({
   yearMax: z.coerce.number().int().optional(),
   ratingMin: z.coerce.number().optional(),
   ratingMax: z.coerce.number().optional(),
+  runtimeMin: z.coerce.number().int().optional(),
+  runtimeMax: z.coerce.number().int().optional(),
   certification: z.string().optional().transform((v) => v ? v.split(',') : undefined),
   providers: z.string().optional().transform((v) => v ? v.split(',').map(Number) : undefined),
+  countries: z.string().optional().transform((v) => v ? v.split(',') : undefined),
   personId: z.coerce.number().int().optional(),
   collectionId: z.coerce.number().int().optional(),
   awards: z.enum(['winner', 'nominated']).optional(),
@@ -23,7 +26,7 @@ const feedQuerySchema = z.object({
 
 const swipeBodySchema = z.object({
   contentId: z.number().int().positive(),
-  action: z.enum(['like', 'dislike', 'superlike', 'skip']),
+  action: z.enum(['like', 'dislike', 'skip']),
 });
 
 export default async function feedRoutes(app: FastifyInstance) {
@@ -100,9 +103,9 @@ export default async function feedRoutes(app: FastifyInstance) {
         body.action,
       );
 
-      // Add to watchlist on like/superlike
+      // Add to watchlist on like
       let addedToWatchlist = false;
-      if (body.action === 'like' || body.action === 'superlike') {
+      if (body.action === 'like') {
         await request.db
           .insert(userWatchlist)
           .values({
@@ -158,8 +161,8 @@ export default async function feedRoutes(app: FastifyInstance) {
           swipe.action,
         );
 
-        // Remove from watchlist if it was a like/superlike
-        if (swipe.action === 'like' || swipe.action === 'superlike') {
+        // Remove from watchlist if it was a like
+        if (swipe.action === 'like') {
           await request.db
             .delete(userWatchlist)
             .where(

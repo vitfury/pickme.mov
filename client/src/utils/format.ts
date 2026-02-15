@@ -2,9 +2,8 @@ export function formatRuntime(minutes: number | null): string {
   if (!minutes) return '';
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
-  if (h === 0) return `${m}m`;
-  if (m === 0) return `${h}h`;
-  return `${h}h ${m}m`;
+  if (h === 0) return `0:${String(m).padStart(2, '0')}`;
+  return `${h}:${String(m).padStart(2, '0')}`;
 }
 
 export function formatDate(dateStr: string | null): string {
@@ -25,4 +24,8 @@ export function formatFullDate(dateStr: string | null): string {
 export function formatRating(rating: number | null): string {
   if (rating === null || rating === undefined) return '--';
   return rating.toFixed(1);
+}
+
+export function countryFlag(code: string): string {
+  return [...code.toUpperCase()].map((c) => String.fromCodePoint(0x1f1e6 + c.charCodeAt(0) - 65)).join('');
 }

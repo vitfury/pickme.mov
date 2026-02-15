@@ -21,7 +21,7 @@ import { relations, sql } from 'drizzle-orm';
 // ─── Enums ───────────────────────────────────────────────────────────────────
 
 export const contentTypeEnum = pgEnum('content_type', ['movie', 'series', 'animation']);
-export const swipeActionEnum = pgEnum('swipe_action', ['like', 'dislike', 'superlike', 'skip']);
+export const swipeActionEnum = pgEnum('swipe_action', ['like', 'dislike', 'skip']);
 export const personRoleEnum = pgEnum('person_role', ['actor', 'director', 'writer']);
 export const providerTypeEnum = pgEnum('provider_type', ['flatrate', 'rent', 'buy']);
 export const entityTypeEnum = pgEnum('entity_type', [

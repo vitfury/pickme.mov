@@ -14,7 +14,6 @@ import {
 // Base action weights
 const ACTION_WEIGHTS = {
   like: 1.0,
-  superlike: 2.0,
   dislike: -0.3,
   skip: 0,
 } as const;
@@ -34,7 +33,7 @@ export async function updatePreferencesForSwipe(
   db: Database,
   userId: number,
   contentId: number,
-  action: 'like' | 'dislike' | 'superlike' | 'skip',
+  action: 'like' | 'dislike' | 'skip',
 ): Promise<string[]> {
   if (action === 'skip') return [];
   const baseWeight = ACTION_WEIGHTS[action];
@@ -161,7 +160,7 @@ export async function reversePreferencesForSwipe(
   db: Database,
   userId: number,
   contentId: number,
-  action: 'like' | 'dislike' | 'superlike' | 'skip',
+  action: 'like' | 'dislike' | 'skip',
 ): Promise<void> {
   if (action === 'skip') return;
   const baseWeight = ACTION_WEIGHTS[action];

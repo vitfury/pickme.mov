@@ -1,5 +1,5 @@
 export type ContentType = 'movie' | 'series' | 'animation';
-export type SwipeAction = 'like' | 'dislike' | 'superlike' | 'skip';
+export type SwipeAction = 'like' | 'dislike' | 'skip';
 export type PersonRole = 'actor' | 'director' | 'writer';
 export type ProviderType = 'flatrate' | 'rent' | 'buy';
 export type AwardCategory =
@@ -74,6 +74,7 @@ export interface FeedCard {
   releaseDate: string;
   runtime: number | null;
   certification: string | null;
+  productionCountries: string[];
   tmdbRating: number | null;
   imdbRating: number | null;
   overview: string;
@@ -218,7 +219,7 @@ export interface UserStats {
   totalSwiped: number;
   likes: number;
   dislikes: number;
-  superlikes: number;
+
   skips: number;
   watchlistSize: number;
   watched: number;
@@ -267,8 +268,11 @@ export interface FeedFilters {
   yearMax?: number;
   ratingMin?: number;
   ratingMax?: number;
+  runtimeMin?: number;
+  runtimeMax?: number;
   certification?: string[];
   providers?: number[];
+  countries?: string[];
   personId?: number;
   collectionId?: number;
   awards?: 'winner' | 'nominated';

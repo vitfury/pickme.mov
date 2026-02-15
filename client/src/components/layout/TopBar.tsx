@@ -16,7 +16,7 @@ export default function TopBar() {
   const setFilterDrawerOpen = useUIStore((s) => s.setFilterDrawerOpen);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-40 bg-bg/70 backdrop-blur-md safe-top">
+    <header className="relative z-40 bg-bg backdrop-blur-md safe-top">
       <div className="flex items-center justify-between px-4 h-12 max-w-lg mx-auto">
         <div className="flex gap-1">
           {tabs.map(({ key, labelKey }) => (
@@ -25,8 +25,8 @@ export default function TopBar() {
               onClick={() => setContentType(key)}
               className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
                 contentType === key
-                  ? 'bg-white/15 text-white'
-                  : 'text-white/60 hover:text-white/80'
+                  ? 'bg-accent/15 text-text'
+                  : 'text-text-muted hover:text-text'
               }`}
             >
               {t(labelKey)}
@@ -35,7 +35,7 @@ export default function TopBar() {
         </div>
         <button
           onClick={() => setFilterDrawerOpen(true)}
-          className="p-2 text-white/60 hover:text-white transition-colors"
+          className="p-2 text-text-muted hover:text-text transition-colors"
           aria-label={t('feed.filters')}
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">

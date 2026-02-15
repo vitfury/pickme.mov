@@ -19,6 +19,7 @@ export interface FeedCard {
   releaseDate: string | null;
   runtime: number | null;
   certification: string | null;
+  productionCountries: string[];
   tmdbRating: number | null;
   imdbRating: number | null;
   overview: string | null;
@@ -99,7 +100,7 @@ export interface UserStats {
   totalSwiped: number;
   likes: number;
   dislikes: number;
-  superlikes: number;
+
   watchlistSize: number;
   watched: number;
   topGenres: { genre: string; score: number }[];

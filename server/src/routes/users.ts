@@ -117,11 +117,6 @@ export default async function usersRoutes(app: FastifyInstance) {
         .from(userSwipes)
         .where(and(eq(userSwipes.userId, request.userId), eq(userSwipes.action, 'dislike')));
 
-      const superlikes = await request.db
-        .select({ count: sql<number>`count(*)` })
-        .from(userSwipes)
-        .where(and(eq(userSwipes.userId, request.userId), eq(userSwipes.action, 'superlike')));
-
       const skips = await request.db
         .select({ count: sql<number>`count(*)` })
         .from(userSwipes)
@@ -184,7 +179,6 @@ export default async function usersRoutes(app: FastifyInstance) {
         totalSwiped: Number(totalSwiped[0]?.count || 0),
         likes: Number(likes[0]?.count || 0),
         dislikes: Number(dislikes[0]?.count || 0),
-        superlikes: Number(superlikes[0]?.count || 0),
         skips: Number(skips[0]?.count || 0),
         watchlistSize: Number(watchlistSize[0]?.count || 0),
         watched: Number(watchedCount[0]?.count || 0),

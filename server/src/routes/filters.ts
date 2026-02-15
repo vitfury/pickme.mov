@@ -1,5 +1,5 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
-import { eq, sql } from 'drizzle-orm';
+import { eq, sql, notInArray } from 'drizzle-orm';
 import { z } from 'zod';
 import {
   genres,
@@ -25,6 +25,8 @@ export default async function filtersRoutes(app: FastifyInstance) {
         .limit(1);
       const locale = user[0]?.locale || 'uk';
 
+      const EXCLUDED_GENRES = ['Soap', 'Talk', 'News', 'Reality'];
+
       const result = await request.db
         .select({
           id: genres.id,
@@ -35,8 +37,9 @@ export default async function filtersRoutes(app: FastifyInstance) {
         })
         .from(genres)
         .leftJoin(contentGenres, eq(genres.id, contentGenres.genreId))
+        .where(notInArray(genres.nameEn, EXCLUDED_GENRES))
         .groupBy(genres.id)
-        .orderBy(genres.nameEn);
+        .orderBy(sql`count(${contentGenres.contentId}) DESC`);
 
       return {
         genres: result.map((g) => ({
@@ -111,6 +114,36 @@ export default async function filtersRoutes(app: FastifyInstance) {
       };
     } catch (err) {
       request.log.error({ err, route: 'GET /collections', userId: request.userId }, 'Failed to fetch collections');
+      throw err;
+    }
+  });
+
+  // GET /filters/countries
+  app.get('/countries', async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const result = await request.db.execute(sql`
+        SELECT country, count(*) as count
+        FROM (
+          SELECT unnest(production_countries) as country FROM content
+          WHERE production_countries IS NOT NULL
+        ) sub
+        GROUP BY country
+        ORDER BY count DESC
+      `);
+
+      const countryFlag = (code: string) =>
+        [...code.toUpperCase()].map((c) => String.fromCodePoint(0x1f1e6 + c.charCodeAt(0) - 65)).join('');
+
+      return {
+        countries: (result.rows as { country: string; count: string }[]).map((r) => ({
+          code: r.country,
+          name: r.country,
+          flag: countryFlag(r.country),
+          count: Number(r.count),
+        })),
+      };
+    } catch (err) {
+      request.log.error({ err, route: 'GET /countries', userId: request.userId }, 'Failed to fetch countries');
       throw err;
     }
   });

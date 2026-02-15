@@ -29,8 +29,11 @@ interface FeedFilters {
   yearMax?: number;
   ratingMin?: number;
   ratingMax?: number;
+  runtimeMin?: number;
+  runtimeMax?: number;
   certification?: string[];
   providers?: number[];
+  countries?: string[];
   personId?: number;
   collectionId?: number;
   awards?: string;
@@ -65,7 +68,7 @@ export async function generateFeed(
   const personalizationWeight = 0.50 * maturity;
 
   // Get content IDs to exclude from feed:
-  // - Permanently exclude: like, dislike, superlike
+  // - Permanently exclude: like, dislike
   // - Exclude today's skips (they naturally reappear on future days)
   const permanentSwipes = await db
     .select({ contentId: userSwipes.contentId })
@@ -94,21 +97,38 @@ export async function generateFeed(
     conditions.push(notInArray(content.id, swipedIds));
   }
 
-  // Apply optional filters
-  if (filters.yearMin) {
-    conditions.push(sql`EXTRACT(YEAR FROM ${content.releaseDate}) >= ${filters.yearMin}`);
-  }
+  // Apply filters with defaults (content-type aware)
+  const isAnimation = contentType === 'animation';
+  const DEFAULT_EXCLUDED_COUNTRIES = isAnimation ? ['RU', 'IN', 'JP'] : ['RU', 'IN'];
+  const DEFAULT_YEAR_MIN = 1990;
+  const DEFAULT_RATING_MIN = 6.5;
+  const isSeries = contentType === 'series';
+  const DEFAULT_RUNTIME_MIN = isSeries ? undefined : isAnimation ? 60 : 80;
+  const DEFAULT_RUNTIME_MAX = isSeries ? undefined : isAnimation ? 180 : 240;
+
+  conditions.push(sql`EXTRACT(YEAR FROM ${content.releaseDate}) >= ${filters.yearMin ?? DEFAULT_YEAR_MIN}`);
   if (filters.yearMax) {
     conditions.push(sql`EXTRACT(YEAR FROM ${content.releaseDate}) <= ${filters.yearMax}`);
   }
-  if (filters.ratingMin) {
-    conditions.push(sql`GREATEST(${content.tmdbRating}::numeric, ${content.imdbRating}::numeric) >= ${filters.ratingMin}`);
-  }
+  conditions.push(sql`GREATEST(${content.tmdbRating}::numeric, ${content.imdbRating}::numeric) >= ${filters.ratingMin ?? DEFAULT_RATING_MIN}`);
   if (filters.ratingMax) {
     conditions.push(sql`LEAST(${content.tmdbRating}::numeric, ${content.imdbRating}::numeric) <= ${filters.ratingMax}`);
   }
+  const runtimeMin = filters.runtimeMin ?? DEFAULT_RUNTIME_MIN;
+  const runtimeMax = filters.runtimeMax ?? DEFAULT_RUNTIME_MAX;
+  if (runtimeMin) {
+    conditions.push(sql`${content.runtime} >= ${runtimeMin}`);
+  }
+  if (runtimeMax) {
+    conditions.push(sql`${content.runtime} <= ${runtimeMax}`);
+  }
   if (filters.certification && filters.certification.length > 0) {
     conditions.push(inArray(content.certification, filters.certification));
+  }
+  if (filters.countries && filters.countries.length > 0) {
+    conditions.push(sql`${content.productionCountries} && ARRAY[${sql.join(filters.countries.map(c => sql`${c}`), sql`, `)}]::text[]`);
+  } else {
+    conditions.push(sql`NOT (${content.productionCountries} && ARRAY[${sql.join(DEFAULT_EXCLUDED_COUNTRIES.map(c => sql`${c}`), sql`, `)}]::text[])`);
   }
 
   // Fetch unseen content with base quality scores (fetch more than needed for diversity)
@@ -565,6 +585,7 @@ export async function generateFeed(
       releaseDate: c.releaseDate,
       runtime: c.runtime,
       certification: c.certification,
+      productionCountries: c.productionCountries || [],
       tmdbRating: c.tmdbRating ? parseFloat(c.tmdbRating) : null,
       imdbRating: c.imdbRating ? parseFloat(c.imdbRating) : null,
       overview: locale === 'uk' ? (c.overviewUk || c.overviewEn) : c.overviewEn,

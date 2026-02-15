@@ -35,8 +35,11 @@ export function useFeed(filters: FeedFilters) {
       if (filters.yearMax) params.yearMax = String(filters.yearMax);
       if (filters.ratingMin) params.ratingMin = String(filters.ratingMin);
       if (filters.ratingMax) params.ratingMax = String(filters.ratingMax);
+      if (filters.runtimeMin) params.runtimeMin = String(filters.runtimeMin);
+      if (filters.runtimeMax) params.runtimeMax = String(filters.runtimeMax);
       if (filters.certification?.length) params.certification = filters.certification.join(',');
       if (filters.providers?.length) params.providers = filters.providers.join(',');
+      if (filters.countries?.length) params.countries = filters.countries.join(',');
       if (filters.personId) params.personId = String(filters.personId);
       if (filters.collectionId) params.collectionId = String(filters.collectionId);
       if (filters.awards) params.awards = filters.awards;
@@ -57,8 +60,11 @@ export function useFeedInfinite(filters: FeedFilters) {
       if (filters.yearMax) params.yearMax = String(filters.yearMax);
       if (filters.ratingMin) params.ratingMin = String(filters.ratingMin);
       if (filters.ratingMax) params.ratingMax = String(filters.ratingMax);
+      if (filters.runtimeMin) params.runtimeMin = String(filters.runtimeMin);
+      if (filters.runtimeMax) params.runtimeMax = String(filters.runtimeMax);
       if (filters.certification?.length) params.certification = filters.certification.join(',');
       if (filters.providers?.length) params.providers = filters.providers.join(',');
+      if (filters.countries?.length) params.countries = filters.countries.join(',');
       if (filters.personId) params.personId = String(filters.personId);
       if (filters.collectionId) params.collectionId = String(filters.collectionId);
       if (filters.awards) params.awards = filters.awards;
@@ -190,6 +196,17 @@ export function useCertifications() {
     queryKey: ['certifications'],
     queryFn: async () => {
       const { data } = await api.get('/filters/certifications');
+      return data;
+    },
+    staleTime: 30 * 60 * 1000,
+  });
+}
+
+export function useCountries() {
+  return useQuery<{ countries: { code: string; name: string; flag: string; count: number }[] }>({
+    queryKey: ['countries'],
+    queryFn: async () => {
+      const { data } = await api.get('/filters/countries');
       return data;
     },
     staleTime: 30 * 60 * 1000,

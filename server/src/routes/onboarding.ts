@@ -16,7 +16,7 @@ const completeOnboardingSchema = z.object({
   selectedGenres: z.array(z.number().int().positive()),
   movieRatings: z.array(z.object({
     contentId: z.number().int().positive(),
-    action: z.enum(['like', 'dislike', 'superlike']),
+    action: z.enum(['like', 'dislike']),
   })),
 });
 

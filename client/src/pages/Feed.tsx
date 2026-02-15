@@ -11,21 +11,25 @@ import type { FeedCard, SwipeAction } from '@/types';
 
 const ANIM_DURATION = 500; // ms — transition duration
 
+interface HistoryEntry {
+  previousIndex: number;
+  apiAction: boolean; // whether server undo is needed
+  cardId?: number;    // for cleaning actedOnRef
+}
+
 export default function Feed() {
   const { t } = useTranslation();
   const contentType = useFeedStore((s) => s.contentType);
   const activeFilters = useFeedStore((s) => s.activeFilters);
-  const setLastSwipe = useFeedStore((s) => s.setLastSwipe);
-  const lastSwipe = useFeedStore((s) => s.lastSwipe);
 
   const [detailCard, setDetailCard] = useState<FeedCard | null>(null);
-  const [undoToast, setUndoToast] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [canUndo, setCanUndo] = useState(false);
 
-  const undoTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const containerRef = useRef<HTMLDivElement>(null);
   const isAnimatingRef = useRef(false);
-  const actedOnRef = useRef<Set<number>>(new Set()); // card IDs with recorded like/dislike/skip
+  const actedOnRef = useRef<Set<number>>(new Set());
+  const historyRef = useRef<HistoryEntry[]>([]);
 
   const filters = { ...activeFilters, contentType };
   const {
@@ -64,15 +68,19 @@ export default function Feed() {
 
     // Record skip for current card if not already acted on
     const currentCard = allCards[currentIndex];
+    let hadApiAction = false;
     if (currentCard && !actedOnRef.current.has(currentCard.id)) {
       actedOnRef.current.add(currentCard.id);
       swipeMutation.mutate({ contentId: currentCard.id, action: 'skip' });
+      hadApiAction = true;
     }
 
-    // Clear undo when scrolling past
-    setLastSwipe(null);
-    setUndoToast(false);
-    clearTimeout(undoTimerRef.current);
+    historyRef.current.push({
+      previousIndex: currentIndex,
+      apiAction: hadApiAction,
+      cardId: hadApiAction ? currentCard?.id : undefined,
+    });
+    setCanUndo(true);
 
     isAnimatingRef.current = true;
     setCurrentIndex((prev) => prev + 1);
@@ -85,11 +93,17 @@ export default function Feed() {
     setTimeout(() => {
       isAnimatingRef.current = false;
     }, ANIM_DURATION);
-  }, [currentIndex, allCards, swipeMutation, setLastSwipe, hasNextPage, isFetchingNextPage, fetchNextPage]);
+  }, [currentIndex, allCards, swipeMutation, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const goPrev = useCallback(() => {
     if (isAnimatingRef.current) return;
     if (currentIndex <= 0) return;
+
+    historyRef.current.push({
+      previousIndex: currentIndex,
+      apiAction: false,
+    });
+    setCanUndo(true);
 
     isAnimatingRef.current = true;
     setCurrentIndex((prev) => prev - 1);
@@ -109,17 +123,15 @@ export default function Feed() {
       actedOnRef.current.add(card.id);
       swipeMutation.mutate({ contentId: card.id, action });
 
-      // Undo toast
-      setLastSwipe({ card, action });
-      setUndoToast(true);
-      clearTimeout(undoTimerRef.current);
-      undoTimerRef.current = setTimeout(() => {
-        setUndoToast(false);
-        setLastSwipe(null);
-      }, 3000);
-
       // Advance to next card
       if (currentIndex < allCards.length - 1) {
+        historyRef.current.push({
+          previousIndex: currentIndex,
+          apiAction: true,
+          cardId: card.id,
+        });
+        setCanUndo(true);
+
         isAnimatingRef.current = true;
         setCurrentIndex((prev) => prev + 1);
 
@@ -132,30 +144,35 @@ export default function Feed() {
         }, ANIM_DURATION);
       }
     },
-    [currentIndex, allCards.length, swipeMutation, setLastSwipe, hasNextPage, isFetchingNextPage, fetchNextPage],
+    [currentIndex, allCards.length, swipeMutation, hasNextPage, isFetchingNextPage, fetchNextPage],
   );
 
-  // --- Undo ---
+  // --- Undo (reverses any action in exact order) ---
 
   const handleUndo = useCallback(async () => {
-    if (!lastSwipe) return;
-    try {
-      await undoMutation.mutateAsync();
-      actedOnRef.current.delete(lastSwipe.card.id);
-      setUndoToast(false);
-      setLastSwipe(null);
-      clearTimeout(undoTimerRef.current);
+    if (historyRef.current.length === 0) return;
+    if (isAnimatingRef.current) return;
 
-      // Go back to the card we just swiped
-      isAnimatingRef.current = true;
-      setCurrentIndex((prev) => Math.max(0, prev - 1));
-      setTimeout(() => {
-        isAnimatingRef.current = false;
-      }, ANIM_DURATION);
-    } catch {
-      // undo failed
+    const entry = historyRef.current.pop()!;
+    setCanUndo(historyRef.current.length > 0);
+
+    if (entry.apiAction) {
+      try {
+        await undoMutation.mutateAsync();
+      } catch {
+        // API undo failed, still navigate back
+      }
+      if (entry.cardId) {
+        actedOnRef.current.delete(entry.cardId);
+      }
     }
-  }, [lastSwipe, undoMutation, setLastSwipe]);
+
+    isAnimatingRef.current = true;
+    setCurrentIndex(entry.previousIndex);
+    setTimeout(() => {
+      isAnimatingRef.current = false;
+    }, ANIM_DURATION);
+  }, [undoMutation]);
 
   // --- Wheel handler ---
 
@@ -203,7 +220,7 @@ export default function Feed() {
 
   if (isLoading && allCards.length === 0) {
     return (
-      <div className="flex items-center justify-center h-[100dvh]">
+      <div className="flex items-center justify-center h-full">
         <Spinner size={32} />
       </div>
     );
@@ -211,7 +228,7 @@ export default function Feed() {
 
   if (allCards.length === 0) {
     return (
-      <div className="flex items-center justify-center h-[100dvh]">
+      <div className="flex items-center justify-center h-full">
         <EmptyState
           icon={
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -231,7 +248,7 @@ export default function Feed() {
   return (
     <>
       {/* Viewport — clips everything, no native scroll */}
-      <div ref={containerRef} className="h-[100dvh] overflow-hidden relative">
+      <div ref={containerRef} className="h-full overflow-hidden relative">
         {renderWindow.map(({ index, card }) => (
           <div
             key={card.id}
@@ -244,8 +261,9 @@ export default function Feed() {
             <FeedItem
               card={card}
               onSwipe={(action) => handleSwipe(card, action)}
-              onOpenDetails={() => setDetailCard(card)}
               onNavigate={handleNavigate}
+              onUndo={handleUndo}
+              canUndo={canUndo}
             />
           </div>
         ))}
@@ -253,24 +271,6 @@ export default function Feed() {
 
       {/* Details bottom sheet */}
       <DetailsSheet card={detailCard} onClose={() => setDetailCard(null)} />
-
-      {/* Undo toast */}
-      {undoToast && lastSwipe && (
-        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50
-          bg-surface border border-border rounded-lg px-4 py-2.5 shadow-2xl
-          flex items-center gap-3 animate-in slide-in-from-bottom-4">
-          <span className="text-sm text-text">
-            {lastSwipe.action === 'like' ? 'Liked' : 'Disliked'}{' '}
-            <span className="font-medium text-accent">{lastSwipe.card.title}</span>
-          </span>
-          <button
-            onClick={handleUndo}
-            className="text-sm font-semibold text-accent hover:text-accent-hover transition-colors"
-          >
-            {t('feed.undo')}
-          </button>
-        </div>
-      )}
     </>
   );
 }
