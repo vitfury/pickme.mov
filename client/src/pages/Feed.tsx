@@ -9,29 +9,26 @@ import Spinner from '@/components/ui/Spinner';
 import EmptyState from '@/components/ui/EmptyState';
 import type { FeedCard, SwipeAction } from '@/types';
 
-const SCROLL_COOLDOWN = 500; // ms before another scroll is allowed
-const TOUCH_SWIPE_THRESHOLD = 50; // px vertical distance to trigger scroll
+const ANIM_DURATION = 500; // ms — transition duration
+const TOUCH_THRESHOLD = 50; // px vertical distance to trigger navigation
 
 export default function Feed() {
   const { t } = useTranslation();
   const contentType = useFeedStore((s) => s.contentType);
   const activeFilters = useFeedStore((s) => s.activeFilters);
-  const swipedCardIds = useFeedStore((s) => s.swipedCardIds);
-  const addSwipedCard = useFeedStore((s) => s.addSwipedCard);
-  const removeSwipedCard = useFeedStore((s) => s.removeSwipedCard);
   const setLastSwipe = useFeedStore((s) => s.setLastSwipe);
   const lastSwipe = useFeedStore((s) => s.lastSwipe);
 
   const [detailCard, setDetailCard] = useState<FeedCard | null>(null);
   const [undoToast, setUndoToast] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
+
   const undoTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const containerRef = useRef<HTMLDivElement>(null);
-  const viewedCardsRef = useRef<Set<number>>(new Set());
-  const swipedActionsRef = useRef<Set<number>>(new Set());
   const isAnimatingRef = useRef(false);
   const touchStartYRef = useRef(0);
-  const prevCardRef = useRef<{ id: number; index: number } | null>(null);
+  const touchStartXRef = useRef(0);
+  const actedOnRef = useRef<Set<number>>(new Set()); // card IDs with recorded like/dislike/skip
 
   const filters = { ...activeFilters, contentType };
   const {
@@ -45,167 +42,184 @@ export default function Feed() {
   const swipeMutation = useSwipe();
   const undoMutation = useUndo();
 
-  // Flatten all pages into single cards array, filtering out swiped
+  // Flat card list — NO filtering, stable array
   const allCards = useMemo(() => {
     if (!data?.pages) return [];
-    const cards = data.pages.flatMap((page) => page.cards);
-    return cards.filter((c) => !swipedCardIds.has(c.id));
-  }, [data?.pages, swipedCardIds]);
+    return data.pages.flatMap((page) => page.cards);
+  }, [data?.pages]);
+
+  // 3-card render window: [prev, current, next]
+  const renderWindow = useMemo(() => {
+    const items: { index: number; card: FeedCard }[] = [];
+    for (let i = currentIndex - 1; i <= currentIndex + 1; i++) {
+      if (i >= 0 && i < allCards.length) {
+        items.push({ index: i, card: allCards[i]! });
+      }
+    }
+    return items;
+  }, [currentIndex, allCards]);
+
+  // --- Navigation ---
+
+  const goNext = useCallback(() => {
+    if (isAnimatingRef.current) return;
+    if (currentIndex >= allCards.length - 1) return;
+
+    // Record skip for current card if not already acted on
+    const currentCard = allCards[currentIndex];
+    if (currentCard && !actedOnRef.current.has(currentCard.id)) {
+      actedOnRef.current.add(currentCard.id);
+      swipeMutation.mutate({ contentId: currentCard.id, action: 'skip' });
+    }
+
+    // Clear undo when scrolling past
+    setLastSwipe(null);
+    setUndoToast(false);
+    clearTimeout(undoTimerRef.current);
+
+    isAnimatingRef.current = true;
+    setCurrentIndex((prev) => prev + 1);
+
+    // Prefetch more cards when nearing end
+    if (currentIndex >= allCards.length - 4 && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+
+    setTimeout(() => {
+      isAnimatingRef.current = false;
+    }, ANIM_DURATION);
+  }, [currentIndex, allCards, swipeMutation, setLastSwipe, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  const goPrev = useCallback(() => {
+    if (isAnimatingRef.current) return;
+    if (currentIndex <= 0) return;
+
+    isAnimatingRef.current = true;
+    setCurrentIndex((prev) => prev - 1);
+
+    setTimeout(() => {
+      isAnimatingRef.current = false;
+    }, ANIM_DURATION);
+  }, [currentIndex]);
+
+  // --- Swipe (like / dislike) ---
 
   const handleSwipe = useCallback(
     (card: FeedCard, action: SwipeAction) => {
-      addSwipedCard(card.id);
-      swipedActionsRef.current.add(card.id);
+      if (action === 'skip') return; // skips handled by goNext
+
+      // Mark acted so goNext won't double-skip
+      actedOnRef.current.add(card.id);
       swipeMutation.mutate({ contentId: card.id, action });
 
-      if (action !== 'skip') {
-        setLastSwipe({ card, action });
-        setUndoToast(true);
-        clearTimeout(undoTimerRef.current);
-        undoTimerRef.current = setTimeout(() => {
-          setUndoToast(false);
-          setLastSwipe(null);
-        }, 3000);
+      // Undo toast
+      setLastSwipe({ card, action });
+      setUndoToast(true);
+      clearTimeout(undoTimerRef.current);
+      undoTimerRef.current = setTimeout(() => {
+        setUndoToast(false);
+        setLastSwipe(null);
+      }, 3000);
+
+      // Advance to next card
+      if (currentIndex < allCards.length - 1) {
+        isAnimatingRef.current = true;
+        setCurrentIndex((prev) => prev + 1);
+
+        if (currentIndex >= allCards.length - 4 && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+
+        setTimeout(() => {
+          isAnimatingRef.current = false;
+        }, ANIM_DURATION);
       }
     },
-    [addSwipedCard, swipeMutation, setLastSwipe],
+    [currentIndex, allCards.length, swipeMutation, setLastSwipe, hasNextPage, isFetchingNextPage, fetchNextPage],
   );
+
+  // --- Undo ---
 
   const handleUndo = useCallback(async () => {
     if (!lastSwipe) return;
     try {
       await undoMutation.mutateAsync();
-      removeSwipedCard(lastSwipe.card.id);
-      swipedActionsRef.current.delete(lastSwipe.card.id);
+      actedOnRef.current.delete(lastSwipe.card.id);
       setUndoToast(false);
       setLastSwipe(null);
       clearTimeout(undoTimerRef.current);
-    } catch {
-      // undo failed, keep state
-    }
-  }, [lastSwipe, undoMutation, removeSwipedCard, setLastSwipe]);
 
-  // Record skip when navigating away from a card
-  const recordSkipIfNeeded = useCallback(
-    (cardIndex: number) => {
-      const card = allCards[cardIndex];
-      if (!card) return;
-      if (viewedCardsRef.current.has(card.id) && !swipedActionsRef.current.has(card.id)) {
-        handleSwipe(card, 'skip');
-      }
-    },
-    [allCards, handleSwipe],
-  );
-
-  // Navigate to a specific index
-  const goToIndex = useCallback(
-    (index: number) => {
-      if (isAnimatingRef.current) return;
-      const clamped = Math.max(0, Math.min(index, allCards.length - 1));
-      if (clamped === currentIndex) return;
-
-      // Record skip on the card we're leaving
-      recordSkipIfNeeded(currentIndex);
-
+      // Go back to the card we just swiped
       isAnimatingRef.current = true;
-      setCurrentIndex(clamped);
-
-      // Mark new card as viewed
-      const newCard = allCards[clamped];
-      if (newCard) viewedCardsRef.current.add(newCard.id);
-
-      // Fetch next page when nearing end
-      if (clamped >= allCards.length - 3 && hasNextPage && !isFetchingNextPage) {
-        fetchNextPage();
-      }
-
+      setCurrentIndex((prev) => Math.max(0, prev - 1));
       setTimeout(() => {
         isAnimatingRef.current = false;
-      }, SCROLL_COOLDOWN);
-    },
-    [currentIndex, allCards, hasNextPage, isFetchingNextPage, fetchNextPage, recordSkipIfNeeded],
-  );
-
-  const goNext = useCallback(() => goToIndex(currentIndex + 1), [currentIndex, goToIndex]);
-  const goPrev = useCallback(() => goToIndex(currentIndex - 1), [currentIndex, goToIndex]);
-
-  // Mark first card as viewed on mount
-  useEffect(() => {
-    if (allCards.length > 0) {
-      viewedCardsRef.current.add(allCards[0]!.id);
+      }, ANIM_DURATION);
+    } catch {
+      // undo failed
     }
-  }, [allCards.length > 0]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [lastSwipe, undoMutation, setLastSwipe]);
 
-  // Track prev card to detect skip when card is removed (swiped)
+  // --- Wheel handler ---
+
   useEffect(() => {
-    const cur = allCards[currentIndex];
-    if (prevCardRef.current && cur && prevCardRef.current.id !== cur.id) {
-      // Cards shifted — a card was removed before/at current index
-      // Mark the new current card as viewed
-      viewedCardsRef.current.add(cur.id);
-    }
-    prevCardRef.current = cur ? { id: cur.id, index: currentIndex } : null;
-  }, [allCards, currentIndex]);
+    const el = containerRef.current;
+    if (!el) return;
 
-  // Clamp index when cards get filtered out (after swipe removes a card)
-  useEffect(() => {
-    if (allCards.length > 0 && currentIndex >= allCards.length) {
-      setCurrentIndex(allCards.length - 1);
-    }
-  }, [allCards.length, currentIndex]);
-
-  // Intercept wheel events
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const handleWheel = (e: WheelEvent) => {
+    const onWheel = (e: WheelEvent) => {
       e.preventDefault();
       if (isAnimatingRef.current) return;
       if (e.deltaY > 0) goNext();
       else if (e.deltaY < 0) goPrev();
     };
 
-    container.addEventListener('wheel', handleWheel, { passive: false });
-    return () => container.removeEventListener('wheel', handleWheel);
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
   }, [goNext, goPrev]);
 
-  // Intercept touch events
+  // --- Touch handler (vertical swipe to navigate) ---
+
   useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
+    const el = containerRef.current;
+    if (!el) return;
 
-    const handleTouchStart = (e: TouchEvent) => {
+    const onTouchStart = (e: TouchEvent) => {
       touchStartYRef.current = e.touches[0]!.clientY;
+      touchStartXRef.current = e.touches[0]!.clientX;
     };
 
-    const handleTouchMove = (e: TouchEvent) => {
-      e.preventDefault();
+    const onTouchMove = (e: TouchEvent) => {
+      // Only prevent default for vertical gestures to avoid blocking horizontal swipe
+      const dx = Math.abs(e.touches[0]!.clientX - touchStartXRef.current);
+      const dy = Math.abs(e.touches[0]!.clientY - touchStartYRef.current);
+      if (dy > dx) e.preventDefault();
     };
 
-    const handleTouchEnd = (e: TouchEvent) => {
+    const onTouchEnd = (e: TouchEvent) => {
       if (isAnimatingRef.current) return;
-      const deltaY = touchStartYRef.current - (e.changedTouches[0]?.clientY ?? touchStartYRef.current);
-      if (Math.abs(deltaY) < TOUCH_SWIPE_THRESHOLD) return;
-      if (deltaY > 0) goNext();
+      const dy = touchStartYRef.current - (e.changedTouches[0]?.clientY ?? touchStartYRef.current);
+      const dx = Math.abs(touchStartXRef.current - (e.changedTouches[0]?.clientX ?? touchStartXRef.current));
+
+      // Only navigate if vertical gesture is dominant
+      if (Math.abs(dy) < TOUCH_THRESHOLD || Math.abs(dy) < dx) return;
+      if (dy > 0) goNext();
       else goPrev();
     };
 
-    container.addEventListener('touchstart', handleTouchStart, { passive: true });
-    container.addEventListener('touchmove', handleTouchMove, { passive: false });
-    container.addEventListener('touchend', handleTouchEnd, { passive: true });
+    el.addEventListener('touchstart', onTouchStart, { passive: true });
+    el.addEventListener('touchmove', onTouchMove, { passive: false });
+    el.addEventListener('touchend', onTouchEnd, { passive: true });
 
     return () => {
-      container.removeEventListener('touchstart', handleTouchStart);
-      container.removeEventListener('touchmove', handleTouchMove);
-      container.removeEventListener('touchend', handleTouchEnd);
+      el.removeEventListener('touchstart', onTouchStart);
+      el.removeEventListener('touchmove', onTouchMove);
+      el.removeEventListener('touchend', onTouchEnd);
     };
   }, [goNext, goPrev]);
 
-  // Keyboard shortcuts
-  const getCurrentCard = useCallback(() => {
-    return allCards[currentIndex] ?? null;
-  }, [allCards, currentIndex]);
+  // --- Keyboard ---
+
+  const getCurrentCard = useCallback(() => allCards[currentIndex] ?? null, [allCards, currentIndex]);
 
   useKeyboardShortcuts({
     onLeft: () => {
@@ -220,6 +234,8 @@ export default function Feed() {
     onDown: goNext,
     onUndo: handleUndo,
   });
+
+  // --- Render ---
 
   if (isLoading && allCards.length === 0) {
     return (
@@ -250,29 +266,24 @@ export default function Feed() {
 
   return (
     <>
-      {/* Outer viewport — clips overflow */}
-      <div
-        ref={containerRef}
-        className="h-[100dvh] overflow-hidden relative"
-      >
-        {/* Inner track — slides via translateY */}
-        <div
-          className="will-change-transform"
-          style={{
-            transform: `translateY(-${currentIndex * 100}dvh)`,
-            transition: 'transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-          }}
-        >
-          {allCards.map((card) => (
-            <div key={card.id} data-card-id={card.id} className="h-[100dvh] w-full">
-              <FeedItem
-                card={card}
-                onSwipe={(action) => handleSwipe(card, action)}
-                onOpenDetails={() => setDetailCard(card)}
-              />
-            </div>
-          ))}
-        </div>
+      {/* Viewport — clips everything, no native scroll */}
+      <div ref={containerRef} className="h-[100dvh] overflow-hidden relative">
+        {renderWindow.map(({ index, card }) => (
+          <div
+            key={card.id}
+            className="absolute inset-0 will-change-transform"
+            style={{
+              transform: `translateY(${(index - currentIndex) * 100}%)`,
+              transition: `transform ${ANIM_DURATION}ms cubic-bezier(0.16, 1, 0.3, 1)`,
+            }}
+          >
+            <FeedItem
+              card={card}
+              onSwipe={(action) => handleSwipe(card, action)}
+              onOpenDetails={() => setDetailCard(card)}
+            />
+          </div>
+        ))}
       </div>
 
       {/* Details bottom sheet */}

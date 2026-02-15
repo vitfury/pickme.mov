@@ -1,5 +1,5 @@
-import { motion, useAnimation, type PanInfo } from 'framer-motion';
-import { useState, useCallback } from 'react';
+import { motion, useMotionValue, useTransform, animate, type PanInfo } from 'framer-motion';
+import { useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { tmdbPoster } from '@/utils/image';
 import { formatRuntime, formatDate, formatRating } from '@/utils/format';
@@ -13,48 +13,76 @@ interface FeedItemProps {
 
 const SWIPE_THRESHOLD = 120;
 const FLY_DISTANCE = 800;
+const DIRECTION_LOCK_THRESHOLD = 10; // px before locking gesture direction
 
 export default function FeedItem({ card, onSwipe, onOpenDetails }: FeedItemProps) {
   const { t } = useTranslation();
-  const controls = useAnimation();
-  const [dragX, setDragX] = useState(0);
+  const x = useMotionValue(0);
+  const cardOpacity = useMotionValue(1);
+  const directionRef = useRef<'none' | 'horizontal' | 'vertical'>('none');
 
-  const handleDrag = useCallback((_: unknown, info: PanInfo) => {
-    setDragX(info.offset.x);
+  const rotation = useTransform(x, (v) => Math.max(-12, Math.min(12, v / 25)));
+  const likeOpacity = useTransform(x, (v) => Math.max(0, Math.min(1, v / SWIPE_THRESHOLD)));
+  const dislikeOpacity = useTransform(x, (v) => Math.max(0, Math.min(1, -v / SWIPE_THRESHOLD)));
+
+  const handlePanStart = useCallback(() => {
+    directionRef.current = 'none';
   }, []);
 
-  const handleDragEnd = useCallback(
-    async (_: unknown, info: PanInfo) => {
-      const { x } = info.offset;
+  const handlePan = useCallback((_: unknown, info: PanInfo) => {
+    // Determine direction once after initial movement
+    if (directionRef.current === 'none') {
+      const absDx = Math.abs(info.offset.x);
+      const absDy = Math.abs(info.offset.y);
+      if (absDx > DIRECTION_LOCK_THRESHOLD || absDy > DIRECTION_LOCK_THRESHOLD) {
+        directionRef.current = absDx > absDy ? 'horizontal' : 'vertical';
+      }
+    }
 
-      if (x > SWIPE_THRESHOLD) {
-        await controls.start({ x: FLY_DISTANCE, opacity: 0, transition: { duration: 0.3 } });
+    // Only move card for confirmed horizontal gestures
+    if (directionRef.current === 'horizontal') {
+      x.set(info.offset.x);
+    }
+  }, [x]);
+
+  const handlePanEnd = useCallback(
+    async (_: unknown, info: PanInfo) => {
+      const wasHorizontal = directionRef.current === 'horizontal';
+      directionRef.current = 'none';
+
+      if (!wasHorizontal) {
+        x.set(0);
+        return;
+      }
+
+      const offsetX = info.offset.x;
+
+      if (offsetX > SWIPE_THRESHOLD) {
+        await Promise.all([
+          animate(x, FLY_DISTANCE, { duration: 0.3 }),
+          animate(cardOpacity, 0, { duration: 0.3 }),
+        ]);
         onSwipe('like');
-      } else if (x < -SWIPE_THRESHOLD) {
-        await controls.start({ x: -FLY_DISTANCE, opacity: 0, transition: { duration: 0.3 } });
+      } else if (offsetX < -SWIPE_THRESHOLD) {
+        await Promise.all([
+          animate(x, -FLY_DISTANCE, { duration: 0.3 }),
+          animate(cardOpacity, 0, { duration: 0.3 }),
+        ]);
         onSwipe('dislike');
       } else {
-        controls.start({ x: 0, rotate: 0, transition: { type: 'spring', stiffness: 300, damping: 25 } });
+        animate(x, 0, { type: 'spring', stiffness: 300, damping: 25 });
       }
-      setDragX(0);
     },
-    [controls, onSwipe],
+    [x, cardOpacity, onSwipe],
   );
-
-  const likeOpacity = Math.max(0, Math.min(1, dragX / SWIPE_THRESHOLD));
-  const dislikeOpacity = Math.max(0, Math.min(1, -dragX / SWIPE_THRESHOLD));
-  const rotation = Math.max(-12, Math.min(12, dragX / 25));
 
   return (
     <div className="h-[100dvh] w-full relative flex-shrink-0">
       <motion.div
-        animate={controls}
-        drag="x"
-        dragConstraints={{ left: 0, right: 0 }}
-        dragElastic={0.7}
-        onDrag={handleDrag}
-        onDragEnd={handleDragEnd}
-        style={{ rotate: rotation }}
+        style={{ x, rotate: rotation, opacity: cardOpacity }}
+        onPanStart={handlePanStart}
+        onPan={handlePan}
+        onPanEnd={handlePanEnd}
         className="absolute inset-0 touch-none"
       >
         {/* Full-bleed poster background */}
