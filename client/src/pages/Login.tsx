@@ -1,6 +1,9 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import api from '@/api/client';
+import { useAuthStore } from '@/stores/authStore';
 
 const TMDB = 'https://image.tmdb.org/t/p/w342';
 
@@ -43,8 +46,27 @@ const VISIBLE_BEHIND = 3;       // swiped cards still animating off
 
 export default function Login() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const login = useAuthStore((s) => s.login);
   const [phase, setPhase] = useState<Phase>('scatter');
   const [swipeCount, setSwipeCount] = useState(0);
+  const [showDevLogin, setShowDevLogin] = useState(false);
+  const [devEmail, setDevEmail] = useState('dev@pickme.mov');
+  const [devLoading, setDevLoading] = useState(false);
+
+  const handleDevLogin = useCallback(async () => {
+    setDevLoading(true);
+    try {
+      const { data } = await api.post('/auth/dev-login', { email: devEmail });
+      login(
+        { accessToken: data.accessToken, refreshToken: data.refreshToken },
+        data.user,
+      );
+      navigate('/');
+    } catch {
+      setDevLoading(false);
+    }
+  }, [devEmail, login, navigate]);
 
   /* ---- scatter positions: golden-ratio spiral ---- */
   const scatterPos = useMemo(
@@ -214,6 +236,55 @@ export default function Login() {
               {t('login.google')}
             </button>
           </motion.div>
+
+          {/* Dev login — only in dev mode */}
+          {import.meta.env.DEV && (
+            <motion.div
+              className="mt-4 flex flex-col items-center gap-2"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+            >
+              <button
+                onClick={() => setShowDevLogin((v) => !v)}
+                className="text-text-muted/30 text-[0.6rem] tracking-wider uppercase
+                  hover:text-text-muted/60 transition-colors pointer-events-auto"
+              >
+                Dev Login
+              </button>
+              <AnimatePresence>
+                {showDevLogin && (
+                  <motion.div
+                    className="flex items-center gap-2 pointer-events-auto"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <input
+                      type="email"
+                      value={devEmail}
+                      onChange={(e) => setDevEmail(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleDevLogin()}
+                      className="bg-white/[0.06] border border-white/[0.1] rounded-lg
+                        px-3 py-2 text-[0.75rem] text-text w-48 outline-none
+                        focus:border-accent/40"
+                      placeholder="dev@pickme.mov"
+                    />
+                    <button
+                      onClick={handleDevLogin}
+                      disabled={devLoading}
+                      className="bg-accent/20 text-accent text-[0.75rem] px-3 py-2
+                        rounded-lg hover:bg-accent/30 transition-colors
+                        disabled:opacity-50"
+                    >
+                      {devLoading ? '...' : 'Go'}
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          )}
         </div>
       )}
     </div>

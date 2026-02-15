@@ -25,21 +25,21 @@ export default function Watchlist() {
   const { data, isLoading } = useWatchlist(filters);
 
   const tabs: { key: Tab; labelKey: string }[] = [
-    { key: 'all', labelKey: 'watchlist.all' },
-    { key: 'unwatched', labelKey: 'watchlist.unwatched' },
-    { key: 'watched', labelKey: 'watchlist.watched' },
+    { key: 'all', labelKey: 'favorites.all' },
+    { key: 'unwatched', labelKey: 'favorites.unwatched' },
+    { key: 'watched', labelKey: 'favorites.watched' },
   ];
 
   const sorts: { key: Sort; labelKey: string }[] = [
-    { key: 'added', labelKey: 'watchlist.sortAdded' },
-    { key: 'rating', labelKey: 'watchlist.sortRating' },
-    { key: 'year', labelKey: 'watchlist.sortYear' },
-    { key: 'title', labelKey: 'watchlist.sortTitle' },
+    { key: 'added', labelKey: 'favorites.sortAdded' },
+    { key: 'rating', labelKey: 'favorites.sortRating' },
+    { key: 'year', labelKey: 'favorites.sortYear' },
+    { key: 'title', labelKey: 'favorites.sortTitle' },
   ];
 
   return (
     <div className="max-w-2xl mx-auto px-4 pt-4">
-      <h1 className="text-lg font-bold mb-3">{t('watchlist.title')}</h1>
+      <h1 className="text-lg font-bold mb-3">{t('favorites.title')}</h1>
 
       {/* Tabs */}
       <div className="flex gap-1 mb-3">
@@ -87,8 +87,8 @@ export default function Watchlist() {
         </div>
       ) : !data?.items.length ? (
         <EmptyState
-          message={t('watchlist.empty')}
-          hint={t('watchlist.emptyHint')}
+          message={t('favorites.empty')}
+          hint={t('favorites.emptyHint')}
         />
       ) : (
         <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">

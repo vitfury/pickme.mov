@@ -1,0 +1,1 @@
+ALTER TYPE "public"."swipe_action" ADD VALUE 'skip';

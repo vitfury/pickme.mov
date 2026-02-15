@@ -21,7 +21,7 @@ import { relations, sql } from 'drizzle-orm';
 // ─── Enums ───────────────────────────────────────────────────────────────────
 
 export const contentTypeEnum = pgEnum('content_type', ['movie', 'series', 'animation']);
-export const swipeActionEnum = pgEnum('swipe_action', ['like', 'dislike', 'superlike']);
+export const swipeActionEnum = pgEnum('swipe_action', ['like', 'dislike', 'superlike', 'skip']);
 export const personRoleEnum = pgEnum('person_role', ['actor', 'director', 'writer']);
 export const providerTypeEnum = pgEnum('provider_type', ['flatrate', 'rent', 'buy']);
 export const entityTypeEnum = pgEnum('entity_type', [
@@ -37,7 +37,7 @@ export const awardCategoryTypeEnum = pgEnum('award_category_type', [
 
 export const users = pgTable('users', {
   id: serial('id').primaryKey(),
-  googleId: varchar('google_id', { length: 255 }).unique().notNull(),
+  googleId: varchar('google_id', { length: 255 }).unique(),
   email: varchar('email', { length: 255 }).unique().notNull(),
   displayName: varchar('display_name', { length: 255 }).notNull(),
   avatarUrl: text('avatar_url'),

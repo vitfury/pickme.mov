@@ -124,11 +124,84 @@ export default async function authRoutes(app: FastifyInstance) {
     }
   });
 
+  // POST /auth/dev-login (dev only)
+  if (process.env.NODE_ENV !== 'production') {
+    const devLoginSchema = z.object({
+      email: z.string().email().default('dev@pickme.mov'),
+      displayName: z.string().min(1).default('Dev User'),
+    });
+
+    app.post('/dev-login', async (request: FastifyRequest, reply: FastifyReply) => {
+      try {
+        const { email, displayName } = devLoginSchema.parse(request.body);
+        const devGoogleId = `dev-${email}`;
+
+        // Upsert dev user
+        const existing = await request.db
+          .select()
+          .from(users)
+          .where(eq(users.email, email))
+          .limit(1);
+
+        let user;
+        if (existing.length > 0) {
+          user = existing[0];
+          await request.db
+            .update(users)
+            .set({ displayName })
+            .where(eq(users.id, user.id));
+        } else {
+          const inserted = await request.db
+            .insert(users)
+            .values({
+              googleId: devGoogleId,
+              email,
+              displayName,
+              avatarUrl: null,
+            })
+            .returning();
+          user = inserted[0];
+        }
+
+        const accessToken = app.jwt.sign(
+          { sub: user.id, type: 'access' },
+          { expiresIn: '15m' },
+        );
+        const refreshToken = app.jwt.sign(
+          { sub: user.id, type: 'refresh' },
+          { expiresIn: '7d' },
+        );
+
+        return {
+          accessToken,
+          refreshToken,
+          user: {
+            id: user.id,
+            email: user.email,
+            displayName: user.displayName,
+            avatarUrl: user.avatarUrl,
+            locale: user.locale,
+            theme: user.theme,
+            onboardingCompleted: user.onboardingCompleted,
+          },
+        };
+      } catch (err) {
+        request.log.error({ err, route: 'POST /dev-login' }, 'Dev login failed');
+        throw err;
+      }
+    });
+  }
+
   // POST /auth/logout
   app.post('/logout', {
     preHandler: [app.authenticate],
   }, async (request: FastifyRequest, reply: FastifyReply) => {
-    // JWT tokens are stateless; client should discard tokens
-    return reply.status(204).send();
+    try {
+      // JWT tokens are stateless; client should discard tokens
+      return reply.status(204).send();
+    } catch (err) {
+      request.log.error({ err, route: 'POST /logout' }, 'Logout failed');
+      throw err;
+    }
   });
 }

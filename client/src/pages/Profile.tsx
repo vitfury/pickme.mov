@@ -150,8 +150,8 @@ export default function Profile() {
                 { label: t('profile.totalSwiped'), value: stats.totalSwiped },
                 { label: t('profile.likes'), value: stats.likes },
                 { label: t('profile.dislikes'), value: stats.dislikes },
-                { label: t('profile.superlikes'), value: stats.superlikes },
-                { label: t('profile.watchlistSize'), value: stats.watchlistSize },
+                { label: t('profile.skips'), value: stats.skips },
+                { label: t('profile.favoritesSize'), value: stats.watchlistSize },
                 { label: t('profile.watchedCount'), value: stats.watched },
               ].map(({ label, value }) => (
                 <div key={label} className="bg-surface-light rounded-md p-3 text-center">
@@ -224,7 +224,7 @@ export default function Profile() {
           {t('profile.resetPreferences')}
         </Button>
         <Button variant="secondary" fullWidth onClick={handleExport}>
-          {t('profile.exportWatchlist')}
+          {t('profile.exportFavorites')}
         </Button>
         <Button variant="danger" fullWidth onClick={handleLogout}>
           {t('profile.logout')}

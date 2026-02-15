@@ -1,160 +1,300 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useFeedStore } from '@/stores/feedStore';
-import { useFeed, useSwipe, useUndo } from '@/api/hooks';
-import { useShakeDetector } from '@/hooks/useShakeDetector';
+import { useFeedInfinite, useSwipe, useUndo } from '@/api/hooks';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
-import CardStack from '@/components/cards/CardStack';
-import type { SwipeAction } from '@/types';
+import FeedItem from '@/components/feed/FeedItem';
+import DetailsSheet from '@/components/feed/DetailsSheet';
+import Spinner from '@/components/ui/Spinner';
+import EmptyState from '@/components/ui/EmptyState';
+import type { FeedCard, SwipeAction } from '@/types';
+
+const SCROLL_COOLDOWN = 500; // ms before another scroll is allowed
+const TOUCH_SWIPE_THRESHOLD = 50; // px vertical distance to trigger scroll
 
 export default function Feed() {
   const { t } = useTranslation();
-  const cards = useFeedStore((s) => s.currentCards);
-  const setCards = useFeedStore((s) => s.setCards);
-  const removeTopCard = useFeedStore((s) => s.removeTopCard);
-  const addToHistory = useFeedStore((s) => s.addToHistory);
-  const popHistory = useFeedStore((s) => s.popHistory);
-  const restoreCard = useFeedStore((s) => s.restoreCard);
   const contentType = useFeedStore((s) => s.contentType);
   const activeFilters = useFeedStore((s) => s.activeFilters);
+  const swipedCardIds = useFeedStore((s) => s.swipedCardIds);
+  const addSwipedCard = useFeedStore((s) => s.addSwipedCard);
+  const removeSwipedCard = useFeedStore((s) => s.removeSwipedCard);
+  const setLastSwipe = useFeedStore((s) => s.setLastSwipe);
+  const lastSwipe = useFeedStore((s) => s.lastSwipe);
+
+  const [detailCard, setDetailCard] = useState<FeedCard | null>(null);
+  const [undoToast, setUndoToast] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const undoTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const viewedCardsRef = useRef<Set<number>>(new Set());
+  const swipedActionsRef = useRef<Set<number>>(new Set());
+  const isAnimatingRef = useRef(false);
+  const touchStartYRef = useRef(0);
+  const prevCardRef = useRef<{ id: number; index: number } | null>(null);
 
   const filters = { ...activeFilters, contentType };
-  const { data, isLoading } = useFeed(filters);
+  const {
+    data,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useFeedInfinite(filters);
+
   const swipeMutation = useSwipe();
   const undoMutation = useUndo();
 
-  // Load cards from API when feed data changes
-  useEffect(() => {
-    if (data?.cards && cards.length === 0) {
-      setCards(data.cards);
-    }
-  }, [data, cards.length, setCards]);
-
-  // Pre-fetch next batch when cards running low
-  useEffect(() => {
-    if (cards.length < 5 && data?.cards) {
-      // TanStack Query will handle refetch via queryKey change
-    }
-  }, [cards.length, data?.cards]);
+  // Flatten all pages into single cards array, filtering out swiped
+  const allCards = useMemo(() => {
+    if (!data?.pages) return [];
+    const cards = data.pages.flatMap((page) => page.cards);
+    return cards.filter((c) => !swipedCardIds.has(c.id));
+  }, [data?.pages, swipedCardIds]);
 
   const handleSwipe = useCallback(
-    (cardId: number, direction: 'left' | 'right' | 'up') => {
-      const actionMap: Record<string, SwipeAction> = {
-        left: 'dislike',
-        right: 'like',
-        up: 'superlike',
-      };
-      const action = actionMap[direction];
-      const card = cards.find((c) => c.id === cardId);
+    (card: FeedCard, action: SwipeAction) => {
+      addSwipedCard(card.id);
+      swipedActionsRef.current.add(card.id);
+      swipeMutation.mutate({ contentId: card.id, action });
 
-      if (card) {
-        addToHistory({ card, action });
-        removeTopCard();
-        swipeMutation.mutate({ contentId: cardId, action });
+      if (action !== 'skip') {
+        setLastSwipe({ card, action });
+        setUndoToast(true);
+        clearTimeout(undoTimerRef.current);
+        undoTimerRef.current = setTimeout(() => {
+          setUndoToast(false);
+          setLastSwipe(null);
+        }, 3000);
       }
     },
-    [cards, addToHistory, removeTopCard, swipeMutation],
+    [addSwipedCard, swipeMutation, setLastSwipe],
   );
 
   const handleUndo = useCallback(async () => {
-    const entry = popHistory();
-    if (!entry) return;
+    if (!lastSwipe) return;
     try {
       await undoMutation.mutateAsync();
-      restoreCard(entry.card);
+      removeSwipedCard(lastSwipe.card.id);
+      swipedActionsRef.current.delete(lastSwipe.card.id);
+      setUndoToast(false);
+      setLastSwipe(null);
+      clearTimeout(undoTimerRef.current);
     } catch {
-      // If undo fails, put it back in history
-      addToHistory(entry);
+      // undo failed, keep state
     }
-  }, [popHistory, undoMutation, restoreCard, addToHistory]);
+  }, [lastSwipe, undoMutation, removeSwipedCard, setLastSwipe]);
 
-  const handleButtonSwipe = useCallback(
-    (direction: 'left' | 'right' | 'up') => {
-      const topCard = cards[0];
-      if (topCard) {
-        handleSwipe(topCard.id, direction);
+  // Record skip when navigating away from a card
+  const recordSkipIfNeeded = useCallback(
+    (cardIndex: number) => {
+      const card = allCards[cardIndex];
+      if (!card) return;
+      if (viewedCardsRef.current.has(card.id) && !swipedActionsRef.current.has(card.id)) {
+        handleSwipe(card, 'skip');
       }
     },
-    [cards, handleSwipe],
+    [allCards, handleSwipe],
   );
 
-  // Shake to undo
-  useShakeDetector(handleUndo);
+  // Navigate to a specific index
+  const goToIndex = useCallback(
+    (index: number) => {
+      if (isAnimatingRef.current) return;
+      const clamped = Math.max(0, Math.min(index, allCards.length - 1));
+      if (clamped === currentIndex) return;
+
+      // Record skip on the card we're leaving
+      recordSkipIfNeeded(currentIndex);
+
+      isAnimatingRef.current = true;
+      setCurrentIndex(clamped);
+
+      // Mark new card as viewed
+      const newCard = allCards[clamped];
+      if (newCard) viewedCardsRef.current.add(newCard.id);
+
+      // Fetch next page when nearing end
+      if (clamped >= allCards.length - 3 && hasNextPage && !isFetchingNextPage) {
+        fetchNextPage();
+      }
+
+      setTimeout(() => {
+        isAnimatingRef.current = false;
+      }, SCROLL_COOLDOWN);
+    },
+    [currentIndex, allCards, hasNextPage, isFetchingNextPage, fetchNextPage, recordSkipIfNeeded],
+  );
+
+  const goNext = useCallback(() => goToIndex(currentIndex + 1), [currentIndex, goToIndex]);
+  const goPrev = useCallback(() => goToIndex(currentIndex - 1), [currentIndex, goToIndex]);
+
+  // Mark first card as viewed on mount
+  useEffect(() => {
+    if (allCards.length > 0) {
+      viewedCardsRef.current.add(allCards[0]!.id);
+    }
+  }, [allCards.length > 0]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Track prev card to detect skip when card is removed (swiped)
+  useEffect(() => {
+    const cur = allCards[currentIndex];
+    if (prevCardRef.current && cur && prevCardRef.current.id !== cur.id) {
+      // Cards shifted — a card was removed before/at current index
+      // Mark the new current card as viewed
+      viewedCardsRef.current.add(cur.id);
+    }
+    prevCardRef.current = cur ? { id: cur.id, index: currentIndex } : null;
+  }, [allCards, currentIndex]);
+
+  // Clamp index when cards get filtered out (after swipe removes a card)
+  useEffect(() => {
+    if (allCards.length > 0 && currentIndex >= allCards.length) {
+      setCurrentIndex(allCards.length - 1);
+    }
+  }, [allCards.length, currentIndex]);
+
+  // Intercept wheel events
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      if (isAnimatingRef.current) return;
+      if (e.deltaY > 0) goNext();
+      else if (e.deltaY < 0) goPrev();
+    };
+
+    container.addEventListener('wheel', handleWheel, { passive: false });
+    return () => container.removeEventListener('wheel', handleWheel);
+  }, [goNext, goPrev]);
+
+  // Intercept touch events
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartYRef.current = e.touches[0]!.clientY;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      e.preventDefault();
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (isAnimatingRef.current) return;
+      const deltaY = touchStartYRef.current - (e.changedTouches[0]?.clientY ?? touchStartYRef.current);
+      if (Math.abs(deltaY) < TOUCH_SWIPE_THRESHOLD) return;
+      if (deltaY > 0) goNext();
+      else goPrev();
+    };
+
+    container.addEventListener('touchstart', handleTouchStart, { passive: true });
+    container.addEventListener('touchmove', handleTouchMove, { passive: false });
+    container.addEventListener('touchend', handleTouchEnd, { passive: true });
+
+    return () => {
+      container.removeEventListener('touchstart', handleTouchStart);
+      container.removeEventListener('touchmove', handleTouchMove);
+      container.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [goNext, goPrev]);
 
   // Keyboard shortcuts
+  const getCurrentCard = useCallback(() => {
+    return allCards[currentIndex] ?? null;
+  }, [allCards, currentIndex]);
+
   useKeyboardShortcuts({
-    onLeft: () => handleButtonSwipe('left'),
-    onRight: () => handleButtonSwipe('right'),
-    onUp: () => handleButtonSwipe('up'),
+    onLeft: () => {
+      const c = getCurrentCard();
+      if (c) handleSwipe(c, 'dislike');
+    },
+    onRight: () => {
+      const c = getCurrentCard();
+      if (c) handleSwipe(c, 'like');
+    },
+    onUp: goPrev,
+    onDown: goNext,
     onUndo: handleUndo,
   });
 
-  return (
-    <div className="flex flex-col h-full">
-      {/* Card area */}
-      <div className="flex-1 relative overflow-hidden">
-        <CardStack
-          cards={cards}
-          onSwipe={handleSwipe}
-          isLoading={isLoading}
+  if (isLoading && allCards.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-[100dvh]">
+        <Spinner size={32} />
+      </div>
+    );
+  }
+
+  if (allCards.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-[100dvh]">
+        <EmptyState
+          icon={
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18" />
+              <line x1="7" y1="2" x2="7" y2="22" />
+              <line x1="17" y1="2" x2="17" y2="22" />
+              <line x1="2" y1="12" x2="22" y2="12" />
+            </svg>
+          }
+          message={t('feed.noMore')}
+          hint={t('feed.noMoreHint')}
         />
       </div>
+    );
+  }
 
-      {/* Action buttons */}
-      <div className="flex items-center justify-center gap-5 pb-4 pt-2 px-4">
-        {/* Undo - desktop only */}
-        <button
-          onClick={handleUndo}
-          className="hidden md:flex w-10 h-10 items-center justify-center rounded-full
-            bg-surface-light text-text-muted hover:text-accent transition-colors"
-          title={t('feed.undo')}
+  return (
+    <>
+      {/* Outer viewport — clips overflow */}
+      <div
+        ref={containerRef}
+        className="h-[100dvh] overflow-hidden relative"
+      >
+        {/* Inner track — slides via translateY */}
+        <div
+          className="will-change-transform"
+          style={{
+            transform: `translateY(-${currentIndex * 100}dvh)`,
+            transition: 'transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+          }}
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="1 4 1 10 7 10" />
-            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
-          </svg>
-        </button>
-
-        {/* Dislike */}
-        <button
-          onClick={() => handleButtonSwipe('left')}
-          disabled={cards.length === 0}
-          className="w-14 h-14 rounded-full bg-dislike/10 border-2 border-dislike text-dislike
-            flex items-center justify-center hover:bg-dislike/20 transition-colors
-            disabled:opacity-30 disabled:pointer-events-none"
-        >
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
-        </button>
-
-        {/* Superlike */}
-        <button
-          onClick={() => handleButtonSwipe('up')}
-          disabled={cards.length === 0}
-          className="w-12 h-12 rounded-full bg-superlike/10 border-2 border-superlike text-superlike
-            flex items-center justify-center hover:bg-superlike/20 transition-colors
-            disabled:opacity-30 disabled:pointer-events-none"
-        >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2l2.4 7.4h7.6l-6 4.6 2.3 7.4-6.3-4.8-6.3 4.8 2.3-7.4-6-4.6h7.6z" />
-          </svg>
-        </button>
-
-        {/* Like */}
-        <button
-          onClick={() => handleButtonSwipe('right')}
-          disabled={cards.length === 0}
-          className="w-14 h-14 rounded-full bg-like/10 border-2 border-like text-like
-            flex items-center justify-center hover:bg-like/20 transition-colors
-            disabled:opacity-30 disabled:pointer-events-none"
-        >
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-          </svg>
-        </button>
+          {allCards.map((card) => (
+            <div key={card.id} data-card-id={card.id} className="h-[100dvh] w-full">
+              <FeedItem
+                card={card}
+                onSwipe={(action) => handleSwipe(card, action)}
+                onOpenDetails={() => setDetailCard(card)}
+              />
+            </div>
+          ))}
+        </div>
       </div>
-    </div>
+
+      {/* Details bottom sheet */}
+      <DetailsSheet card={detailCard} onClose={() => setDetailCard(null)} />
+
+      {/* Undo toast */}
+      {undoToast && lastSwipe && (
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50
+          bg-surface border border-border rounded-lg px-4 py-2.5 shadow-2xl
+          flex items-center gap-3 animate-in slide-in-from-bottom-4">
+          <span className="text-sm text-text">
+            {lastSwipe.action === 'like' ? 'Liked' : 'Disliked'}{' '}
+            <span className="font-medium text-accent">{lastSwipe.card.title}</span>
+          </span>
+          <button
+            onClick={handleUndo}
+            className="text-sm font-semibold text-accent hover:text-accent-hover transition-colors"
+          >
+            {t('feed.undo')}
+          </button>
+        </div>
+      )}
+    </>
   );
 }

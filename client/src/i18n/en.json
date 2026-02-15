@@ -1,7 +1,7 @@
 {
   "nav": {
     "feed": "Feed",
-    "watchlist": "Watchlist",
+    "watchlist": "Favorites",
     "search": "Search",
     "profile": "Profile"
   },
@@ -43,8 +43,8 @@
     "apply": "Apply",
     "reset": "Reset"
   },
-  "watchlist": {
-    "title": "Watchlist",
+  "favorites": {
+    "title": "Favorites",
     "all": "All",
     "unwatched": "Unwatched",
     "watched": "Watched",
@@ -52,8 +52,8 @@
     "sortRating": "Rating",
     "sortYear": "Year",
     "sortTitle": "Title",
-    "empty": "Your watchlist is empty",
-    "emptyHint": "Swipe right on movies you want to watch.",
+    "empty": "No favorites yet",
+    "emptyHint": "Swipe right on movies you love.",
     "markWatched": "Mark watched",
     "rate": "Rate",
     "remove": "Remove"
@@ -75,16 +75,16 @@
     "totalSwiped": "Total swiped",
     "likes": "Likes",
     "dislikes": "Dislikes",
-    "superlikes": "Superlikes",
-    "watchlistSize": "In watchlist",
+    "skips": "Skipped",
+    "favoritesSize": "Favorites",
     "watchedCount": "Watched",
     "topGenres": "Top genres",
     "topDirectors": "Top directors",
     "topActors": "Top actors",
     "resetPreferences": "Reset preferences",
-    "resetConfirm": "Are you sure? All your preferences will be reset. Swipe history and watchlist will be kept.",
+    "resetConfirm": "Are you sure? All your preferences will be reset. Swipe history and favorites will be kept.",
     "resetConfirmAction": "Reset",
-    "exportWatchlist": "Export watchlist",
+    "exportFavorites": "Export favorites",
     "logout": "Log out"
   },
   "person": {
@@ -98,8 +98,8 @@
     "whyRecommended": "Why recommended",
     "keywords": "Keywords",
     "writers": "Writers",
-    "addToWatchlist": "Add to watchlist",
-    "inWatchlist": "In watchlist",
+    "addToFavorites": "Add to favorites",
+    "inFavorites": "In favorites",
     "markWatched": "Mark watched",
     "yourRating": "Your rating"
   },

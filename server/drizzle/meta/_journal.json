@@ -8,6 +8,20 @@
       "when": 1770510064478,
       "tag": "0000_daffy_karnak",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1771011926975,
+      "tag": "0001_dapper_masque",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1771154881147,
+      "tag": "0002_clever_william_stryker",
+      "breakpoints": true
     }
   ]
 }

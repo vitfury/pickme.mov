@@ -35,6 +35,7 @@ export interface FeedResponse {
   cards: FeedCard[];
   remaining: number;
   maturityScore: number;
+  offset: number;
 }
 
 export interface SwipeResponse {

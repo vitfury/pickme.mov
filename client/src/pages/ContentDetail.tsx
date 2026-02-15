@@ -224,11 +224,11 @@ export default function ContentDetail() {
         <div className="flex gap-3 pt-2">
           {content.userStatus.inWatchlist ? (
             <Button variant="secondary" fullWidth>
-              {t('content.inWatchlist')}
+              {t('content.inFavorites')}
             </Button>
           ) : (
             <Button variant="primary" fullWidth>
-              {t('content.addToWatchlist')}
+              {t('content.addToFavorites')}
             </Button>
           )}
         </div>

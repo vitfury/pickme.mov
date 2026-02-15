@@ -1,7 +1,7 @@
 {
   "nav": {
     "feed": "Стрічка",
-    "watchlist": "Список",
+    "watchlist": "Обране",
     "search": "Пошук",
     "profile": "Профіль"
   },
@@ -43,8 +43,8 @@
     "apply": "Застосувати",
     "reset": "Скинути"
   },
-  "watchlist": {
-    "title": "Список перегляду",
+  "favorites": {
+    "title": "Обране",
     "all": "Усі",
     "unwatched": "Не переглянуті",
     "watched": "Переглянуті",
@@ -52,8 +52,8 @@
     "sortRating": "За рейтингом",
     "sortYear": "За роком",
     "sortTitle": "За назвою",
-    "empty": "Ваш список поки порожній",
-    "emptyHint": "Свайпніть вправо, щоб додати фільм.",
+    "empty": "У вас поки немає обраного",
+    "emptyHint": "Свайпніть вправо на фільми, які вам подобаються.",
     "markWatched": "Переглянуто",
     "rate": "Оцінити",
     "remove": "Видалити"
@@ -75,16 +75,16 @@
     "totalSwiped": "Переглянуто карток",
     "likes": "Вподобання",
     "dislikes": "Відхилення",
-    "superlikes": "Суперлайки",
-    "watchlistSize": "У списку",
+    "skips": "Пропущено",
+    "favoritesSize": "В обраному",
     "watchedCount": "Переглянуто",
     "topGenres": "Улюблені жанри",
     "topDirectors": "Улюблені режисери",
     "topActors": "Улюблені актори",
     "resetPreferences": "Скинути вподобання",
-    "resetConfirm": "Ви впевнені? Всі ваші вподобання буде скинуто. Історія свайпів та список збережуться.",
+    "resetConfirm": "Ви впевнені? Всі ваші вподобання буде скинуто. Історія свайпів та обране збережуться.",
     "resetConfirmAction": "Скинути",
-    "exportWatchlist": "Експортувати список",
+    "exportFavorites": "Експортувати обране",
     "logout": "Вийти"
   },
   "person": {
@@ -98,8 +98,8 @@
     "whyRecommended": "Чому рекомендуємо",
     "keywords": "Ключові слова",
     "writers": "Сценаристи",
-    "addToWatchlist": "Додати до списку",
-    "inWatchlist": "У списку",
+    "addToFavorites": "Додати до обраного",
+    "inFavorites": "В обраному",
     "markWatched": "Переглянуто",
     "yourRating": "Ваша оцінка"
   },

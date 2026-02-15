@@ -1,5 +1,5 @@
 export type ContentType = 'movie' | 'series' | 'animation';
-export type SwipeAction = 'like' | 'dislike' | 'superlike';
+export type SwipeAction = 'like' | 'dislike' | 'superlike' | 'skip';
 export type PersonRole = 'actor' | 'director' | 'writer';
 export type ProviderType = 'flatrate' | 'rent' | 'buy';
 export type AwardCategory =
@@ -90,6 +90,7 @@ export interface FeedResponse {
   cards: FeedCard[];
   remaining: number;
   maturityScore: number;
+  offset: number;
 }
 
 export interface SwipeResponse {
@@ -218,6 +219,7 @@ export interface UserStats {
   likes: number;
   dislikes: number;
   superlikes: number;
+  skips: number;
   watchlistSize: number;
   watched: number;
   topGenres: { genre: string; score: number }[];
@@ -259,6 +261,7 @@ export interface AuthTokens {
 
 export interface FeedFilters {
   contentType?: ContentType;
+  offset?: number;
   genres?: number[];
   yearMin?: number;
   yearMax?: number;

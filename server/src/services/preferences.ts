@@ -16,6 +16,7 @@ const ACTION_WEIGHTS = {
   like: 1.0,
   superlike: 2.0,
   dislike: -0.3,
+  skip: 0,
 } as const;
 
 interface PreferenceUpdate {
@@ -33,8 +34,9 @@ export async function updatePreferencesForSwipe(
   db: Database,
   userId: number,
   contentId: number,
-  action: 'like' | 'dislike' | 'superlike',
+  action: 'like' | 'dislike' | 'superlike' | 'skip',
 ): Promise<string[]> {
+  if (action === 'skip') return [];
   const baseWeight = ACTION_WEIGHTS[action];
 
   // Fetch entity type weights from config table
@@ -159,8 +161,9 @@ export async function reversePreferencesForSwipe(
   db: Database,
   userId: number,
   contentId: number,
-  action: 'like' | 'dislike' | 'superlike',
+  action: 'like' | 'dislike' | 'superlike' | 'skip',
 ): Promise<void> {
+  if (action === 'skip') return;
   const baseWeight = ACTION_WEIGHTS[action];
 
   const typeWeights = await db.select().from(entityTypeWeights);

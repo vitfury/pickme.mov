@@ -1,4 +1,4 @@
-import { eq, and, sql, notInArray, inArray, desc, asc, isNull, or, gte, lte } from 'drizzle-orm';
+import { eq, and, ne, sql, notInArray, inArray, desc, asc, isNull, or, gte, lte } from 'drizzle-orm';
 import { Database } from '../db/index.js';
 import {
   users,
@@ -23,6 +23,7 @@ import type { FeedCard } from '../types/index.js';
 interface FeedFilters {
   contentType?: string;
   limit?: number;
+  offset?: number;
   genres?: number[];
   yearMin?: number;
   yearMax?: number;
@@ -47,7 +48,7 @@ export async function generateFeed(
   userId: number,
   filters: FeedFilters,
   locale: string,
-): Promise<{ cards: FeedCard[]; remaining: number; maturityScore: number }> {
+): Promise<{ cards: FeedCard[]; remaining: number; maturityScore: number; offset: number }> {
   const limit = Math.min(filters.limit || 20, 50);
   const contentType = filters.contentType || 'movie';
 
@@ -63,12 +64,27 @@ export async function generateFeed(
   const qualityWeight = 0.30 + 0.20 * (1 - maturity);
   const personalizationWeight = 0.50 * maturity;
 
-  // Get already-swiped content IDs
-  const swipedRows = await db
+  // Get content IDs to exclude from feed:
+  // - Permanently exclude: like, dislike, superlike
+  // - Exclude today's skips (they naturally reappear on future days)
+  const permanentSwipes = await db
     .select({ contentId: userSwipes.contentId })
     .from(userSwipes)
-    .where(eq(userSwipes.userId, userId));
-  const swipedIds = swipedRows.map((r) => r.contentId);
+    .where(and(eq(userSwipes.userId, userId), ne(userSwipes.action, 'skip')));
+
+  const todaySkips = await db
+    .select({ contentId: userSwipes.contentId })
+    .from(userSwipes)
+    .where(and(
+      eq(userSwipes.userId, userId),
+      eq(userSwipes.action, 'skip'),
+      sql`${userSwipes.createdAt}::date = CURRENT_DATE`,
+    ));
+
+  const swipedIds = [
+    ...permanentSwipes.map((r) => r.contentId),
+    ...todaySkips.map((r) => r.contentId),
+  ];
 
   // Build base query conditions for unseen content
   const conditions: any[] = [
@@ -96,7 +112,8 @@ export async function generateFeed(
   }
 
   // Fetch unseen content with base quality scores (fetch more than needed for diversity)
-  const fetchLimit = limit * 5;
+  const offset = filters.offset || 0;
+  const fetchLimit = (limit + offset) * 5;
 
   let unseenQuery = db
     .select({
@@ -184,7 +201,7 @@ export async function generateFeed(
     .limit(fetchLimit);
 
   if (unseenContent.length === 0) {
-    return { cards: [], remaining: 0, maturityScore };
+    return { cards: [], remaining: 0, maturityScore, offset: 0 };
   }
 
   // Get user preferences
@@ -434,7 +451,7 @@ export async function generateFeed(
   // Hydrate the cards with full data
   const finalIds = diverseResults.map((r) => r.id);
   if (finalIds.length === 0) {
-    return { cards: [], remaining: 0, maturityScore };
+    return { cards: [], remaining: 0, maturityScore, offset: 0 };
   }
 
   const feedScoreMap = new Map(diverseResults.map((r) => [r.id, r.feedScore]));
@@ -561,7 +578,7 @@ export async function generateFeed(
     });
   }
 
-  // Count remaining unseen content
+  // Count remaining unseen content (using same exclusion logic)
   const totalUnseen = await db
     .select({ count: sql<number>`count(*)` })
     .from(content)
@@ -572,7 +589,7 @@ export async function generateFeed(
 
   const remaining = Number(totalUnseen[0]?.count || 0) - cards.length;
 
-  return { cards, remaining: Math.max(0, remaining), maturityScore };
+  return { cards, remaining: Math.max(0, remaining), maturityScore, offset: offset + cards.length };
 }
 
 function groupBy<T extends Record<string, any>>(arr: T[], key: string): Map<number, T[]> {

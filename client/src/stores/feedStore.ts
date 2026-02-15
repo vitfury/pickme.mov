@@ -1,60 +1,49 @@
 import { create } from 'zustand';
-import type { FeedCard, ContentType, FeedFilters } from '@/types';
+import type { FeedCard, ContentType, FeedFilters, SwipeAction } from '@/types';
 
-interface SwipeHistoryEntry {
+interface LastSwipe {
   card: FeedCard;
-  action: 'like' | 'dislike' | 'superlike';
+  action: SwipeAction;
 }
 
 interface FeedState {
-  currentCards: FeedCard[];
-  swipeHistory: SwipeHistoryEntry[];
   activeFilters: FeedFilters;
   contentType: ContentType;
-  setCards: (cards: FeedCard[]) => void;
-  removeTopCard: () => FeedCard | undefined;
-  addToHistory: (entry: SwipeHistoryEntry) => void;
-  popHistory: () => SwipeHistoryEntry | undefined;
+  swipedCardIds: Set<number>;
+  lastSwipe: LastSwipe | null;
   setFilters: (filters: FeedFilters) => void;
   setContentType: (type: ContentType) => void;
-  restoreCard: (card: FeedCard) => void;
+  addSwipedCard: (id: number) => void;
+  removeSwipedCard: (id: number) => void;
+  setLastSwipe: (swipe: LastSwipe | null) => void;
+  clearSwiped: () => void;
 }
 
-export const useFeedStore = create<FeedState>()((set, get) => ({
-  currentCards: [],
-  swipeHistory: [],
+export const useFeedStore = create<FeedState>()((set) => ({
   activeFilters: {},
   contentType: 'movie',
+  swipedCardIds: new Set(),
+  lastSwipe: null,
 
-  setCards: (cards) => set({ currentCards: cards }),
+  setFilters: (filters) => set({ activeFilters: filters, swipedCardIds: new Set() }),
 
-  removeTopCard: () => {
-    const cards = get().currentCards;
-    if (cards.length === 0) return undefined;
-    const top = cards[0];
-    set({ currentCards: cards.slice(1) });
-    return top;
-  },
+  setContentType: (type) => set({ contentType: type, swipedCardIds: new Set() }),
 
-  addToHistory: (entry) =>
-    set((state) => ({
-      swipeHistory: [entry, ...state.swipeHistory].slice(0, 1),
-    })),
+  addSwipedCard: (id) =>
+    set((state) => {
+      const next = new Set(state.swipedCardIds);
+      next.add(id);
+      return { swipedCardIds: next };
+    }),
 
-  popHistory: () => {
-    const history = get().swipeHistory;
-    if (history.length === 0) return undefined;
-    const last = history[0];
-    set({ swipeHistory: history.slice(1) });
-    return last;
-  },
+  removeSwipedCard: (id) =>
+    set((state) => {
+      const next = new Set(state.swipedCardIds);
+      next.delete(id);
+      return { swipedCardIds: next };
+    }),
 
-  setFilters: (filters) => set({ activeFilters: filters }),
+  setLastSwipe: (swipe) => set({ lastSwipe: swipe }),
 
-  setContentType: (type) => set({ contentType: type, currentCards: [] }),
-
-  restoreCard: (card) =>
-    set((state) => ({
-      currentCards: [card, ...state.currentCards],
-    })),
+  clearSwiped: () => set({ swipedCardIds: new Set(), lastSwipe: null }),
 }));

@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from './client';
 import type {
   FeedResponse,
@@ -43,6 +43,32 @@ export function useFeed(filters: FeedFilters) {
       const { data } = await api.get('/feed', { params });
       return data;
     },
+  });
+}
+
+export function useFeedInfinite(filters: FeedFilters) {
+  return useInfiniteQuery<FeedResponse>({
+    queryKey: ['feed-infinite', filters],
+    queryFn: async ({ pageParam }) => {
+      const params: Record<string, string> = {};
+      if (filters.contentType) params.contentType = filters.contentType;
+      if (filters.genres?.length) params.genres = filters.genres.join(',');
+      if (filters.yearMin) params.yearMin = String(filters.yearMin);
+      if (filters.yearMax) params.yearMax = String(filters.yearMax);
+      if (filters.ratingMin) params.ratingMin = String(filters.ratingMin);
+      if (filters.ratingMax) params.ratingMax = String(filters.ratingMax);
+      if (filters.certification?.length) params.certification = filters.certification.join(',');
+      if (filters.providers?.length) params.providers = filters.providers.join(',');
+      if (filters.personId) params.personId = String(filters.personId);
+      if (filters.collectionId) params.collectionId = String(filters.collectionId);
+      if (filters.awards) params.awards = filters.awards;
+      params.offset = String(pageParam);
+      const { data } = await api.get('/feed', { params });
+      return data;
+    },
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) =>
+      lastPage.remaining > 0 ? lastPage.offset : undefined,
   });
 }
 

@@ -12,7 +12,7 @@ export default function PageShell() {
   return (
     <div className="flex flex-col h-full">
       {isFeed && <TopBar />}
-      <main className="flex-1 overflow-y-auto pb-16">
+      <main className={isFeed ? 'flex-1' : 'flex-1 overflow-y-auto pb-16'}>
         <Outlet />
       </main>
       <BottomNav />

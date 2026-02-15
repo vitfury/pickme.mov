@@ -1,4 +1,7 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import Fastify, { FastifyError, FastifyInstance } from 'fastify';
+import pino from 'pino';
 import cors from '@fastify/cors';
 import jwt from '@fastify/jwt';
 import cookie from '@fastify/cookie';
@@ -23,10 +26,24 @@ declare module 'fastify' {
 }
 
 export async function buildApp(): Promise<FastifyInstance> {
+  // Ensure logs directory exists
+  const logDir = process.env.LOG_DIR || './logs';
+  fs.mkdirSync(logDir, { recursive: true });
+
+  const logLevel = process.env.LOG_LEVEL || 'info';
+  const logFilePath = path.join(logDir, 'error.log');
+
+  // Write errors to file + everything to stdout
+  const loggerStream = pino.multistream([
+    { level: logLevel as pino.Level, stream: process.stdout },
+    { level: 'error', stream: pino.destination(logFilePath) },
+  ]);
+
   const app = Fastify({
     logger: {
-      level: process.env.LOG_LEVEL || 'info',
-    },
+      level: logLevel,
+      stream: loggerStream,
+    } as any,
   });
 
   // Register CORS
@@ -68,7 +85,14 @@ export async function buildApp(): Promise<FastifyInstance> {
 
   // Global error handler
   app.setErrorHandler((error: FastifyError, request, reply) => {
-    request.log.error(error);
+    request.log.error({
+      err: error,
+      method: request.method,
+      url: request.url,
+      params: request.params,
+      query: request.query,
+      userId: (request as any).userId || null,
+    }, `[${request.method}] ${request.url} — ${error.message}`);
 
     if (error.validation) {
       return reply.status(400).send({
@@ -80,6 +104,7 @@ export async function buildApp(): Promise<FastifyInstance> {
     const statusCode = error.statusCode || 500;
     return reply.status(statusCode).send({
       error: statusCode >= 500 ? 'Internal Server Error' : error.message,
+      ...(statusCode < 500 ? { message: error.message } : {}),
     });
   });
 
