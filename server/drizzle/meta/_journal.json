@@ -22,6 +22,20 @@
       "when": 1771154881147,
       "tag": "0002_clever_william_stryker",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1771189163362,
+      "tag": "0003_next_phantom_reporter",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1771246707766,
+      "tag": "0004_rainy_puma",
+      "breakpoints": true
     }
   ]
 }

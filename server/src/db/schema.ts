@@ -29,8 +29,11 @@ export const entityTypeEnum = pgEnum('entity_type', [
 ]);
 export const awardCategoryTypeEnum = pgEnum('award_category_type', [
   'picture', 'director', 'actor', 'actress', 'supporting_actor',
-  'supporting_actress', 'screenplay', 'cinematography', 'score',
-  'song', 'animated', 'international', 'other',
+  'supporting_actress', 'original_screenplay', 'adapted_screenplay',
+  'animated', 'international', 'documentary_feature', 'documentary_short',
+  'short_live_action', 'short_animated', 'score', 'song', 'sound',
+  'production_design', 'cinematography', 'makeup', 'costume_design',
+  'editing', 'visual_effects',
 ]);
 
 // ─── Users ───────────────────────────────────────────────────────────────────
@@ -283,6 +286,18 @@ export const userWatchlist = pgTable('user_watchlist', {
   check('personal_rating_check', sql`personal_rating BETWEEN 1 AND 10`),
 ]);
 
+// ─── User Bookmarks ─────────────────────────────────────────────────────────
+
+export const userBookmarks = pgTable('user_bookmarks', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  contentId: integer('content_id').notNull().references(() => content.id, { onDelete: 'cascade' }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+}, (table) => [
+  uniqueIndex('user_bookmarks_user_content_unique').on(table.userId, table.contentId),
+  index('idx_bookmarks_user').on(table.userId),
+]);
+
 // ─── Entity IDF Cache ────────────────────────────────────────────────────────
 
 export const entityIdfCache = pgTable('entity_idf_cache', {
@@ -317,6 +332,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   swipes: many(userSwipes),
   preferences: many(userPreferences),
   watchlist: many(userWatchlist),
+  bookmarks: many(userBookmarks),
 }));
 
 export const contentRelations = relations(content, ({ many }) => ({
@@ -328,6 +344,7 @@ export const contentRelations = relations(content, ({ many }) => ({
   awards: many(awards),
   swipes: many(userSwipes),
   watchlistEntries: many(userWatchlist),
+  bookmarks: many(userBookmarks),
   onboardingSeeds: many(onboardingSeeds),
 }));
 
@@ -394,6 +411,11 @@ export const userPreferencesRelations = relations(userPreferences, ({ one }) => 
 export const userWatchlistRelations = relations(userWatchlist, ({ one }) => ({
   user: one(users, { fields: [userWatchlist.userId], references: [users.id] }),
   content: one(content, { fields: [userWatchlist.contentId], references: [content.id] }),
+}));
+
+export const userBookmarksRelations = relations(userBookmarks, ({ one }) => ({
+  user: one(users, { fields: [userBookmarks.userId], references: [users.id] }),
+  content: one(content, { fields: [userBookmarks.contentId], references: [content.id] }),
 }));
 
 export const onboardingSeedsRelations = relations(onboardingSeeds, ({ one }) => ({

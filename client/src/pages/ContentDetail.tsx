@@ -1,11 +1,9 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useContentDetail } from '@/api/hooks';
-import { tmdbBackdrop, tmdbPoster, tmdbProfile, tmdbLogo } from '@/utils/image';
+import { tmdbBackdrop, tmdbPoster } from '@/utils/image';
 import { formatRuntime, formatDate, formatRating } from '@/utils/format';
-import Badge from '@/components/ui/Badge';
 import Spinner from '@/components/ui/Spinner';
-import Button from '@/components/ui/Button';
 
 export default function ContentDetail() {
   const { id } = useParams<{ id: string }>();
@@ -30,18 +28,19 @@ export default function ContentDetail() {
   }
 
   return (
-    <div className="pb-8">
+    <div className="min-h-full bg-surface overflow-y-auto">
       {/* Backdrop hero */}
-      <div className="relative h-56 md:h-72">
+      <div className="relative h-56">
         <img
           src={tmdbBackdrop(content.backdropPath)}
           alt=""
           className="w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-bg via-bg/50 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/50 to-transparent" />
+        {/* Back button */}
         <button
           onClick={() => navigate(-1)}
-          className="absolute top-4 left-4 p-2 rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors"
+          className="absolute top-4 left-4 z-10 w-9 h-9 flex items-center justify-center rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="15 18 9 12 15 6" />
@@ -49,20 +48,22 @@ export default function ContentDetail() {
         </button>
       </div>
 
-      <div className="px-4 -mt-16 relative z-10 max-w-2xl mx-auto space-y-4">
-        {/* Title row with poster */}
-        <div className="flex gap-4">
+      <div className="px-4 -mt-16 relative z-10 pb-6 space-y-4">
+        {/* Title row with poster + trailer */}
+        <div className="flex gap-4 items-end">
           <img
             src={tmdbPoster(content.posterPath, 'w185')}
             alt={content.title}
             className="w-24 aspect-[2/3] object-cover rounded-md shadow-lg flex-shrink-0"
           />
-          <div className="flex-1 pt-8">
-            <h1 className="text-xl font-bold leading-tight">{content.title}</h1>
-            {content.originalTitle !== content.title && (
-              <p className="text-xs text-text-muted mt-0.5">{content.originalTitle}</p>
-            )}
-            <div className="flex items-center gap-2 mt-2 text-sm text-text-muted flex-wrap">
+          <div className="flex-1 min-w-0 pt-8 space-y-2">
+            <div>
+              <h2 className="text-xl font-bold leading-tight">{content.title}</h2>
+              {content.originalTitle && content.originalTitle !== content.title && (
+                <p className="text-xs text-text-muted mt-0.5">{content.originalTitle}</p>
+              )}
+            </div>
+            <div className="flex items-center gap-2 text-sm text-text-muted flex-wrap">
               <span>{formatDate(content.releaseDate)}</span>
               {content.runtime && <span>{formatRuntime(content.runtime)}</span>}
               {content.certification && (
@@ -72,28 +73,36 @@ export default function ContentDetail() {
               )}
             </div>
           </div>
+          <a
+            href={`https://www.youtube.com/results?search_query=${encodeURIComponent((content.originalTitle || content.title) + ' trailer')}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex flex-col items-center gap-1 flex-shrink-0"
+          >
+            <span className="w-11 h-11 flex items-center justify-center rounded-full bg-red-600 text-white shadow-lg">
+              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M10 8.64v6.72L15.27 12 10 8.64zM21.54 7.17s-.21-1.49-.86-2.14c-.82-.87-1.74-.87-2.16-.92C15.48 3.82 12 3.82 12 3.82s-3.48 0-6.52.29c-.42.05-1.34.05-2.16.92-.65.65-.86 2.14-.86 2.14S2.18 8.88 2.18 10.6v1.6c0 1.72.28 3.43.28 3.43s.21 1.49.86 2.14c.82.87 1.74.87 2.16.92 1.57.15 6.52.18 6.52.18s3.48 0 6.52-.29c.42-.05 1.34-.05 2.16-.92.65-.65.86-2.14.86-2.14s.28-1.71.28-3.43v-1.6c0-1.72-.28-3.43-.28-3.43z"/>
+              </svg>
+            </span>
+            <span className="text-[10px] text-text-muted font-medium">{t('content.watchTrailer')}</span>
+          </a>
         </div>
 
-        {/* Ratings */}
-        <div className="flex gap-4">
-          {content.tmdbRating && (
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs text-text-muted">TMDB</span>
-              <span className="text-lg font-bold text-accent">{formatRating(content.tmdbRating)}</span>
-            </div>
-          )}
-          {content.imdbRating && (
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs text-text-muted">IMDb</span>
-              <span className="text-lg font-bold text-accent">{formatRating(content.imdbRating)}</span>
-            </div>
-          )}
-        </div>
+        {/* Rating */}
+        {content.imdbRating && (
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-text-muted">IMDb</span>
+            <span className="text-lg font-bold text-accent">{formatRating(content.imdbRating)}</span>
+          </div>
+        )}
 
-        {/* Genre pills */}
+        {/* Genres */}
         <div className="flex flex-wrap gap-1.5">
           {content.genres.map((g) => (
-            <span key={g.id} className="text-xs px-2 py-0.5 bg-surface-light rounded text-text-muted">
+            <span
+              key={g.id}
+              className="text-xs px-2 py-0.5 bg-surface-light rounded text-text-muted"
+            >
               {g.emoji} {g.name}
             </span>
           ))}
@@ -101,104 +110,89 @@ export default function ContentDetail() {
 
         {/* Overview */}
         {content.overview && (
+          <p className="text-sm text-text-muted leading-relaxed">{content.overview}</p>
+        )}
+
+        {/* Directors */}
+        {content.directors.length > 0 && (
           <div>
-            <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-1">
-              {t('card.overview')}
+            <h3 className="text-sm font-semibold text-text-muted uppercase tracking-wide mt-6 mb-2">
+              {t('card.director')}
             </h3>
-            <p className="text-sm text-text leading-relaxed">{content.overview}</p>
+            <div className="grid grid-cols-4 gap-x-3 gap-y-5">
+              {content.directors.map((d) => (
+                <button
+                  key={d.id}
+                  onClick={() => navigate(`/person/${d.id}`)}
+                  className="text-center"
+                >
+                  <img
+                    src={
+                      d.photoPath
+                        ? `https://image.tmdb.org/t/p/w185${d.photoPath}`
+                        : '/profile-placeholder.svg'
+                    }
+                    alt={d.name}
+                    className="w-24 h-24 rounded-full object-cover mx-auto bg-surface-light"
+                  />
+                  <p className="text-xs text-text-muted mt-1 leading-tight line-clamp-2">
+                    {d.name}
+                  </p>
+                </button>
+              ))}
+            </div>
           </div>
         )}
 
         {/* Cast */}
         {content.cast.length > 0 && (
           <div>
-            <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">
+            <h3 className="text-sm font-semibold text-text-muted uppercase tracking-wide mt-6 mb-2">
               {t('card.cast')}
             </h3>
-            <div className="flex gap-3 overflow-x-auto pb-1">
-              {content.cast.map((actor) => (
+            <div className="grid grid-cols-4 gap-x-3 gap-y-5">
+              {content.cast.slice(0, 8).map((actor) => (
                 <button
                   key={actor.id}
                   onClick={() => navigate(`/person/${actor.id}`)}
-                  className="flex-shrink-0 text-center w-16"
+                  className="text-center"
                 >
                   <img
-                    src={tmdbProfile(actor.photoPath)}
+                    src={
+                      actor.photoPath
+                        ? `https://image.tmdb.org/t/p/w185${actor.photoPath}`
+                        : '/profile-placeholder.svg'
+                    }
                     alt={actor.name}
-                    className="w-14 h-14 rounded-full object-cover mx-auto bg-surface-light"
+                    className="w-24 h-24 rounded-full object-cover mx-auto bg-surface-light"
                   />
-                  <p className="text-[10px] text-text mt-1 leading-tight line-clamp-2">{actor.name}</p>
-                  <p className="text-[9px] text-text-muted leading-tight line-clamp-1">{actor.character}</p>
+                  <p className="text-xs text-text-muted mt-1 leading-tight line-clamp-2">
+                    {actor.name}
+                  </p>
                 </button>
               ))}
             </div>
-          </div>
-        )}
-
-        {/* Directors */}
-        {content.directors.length > 0 && (
-          <div className="text-sm">
-            <span className="text-text-muted font-semibold">{t('card.director')}: </span>
-            {content.directors.map((d, i) => (
-              <span key={d.id}>
-                <button
-                  onClick={() => navigate(`/person/${d.id}`)}
-                  className="text-accent hover:underline"
-                >
-                  {d.name}
-                </button>
-                {i < content.directors.length - 1 && ', '}
-              </span>
-            ))}
-          </div>
-        )}
-
-        {/* Writers */}
-        {content.writers.length > 0 && (
-          <div className="text-sm">
-            <span className="text-text-muted font-semibold">{t('content.writers')}: </span>
-            {content.writers.map((w, i) => (
-              <span key={w.id}>
-                {w.name}
-                {i < content.writers.length - 1 && ', '}
-              </span>
-            ))}
           </div>
         )}
 
         {/* Awards */}
         {content.awards.length > 0 && (
           <div>
-            <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">
+            <h3 className="text-sm font-semibold text-text-muted uppercase tracking-wide mt-6 mb-2">
               {t('card.awards')}
             </h3>
             <div className="flex flex-wrap gap-1.5">
-              {content.awards.map((a, i) => (
-                <Badge
+              {[...content.awards].sort((a, b) => (a.won === b.won ? 0 : a.won ? -1 : 1)).map((a, i) => (
+                <span
                   key={i}
-                  won={a.won}
-                  label={`${a.category} ${a.year}`}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Providers */}
-        {content.providers.length > 0 && (
-          <div>
-            <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">
-              {t('card.providers')}
-            </h3>
-            <div className="flex gap-2">
-              {content.providers.map((p) => (
-                <img
-                  key={p.id}
-                  src={tmdbLogo(p.logoPath)}
-                  alt={p.name}
-                  className="w-10 h-10 rounded-md object-cover bg-surface-light"
-                  title={p.name}
-                />
+                  className={`text-sm px-2.5 py-1 rounded ${
+                    a.won
+                      ? 'bg-accent/15 text-accent'
+                      : 'bg-surface-light text-text-muted'
+                  }`}
+                >
+                  {a.won ? '\u2605' : '\u2606'} {t(`card.awardCategory.${a.category}`, a.category)} {a.year}
+                </span>
               ))}
             </div>
           </div>
@@ -206,13 +200,13 @@ export default function ContentDetail() {
 
         {/* Why recommended */}
         {content.recommendationReasons.length > 0 && (
-          <div className="bg-surface-light rounded-md p-3">
-            <h3 className="text-xs font-semibold text-accent uppercase tracking-wide mb-1.5">
+          <div className="bg-surface-light rounded-md p-3 mt-6">
+            <h3 className="text-sm font-semibold text-accent uppercase tracking-wide mb-1">
               {t('content.whyRecommended')}
             </h3>
             <ul className="space-y-1">
               {content.recommendationReasons.map((reason, i) => (
-                <li key={i} className="text-sm text-text-muted">
+                <li key={i} className="text-base text-text-muted">
                   {reason}
                 </li>
               ))}
@@ -220,18 +214,10 @@ export default function ContentDetail() {
           </div>
         )}
 
-        {/* Watchlist actions */}
-        <div className="flex gap-3 pt-2">
-          {content.userStatus.inWatchlist ? (
-            <Button variant="secondary" fullWidth>
-              {t('content.inFavorites')}
-            </Button>
-          ) : (
-            <Button variant="primary" fullWidth>
-              {t('content.addToFavorites')}
-            </Button>
-          )}
-        </div>
+        {/* Add to favorites */}
+        <button className="w-full py-3 rounded-lg bg-accent text-bg font-semibold text-sm mt-6">
+          {content.userStatus?.inWatchlist ? t('content.inFavorites') : t('content.addToFavorites')}
+        </button>
       </div>
     </div>
   );

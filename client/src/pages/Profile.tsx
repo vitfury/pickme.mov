@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/uiStore';
 import { useUserStats, useResetPreferences, useUpdateProfile } from '@/api/hooks';
@@ -10,6 +11,7 @@ import i18n from '@/i18n/config';
 
 export default function Profile() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const updateUser = useAuthStore((s) => s.updateUser);
@@ -40,7 +42,9 @@ export default function Profile() {
 
   const handleReset = async () => {
     await resetPreferences.mutateAsync();
+    updateUser({ onboardingCompleted: false });
     setResetModalOpen(false);
+    navigate('/onboarding', { replace: true });
   };
 
   const handleExport = () => {
@@ -90,7 +94,7 @@ export default function Profile() {
                 : 'bg-surface-light text-text-muted border border-border'
             }`}
           >
-            UA
+            🇺🇦 UA
           </button>
           <button
             onClick={() => handleLocaleChange('en')}
@@ -100,7 +104,7 @@ export default function Profile() {
                 : 'bg-surface-light text-text-muted border border-border'
             }`}
           >
-            EN
+            🇬🇧 EN
           </button>
         </div>
       </div>

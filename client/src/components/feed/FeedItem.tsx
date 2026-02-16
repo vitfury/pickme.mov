@@ -8,34 +8,63 @@ interface FeedItemProps {
   card: FeedCard;
   onSwipe: (action: SwipeAction) => void;
   onNavigate?: (direction: 'next' | 'prev') => void;
+  onVerticalDrag?: (offsetY: number) => void;
+  onVerticalDragEnd?: () => void;
   onUndo?: () => void;
+  onTap?: () => void;
   canUndo?: boolean;
+  isBookmarked?: boolean;
+  onToggleBookmark?: () => void;
 }
 
 const SWIPE_THRESHOLD = 120;
 const FLY_DISTANCE = 800;
-const DIRECTION_LOCK_THRESHOLD = 10; // px before locking gesture direction
-const VERTICAL_THRESHOLD = 50; // px vertical distance to trigger navigation
+const DIRECTION_LOCK_THRESHOLD = 10;
+const VERTICAL_THRESHOLD = 50;
+const TAP_THRESHOLD = 10;
 
-export default function FeedItem({ card, onSwipe, onNavigate, onUndo, canUndo }: FeedItemProps) {
+export default function FeedItem({ card, onSwipe, onNavigate, onVerticalDrag, onVerticalDragEnd, onUndo, onTap, canUndo, isBookmarked, onToggleBookmark }: FeedItemProps) {
   const x = useMotionValue(0);
-  const y = useMotionValue(0);
   const cardOpacity = useMotionValue(1);
   const directionRef = useRef<'none' | 'horizontal' | 'vertical'>('none');
+  const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
+  const wasPanningRef = useRef(false);
 
   const rotation = useTransform(x, (v) => Math.max(-12, Math.min(12, v / 25)));
   const likeOpacity = useTransform(x, (v) => Math.max(0, Math.min(1, v / SWIPE_THRESHOLD)));
   const dislikeOpacity = useTransform(x, (v) => Math.max(0, Math.min(1, -v / SWIPE_THRESHOLD)));
+
+  const handlePointerDown = useCallback((e: React.PointerEvent) => {
+    pointerStartRef.current = { x: e.clientX, y: e.clientY };
+    wasPanningRef.current = false;
+  }, []);
+
+  const handlePointerUp = useCallback((e: React.PointerEvent) => {
+    if (!pointerStartRef.current || wasPanningRef.current) {
+      pointerStartRef.current = null;
+      return;
+    }
+    const dx = Math.abs(e.clientX - pointerStartRef.current.x);
+    const dy = Math.abs(e.clientY - pointerStartRef.current.y);
+    pointerStartRef.current = null;
+    if (dx < TAP_THRESHOLD && dy < TAP_THRESHOLD) {
+      onTap?.();
+    }
+  }, [onTap]);
 
   const handlePanStart = useCallback(() => {
     directionRef.current = 'none';
   }, []);
 
   const handlePan = useCallback((_: unknown, info: PanInfo) => {
-    // Determine direction once after initial movement
+    const absDx = Math.abs(info.offset.x);
+    const absDy = Math.abs(info.offset.y);
+
+    if (absDx > TAP_THRESHOLD || absDy > TAP_THRESHOLD) {
+      wasPanningRef.current = true;
+    }
+
     if (directionRef.current === 'none') {
-      const absDx = Math.abs(info.offset.x);
-      const absDy = Math.abs(info.offset.y);
       if (absDx > DIRECTION_LOCK_THRESHOLD || absDy > DIRECTION_LOCK_THRESHOLD) {
         directionRef.current = absDx > absDy ? 'horizontal' : 'vertical';
       }
@@ -44,26 +73,24 @@ export default function FeedItem({ card, onSwipe, onNavigate, onUndo, canUndo }:
     if (directionRef.current === 'horizontal') {
       x.set(info.offset.x);
     } else if (directionRef.current === 'vertical') {
-      y.set(info.offset.y);
+      onVerticalDrag?.(info.offset.y);
     }
-  }, [x, y]);
+  }, [x, onVerticalDrag]);
 
   const handlePanEnd = useCallback(
     async (_: unknown, info: PanInfo) => {
       const direction = directionRef.current;
       directionRef.current = 'none';
 
-      // Vertical gesture → navigate between cards
+      // Vertical gesture → navigate between cards (Feed handles the scroll)
       if (direction === 'vertical') {
         const offsetY = info.offset.y;
         if (offsetY < -VERTICAL_THRESHOLD) {
-          y.set(0);
           onNavigate?.('next');
         } else if (offsetY > VERTICAL_THRESHOLD) {
-          y.set(0);
           onNavigate?.('prev');
         } else {
-          animate(y, 0, { type: 'spring', stiffness: 300, damping: 30 });
+          onVerticalDragEnd?.();
         }
         return;
       }
@@ -77,7 +104,6 @@ export default function FeedItem({ card, onSwipe, onNavigate, onUndo, canUndo }:
             animate(cardOpacity, 0, { duration: 0.3 }),
           ]);
           onSwipe('like');
-          // Reset after fly-away so card is clean if undo brings it back
           requestAnimationFrame(() => { x.set(0); cardOpacity.set(1); });
         } else if (offsetX < -SWIPE_THRESHOLD) {
           await Promise.all([
@@ -94,15 +120,16 @@ export default function FeedItem({ card, onSwipe, onNavigate, onUndo, canUndo }:
 
       // No direction determined — reset
       x.set(0);
-      y.set(0);
     },
-    [x, y, cardOpacity, onSwipe, onNavigate],
+    [x, cardOpacity, onSwipe, onNavigate, onVerticalDragEnd],
   );
 
   return (
     <div className="h-full w-full relative flex-shrink-0">
       <motion.div
-        style={{ x, y, rotate: rotation, opacity: cardOpacity }}
+        style={{ x, rotate: rotation, opacity: cardOpacity }}
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
         onPanStart={handlePanStart}
         onPan={handlePan}
         onPanEnd={handlePanEnd}
@@ -124,16 +151,19 @@ export default function FeedItem({ card, onSwipe, onNavigate, onUndo, canUndo }:
           className="absolute bottom-0 inset-x-0 pointer-events-none pb-20 px-6"
           style={{ paddingTop: '30vh', background: 'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.9) 60%, rgba(0,0,0,1) 100%)' }}
         >
-          <h2 className="text-4xl font-bold text-white leading-tight line-clamp-2 drop-shadow-lg">
+          <h2 className="text-3xl font-bold text-white leading-tight line-clamp-2 drop-shadow-lg">
             {card.title}
           </h2>
-          <div className="flex items-center gap-3 mt-3 text-xl text-white/80">
+          {card.titleEn && card.titleEn !== card.title && (
+            <p className="text-sm text-white/50 mt-1">({card.titleEn})</p>
+          )}
+          <div className="flex items-center gap-2 mt-4 text-base text-white/80">
             <span>{formatDate(card.releaseDate)}</span>
             {card.runtime && (
               <>
                 <span className="text-white/40">|</span>
-                <span className="flex items-center gap-1.5">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <span className="flex items-center gap-1">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="12" cy="12" r="10" />
                     <polyline points="12 6 12 12 16 14" />
                   </svg>
@@ -141,14 +171,14 @@ export default function FeedItem({ card, onSwipe, onNavigate, onUndo, canUndo }:
                 </span>
               </>
             )}
-            {card.tmdbRating && (
+            {card.imdbRating && (
               <>
                 <span className="text-white/40">|</span>
-                <span className="flex items-center gap-1.5">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" className="text-accent">
+                <span className="flex items-center gap-1">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="text-accent">
                     <path d="M12 2l2.4 7.4h7.6l-6 4.6 2.3 7.4-6.3-4.8-6.3 4.8 2.3-7.4-6-4.6h7.6z" />
                   </svg>
-                  {formatRating(card.tmdbRating)}
+                  {formatRating(card.imdbRating)}
                 </span>
               </>
             )}
@@ -161,11 +191,11 @@ export default function FeedItem({ card, onSwipe, onNavigate, onUndo, canUndo }:
           </div>
 
           {/* Genre chips */}
-          <div className="flex flex-wrap gap-2.5 mt-3">
+          <div className="flex flex-wrap gap-2 mt-4">
             {card.genres.slice(0, 4).map((g) => (
               <span
                 key={g.id}
-                className="text-base px-3 py-1 bg-white/15 backdrop-blur-sm rounded-full text-white/90"
+                className="text-xs px-2.5 py-0.5 bg-white/15 backdrop-blur-sm rounded-full text-white/90"
               >
                 {g.emoji} {g.name}
               </span>
@@ -173,18 +203,28 @@ export default function FeedItem({ card, onSwipe, onNavigate, onUndo, canUndo }:
           </div>
         </div>
 
-        {/* Undo button */}
-        <div className="absolute right-4 bottom-24 z-20 pointer-events-auto">
+        {/* Action buttons (undo + bookmark) */}
+        <div className="absolute right-4 top-4 z-20 pointer-events-auto flex flex-col gap-2" onPointerDown={(e) => e.stopPropagation()}>
           <button
             onClick={(e) => { e.stopPropagation(); onUndo?.(); }}
             disabled={!canUndo}
-            className="w-16 h-16 rounded-full bg-black/60 backdrop-blur-md border-2 border-white/40
+            className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-md border border-white/30
               flex items-center justify-center text-white active:scale-90 transition-all
               shadow-lg shadow-black/40 disabled:opacity-20"
           >
-            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M3 7v6h6" />
               <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6.69 3L3 13" />
+            </svg>
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); onToggleBookmark?.(); }}
+            className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-md border border-white/30
+              flex items-center justify-center text-white active:scale-90 transition-all
+              shadow-lg shadow-black/40"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill={isBookmarked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
             </svg>
           </button>
         </div>

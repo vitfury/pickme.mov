@@ -25,7 +25,7 @@ export default async function filtersRoutes(app: FastifyInstance) {
         .limit(1);
       const locale = user[0]?.locale || 'uk';
 
-      const EXCLUDED_GENRES = ['Soap', 'Talk', 'News', 'Reality'];
+      const EXCLUDED_GENRES = ['Soap', 'Talk', 'News', 'Reality', 'TV Movie'];
 
       const result = await request.db
         .select({

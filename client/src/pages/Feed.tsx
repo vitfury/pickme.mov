@@ -1,28 +1,27 @@
 import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { motion, useMotionValue, animate as fmAnimate } from 'framer-motion';
 import { useFeedStore } from '@/stores/feedStore';
-import { useFeedInfinite, useSwipe, useUndo } from '@/api/hooks';
+import { useFeedInfinite, useSwipe, useUndo, useToggleBookmark } from '@/api/hooks';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import FeedItem from '@/components/feed/FeedItem';
-import DetailsSheet from '@/components/feed/DetailsSheet';
 import Spinner from '@/components/ui/Spinner';
 import EmptyState from '@/components/ui/EmptyState';
 import type { FeedCard, SwipeAction } from '@/types';
 
-const ANIM_DURATION = 500; // ms — transition duration
-
 interface HistoryEntry {
   previousIndex: number;
-  apiAction: boolean; // whether server undo is needed
-  cardId?: number;    // for cleaning actedOnRef
+  apiAction: boolean;
+  cardId?: number;
 }
 
 export default function Feed() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const contentType = useFeedStore((s) => s.contentType);
   const activeFilters = useFeedStore((s) => s.activeFilters);
 
-  const [detailCard, setDetailCard] = useState<FeedCard | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [canUndo, setCanUndo] = useState(false);
 
@@ -30,6 +29,11 @@ export default function Feed() {
   const isAnimatingRef = useRef(false);
   const actedOnRef = useRef<Set<number>>(new Set());
   const historyRef = useRef<HistoryEntry[]>([]);
+  const currentIndexRef = useRef(0);
+  const containerHeightRef = useRef(0);
+
+  // Scroll position MotionValue — moves all cards as a group
+  const scrollY = useMotionValue(0);
 
   const filters = { ...activeFilters, contentType };
   const {
@@ -42,8 +46,29 @@ export default function Feed() {
 
   const swipeMutation = useSwipe();
   const undoMutation = useUndo();
+  const toggleBookmarkMutation = useToggleBookmark();
 
-  // Flat card list — NO filtering, stable array
+  const [localBookmarks, setLocalBookmarks] = useState<Map<number, boolean>>(new Map());
+
+  // Keep refs in sync
+  useEffect(() => { currentIndexRef.current = currentIndex; }, [currentIndex]);
+
+  // Measure container height
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const measure = () => {
+      containerHeightRef.current = el.clientHeight;
+      // Reposition on resize
+      scrollY.set(-currentIndexRef.current * containerHeightRef.current);
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [scrollY]);
+
+  // Flat card list
   const allCards = useMemo(() => {
     if (!data?.pages) return [];
     return data.pages.flatMap((page) => page.cards);
@@ -60,13 +85,34 @@ export default function Feed() {
     return items;
   }, [currentIndex, allCards]);
 
+  // --- Animate scroll to a target index ---
+
+  const animateToIndex = useCallback((newIndex: number, instant?: boolean) => {
+    isAnimatingRef.current = true;
+    currentIndexRef.current = newIndex;
+    setCurrentIndex(newIndex);
+
+    const target = -newIndex * containerHeightRef.current;
+    if (instant) {
+      scrollY.set(target);
+      isAnimatingRef.current = false;
+      return;
+    }
+
+    fmAnimate(scrollY, target, {
+      type: 'tween',
+      duration: 0.4,
+      ease: [0.16, 1, 0.3, 1],
+      onComplete: () => { isAnimatingRef.current = false; },
+    });
+  }, [scrollY]);
+
   // --- Navigation ---
 
   const goNext = useCallback(() => {
     if (isAnimatingRef.current) return;
     if (currentIndex >= allCards.length - 1) return;
 
-    // Record skip for current card if not already acted on
     const currentCard = allCards[currentIndex];
     let hadApiAction = false;
     if (currentCard && !actedOnRef.current.has(currentCard.id)) {
@@ -82,18 +128,12 @@ export default function Feed() {
     });
     setCanUndo(true);
 
-    isAnimatingRef.current = true;
-    setCurrentIndex((prev) => prev + 1);
+    animateToIndex(currentIndex + 1);
 
-    // Prefetch more cards when nearing end
     if (currentIndex >= allCards.length - 4 && hasNextPage && !isFetchingNextPage) {
       fetchNextPage();
     }
-
-    setTimeout(() => {
-      isAnimatingRef.current = false;
-    }, ANIM_DURATION);
-  }, [currentIndex, allCards, swipeMutation, hasNextPage, isFetchingNextPage, fetchNextPage]);
+  }, [currentIndex, allCards, swipeMutation, hasNextPage, isFetchingNextPage, fetchNextPage, animateToIndex]);
 
   const goPrev = useCallback(() => {
     if (isAnimatingRef.current) return;
@@ -105,25 +145,18 @@ export default function Feed() {
     });
     setCanUndo(true);
 
-    isAnimatingRef.current = true;
-    setCurrentIndex((prev) => prev - 1);
-
-    setTimeout(() => {
-      isAnimatingRef.current = false;
-    }, ANIM_DURATION);
-  }, [currentIndex]);
+    animateToIndex(currentIndex - 1);
+  }, [currentIndex, animateToIndex]);
 
   // --- Swipe (like / dislike) ---
 
   const handleSwipe = useCallback(
     (card: FeedCard, action: SwipeAction) => {
-      if (action === 'skip') return; // skips handled by goNext
+      if (action === 'skip') return;
 
-      // Mark acted so goNext won't double-skip
       actedOnRef.current.add(card.id);
       swipeMutation.mutate({ contentId: card.id, action });
 
-      // Advance to next card
       if (currentIndex < allCards.length - 1) {
         historyRef.current.push({
           previousIndex: currentIndex,
@@ -132,22 +165,17 @@ export default function Feed() {
         });
         setCanUndo(true);
 
-        isAnimatingRef.current = true;
-        setCurrentIndex((prev) => prev + 1);
+        animateToIndex(currentIndex + 1);
 
         if (currentIndex >= allCards.length - 4 && hasNextPage && !isFetchingNextPage) {
           fetchNextPage();
         }
-
-        setTimeout(() => {
-          isAnimatingRef.current = false;
-        }, ANIM_DURATION);
       }
     },
-    [currentIndex, allCards.length, swipeMutation, hasNextPage, isFetchingNextPage, fetchNextPage],
+    [currentIndex, allCards.length, swipeMutation, hasNextPage, isFetchingNextPage, fetchNextPage, animateToIndex],
   );
 
-  // --- Undo (reverses any action in exact order) ---
+  // --- Undo ---
 
   const handleUndo = useCallback(async () => {
     if (historyRef.current.length === 0) return;
@@ -167,12 +195,37 @@ export default function Feed() {
       }
     }
 
-    isAnimatingRef.current = true;
-    setCurrentIndex(entry.previousIndex);
-    setTimeout(() => {
-      isAnimatingRef.current = false;
-    }, ANIM_DURATION);
-  }, [undoMutation]);
+    animateToIndex(entry.previousIndex);
+  }, [undoMutation, animateToIndex]);
+
+  // --- Vertical drag (from FeedItem) ---
+
+  const handleVerticalDrag = useCallback((offsetY: number) => {
+    const base = -currentIndexRef.current * containerHeightRef.current;
+    scrollY.set(base + offsetY);
+  }, [scrollY]);
+
+  const handleVerticalDragEnd = useCallback(() => {
+    // Snap back to current card position
+    const target = -currentIndexRef.current * containerHeightRef.current;
+    fmAnimate(scrollY, target, {
+      type: 'spring',
+      stiffness: 300,
+      damping: 30,
+    });
+  }, [scrollY]);
+
+  // --- Bookmark ---
+
+  const handleToggleBookmark = useCallback((card: FeedCard) => {
+    const current = localBookmarks.get(card.id) ?? card.isBookmarked ?? false;
+    setLocalBookmarks((prev) => new Map(prev).set(card.id, !current));
+    toggleBookmarkMutation.mutate(card.id);
+  }, [localBookmarks, toggleBookmarkMutation]);
+
+  const getBookmarkStatus = useCallback((card: FeedCard) => {
+    return localBookmarks.get(card.id) ?? card.isBookmarked ?? false;
+  }, [localBookmarks]);
 
   // --- Wheel handler ---
 
@@ -191,7 +244,7 @@ export default function Feed() {
     return () => el.removeEventListener('wheel', onWheel);
   }, [goNext, goPrev]);
 
-  // --- Touch navigation (handled by FeedItem via onNavigate) ---
+  // --- Touch navigation ---
 
   const handleNavigate = useCallback((direction: 'next' | 'prev') => {
     if (direction === 'next') goNext();
@@ -249,28 +302,32 @@ export default function Feed() {
     <>
       {/* Viewport — clips everything, no native scroll */}
       <div ref={containerRef} className="h-full overflow-hidden relative">
-        {renderWindow.map(({ index, card }) => (
-          <div
-            key={card.id}
-            className="absolute inset-0 will-change-transform"
-            style={{
-              transform: `translateY(${(index - currentIndex) * 100}%)`,
-              transition: `transform ${ANIM_DURATION}ms cubic-bezier(0.16, 1, 0.3, 1)`,
-            }}
-          >
-            <FeedItem
-              card={card}
-              onSwipe={(action) => handleSwipe(card, action)}
-              onNavigate={handleNavigate}
-              onUndo={handleUndo}
-              canUndo={canUndo}
-            />
-          </div>
-        ))}
+        {/* Inner container — moves all cards together via scrollY */}
+        <motion.div style={{ y: scrollY }} className="h-full relative">
+          {renderWindow.map(({ index, card }) => (
+            <div
+              key={card.id}
+              className="absolute inset-0 will-change-transform"
+              style={{
+                transform: `translateY(${index * 100}%)`,
+              }}
+            >
+              <FeedItem
+                card={card}
+                onSwipe={(action) => handleSwipe(card, action)}
+                onNavigate={handleNavigate}
+                onVerticalDrag={handleVerticalDrag}
+                onVerticalDragEnd={handleVerticalDragEnd}
+                onUndo={handleUndo}
+                onTap={() => navigate(`/content/${card.id}`)}
+                canUndo={canUndo}
+                isBookmarked={getBookmarkStatus(card)}
+                onToggleBookmark={() => handleToggleBookmark(card)}
+              />
+            </div>
+          ))}
+        </motion.div>
       </div>
-
-      {/* Details bottom sheet */}
-      <DetailsSheet card={detailCard} onClose={() => setDetailCard(null)} />
     </>
   );
 }

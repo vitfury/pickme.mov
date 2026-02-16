@@ -15,6 +15,7 @@ import {
   streamingProviders,
   userSwipes,
   userWatchlist,
+  userBookmarks,
   users,
 } from '../db/schema.js';
 import { generateReasons } from '../services/reasons.js';
@@ -57,6 +58,7 @@ export default async function contentRoutes(app: FastifyInstance) {
         contentAwardRows,
         swipeRow,
         watchlistRow,
+        bookmarkRow,
       ] = await Promise.all([
         request.db
           .select({ genreId: genres.id, nameEn: genres.nameEn, nameUk: genres.nameUk, emoji: genres.emoji })
@@ -110,6 +112,11 @@ export default async function contentRoutes(app: FastifyInstance) {
           .from(userWatchlist)
           .where(and(eq(userWatchlist.userId, request.userId), eq(userWatchlist.contentId, contentId)))
           .limit(1),
+        request.db
+          .select({ id: userBookmarks.id })
+          .from(userBookmarks)
+          .where(and(eq(userBookmarks.userId, request.userId), eq(userBookmarks.contentId, contentId)))
+          .limit(1),
       ]);
 
       // Generate recommendation reasons
@@ -154,8 +161,7 @@ export default async function contentRoutes(app: FastifyInstance) {
         releaseDate: c.releaseDate,
         runtime: c.runtime,
         certification: c.certification,
-        tmdbRating: c.tmdbRating ? parseFloat(c.tmdbRating) : null,
-        imdbRating: c.imdbRating ? parseFloat(c.imdbRating) : null,
+        imdbRating: c.imdbRating ? parseFloat(c.imdbRating) : c.tmdbRating ? parseFloat(c.tmdbRating) : null,
         imdbId: c.imdbId,
         genres: contentGenreRows.map((g) => ({
           id: g.genreId,
@@ -187,6 +193,7 @@ export default async function contentRoutes(app: FastifyInstance) {
           inWatchlist: watchlistRow.length > 0,
           watched: watchlistRow[0]?.watched || false,
           personalRating: watchlistRow[0]?.personalRating || null,
+          isBookmarked: bookmarkRow.length > 0,
         },
       };
     } catch (err) {

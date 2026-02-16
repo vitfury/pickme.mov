@@ -41,39 +41,76 @@ const TV_GENRE_QUOTAS: Record<string, number> = {
   Animation: 200, Documentary: 100, Family: 50, War: 50,
 };
 
+const EXCLUDED_GENRES = new Set(['TV Movie', 'Soap', 'Talk', 'News', 'Reality']);
+
 const GENRE_EMOJIS: Record<string, string> = {
   Action: '💥', Adventure: '🗺️', Animation: '🎨', Comedy: '😂',
   Crime: '🔫', Documentary: '📹', Drama: '🎭', Family: '👨‍👩‍👧‍👦',
   Fantasy: '🧙', History: '📜', Horror: '🔪', Music: '🎵',
   Mystery: '🔍', Romance: '💕', 'Science Fiction': '🚀',
-  'TV Movie': '📺', Thriller: '😱', War: '⚔️', Western: '🤠',
+  Thriller: '😱', War: '⚔️', Western: '🤠',
   // TV genres
   'Action & Adventure': '💥', 'Sci-Fi & Fantasy': '🚀',
-  Kids: '👶', News: '📰', Reality: '📸', Soap: '🧼', Talk: '🎤',
-  'War & Politics': '⚔️',
+  Kids: '👶', 'War & Politics': '⚔️',
 };
 
 const OSCAR_CATEGORY_MAP: Record<string, string> = {
+  // 23 Academy Award categories — exact matches
   'BEST PICTURE': 'picture',
   'DIRECTING': 'director',
   'ACTOR IN A LEADING ROLE': 'actor',
   'ACTRESS IN A LEADING ROLE': 'actress',
   'ACTOR IN A SUPPORTING ROLE': 'supporting_actor',
   'ACTRESS IN A SUPPORTING ROLE': 'supporting_actress',
-  'CINEMATOGRAPHY': 'cinematography',
+  'WRITING (Original Screenplay)': 'original_screenplay',
+  'WRITING (Adapted Screenplay)': 'adapted_screenplay',
   'ANIMATED FEATURE FILM': 'animated',
   'INTERNATIONAL FEATURE FILM': 'international',
+  'DOCUMENTARY (Feature)': 'documentary_feature',
+  'DOCUMENTARY (Short Subject)': 'documentary_short',
+  'SHORT FILM (Live Action)': 'short_live_action',
+  'SHORT FILM (Animated)': 'short_animated',
+  'MUSIC (Original Score)': 'score',
+  'MUSIC (Original Song)': 'song',
+  'SOUND': 'sound',
+  'SOUND MIXING': 'sound',
+  'SOUND EDITING': 'sound',
+  'PRODUCTION DESIGN': 'production_design',
+  'ART DIRECTION': 'production_design',
+  'CINEMATOGRAPHY': 'cinematography',
+  'MAKEUP AND HAIRSTYLING': 'makeup',
+  'MAKEUP': 'makeup',
+  'COSTUME DESIGN': 'costume_design',
+  'FILM EDITING': 'editing',
+  'VISUAL EFFECTS': 'visual_effects',
 };
 
-// Patterns for partial matching
+// Patterns for partial matching (order matters — more specific first)
 const OSCAR_CATEGORY_PATTERNS: [RegExp, string][] = [
-  [/^WRITING/i, 'screenplay'],
-  [/SCREENPLAY/i, 'screenplay'],
+  [/ORIGINAL SCREENPLAY/i, 'original_screenplay'],
+  [/ADAPTED SCREENPLAY/i, 'adapted_screenplay'],
+  [/^WRITING.*ORIGINAL/i, 'original_screenplay'],
+  [/^WRITING.*ADAPT/i, 'adapted_screenplay'],
+  [/^WRITING/i, 'original_screenplay'],
+  [/SCREENPLAY/i, 'original_screenplay'],
   [/^MUSIC \(ORIGINAL SCORE\)/i, 'score'],
   [/^MUSIC \(ORIGINAL SONG\)/i, 'song'],
+  [/SCORE/i, 'score'],
   [/ANIMATED FEATURE/i, 'animated'],
   [/INTERNATIONAL FEATURE/i, 'international'],
   [/BEST PICTURE/i, 'picture'],
+  [/DOCUMENTARY.*SHORT/i, 'documentary_short'],
+  [/DOCUMENTARY/i, 'documentary_feature'],
+  [/SHORT FILM.*ANIMATED/i, 'short_animated'],
+  [/SHORT FILM/i, 'short_live_action'],
+  [/SPECIAL ACHIEVEMENT.*VISUAL/i, 'visual_effects'],
+  [/SPECIAL ACHIEVEMENT.*SOUND/i, 'sound'],
+  [/VISUAL EFFECTS/i, 'visual_effects'],
+  [/SOUND/i, 'sound'],
+  [/FILM EDITING/i, 'editing'],
+  [/ART DIRECTION|PRODUCTION DESIGN/i, 'production_design'],
+  [/COSTUME/i, 'costume_design'],
+  [/MAKEUP|HAIRSTYLING/i, 'makeup'],
 ];
 
 // ─── Database Setup ─────────────────────────────────────────────────────────
@@ -368,10 +405,12 @@ async function phaseDiscover(progress: SeedProgress): Promise<void> {
     tmdbFetch<{ genres: TmdbGenre[] }>('/genre/tv/list', { language: 'uk-UA' }),
   ]);
 
-  // Merge movie + TV genres, dedup by tmdb_id
+  // Merge movie + TV genres, dedup by tmdb_id, skip excluded
   const allGenresMap = new Map<number, { tmdbId: number; nameEn: string; nameUk: string | null; emoji: string | null }>();
+  const excludedGenreIds: number[] = [];
 
   for (const g of movieGenresEn.genres) {
+    if (EXCLUDED_GENRES.has(g.name)) { excludedGenreIds.push(g.id); continue; }
     const ukMatch = movieGenresUk.genres.find((u) => u.id === g.id);
     allGenresMap.set(g.id, {
       tmdbId: g.id,
@@ -381,6 +420,7 @@ async function phaseDiscover(progress: SeedProgress): Promise<void> {
     });
   }
   for (const g of tvGenresEn.genres) {
+    if (EXCLUDED_GENRES.has(g.name)) { excludedGenreIds.push(g.id); continue; }
     if (!allGenresMap.has(g.id)) {
       const ukMatch = tvGenresUk.genres.find((u) => u.id === g.id);
       allGenresMap.set(g.id, {
@@ -391,6 +431,9 @@ async function phaseDiscover(progress: SeedProgress): Promise<void> {
       });
     }
   }
+
+  const excludedGenreIdStr = [...new Set(excludedGenreIds)].join(',');
+  log(`[Phase 1] Excluding genres: ${[...EXCLUDED_GENRES].join(', ')} (TMDB IDs: ${excludedGenreIdStr})`);
 
   // Upsert genres
   log(`[Phase 1] Inserting ${allGenresMap.size} genres...`);
@@ -425,6 +468,7 @@ async function phaseDiscover(progress: SeedProgress): Promise<void> {
     while (collected < quota && page <= 50) {
       const data = await tmdbFetch<TmdbDiscoverResult>('/discover/movie', {
         with_genres: String(genreId),
+        without_genres: excludedGenreIdStr,
         sort_by: 'vote_count.desc',
         'vote_count.gte': '100',
         'vote_average.gte': '5.5',
@@ -473,6 +517,7 @@ async function phaseDiscover(progress: SeedProgress): Promise<void> {
     while (collected < quota && page <= 50) {
       const data = await tmdbFetch<TmdbDiscoverResult>('/discover/tv', {
         with_genres: String(genreId),
+        without_genres: excludedGenreIdStr,
         sort_by: 'vote_count.desc',
         'vote_count.gte': '100',
         'vote_average.gte': '5.5',
@@ -591,8 +636,9 @@ async function phaseDetails(progress: SeedProgress): Promise<void> {
 
       const contentId = contentRow.id;
 
-      // Insert content_genres
+      // Insert content_genres (skip excluded)
       for (const g of en.genres) {
+        if (EXCLUDED_GENRES.has(g.name)) continue;
         const genreDbId = genreTmdbToId.get(g.id);
         if (!genreDbId) continue;
         await db.insert(schema.contentGenres).values({

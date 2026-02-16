@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useCallback } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useSearch } from '@/api/hooks';
 import { tmdbPoster, tmdbProfile } from '@/utils/image';
@@ -8,24 +8,100 @@ import SearchInput from '@/components/ui/SearchInput';
 import Spinner from '@/components/ui/Spinner';
 import EmptyState from '@/components/ui/EmptyState';
 
+type SearchType = undefined | 'content' | 'person';
+type SortMode = 'relevance' | 'rating' | 'popularity';
+
 export default function Search() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [query, setQuery] = useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const { data, isLoading } = useSearch(query);
+  const query = searchParams.get('q') || '';
+  const searchType = (searchParams.get('type') as SearchType) || undefined;
+  const sort = (searchParams.get('sort') as SortMode) || 'relevance';
+
+  const updateParams = useCallback((updates: Record<string, string | undefined>) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      for (const [k, v] of Object.entries(updates)) {
+        if (v) next.set(k, v);
+        else next.delete(k);
+      }
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
+
+  const setQuery = (q: string) => updateParams({ q: q || undefined });
+  const setSearchTypeAndReset = (type: SearchType) => updateParams({ type, sort: undefined });
+  const setSort = (s: SortMode) => updateParams({ sort: s === 'relevance' ? undefined : s });
+
+  const { data, isLoading } = useSearch(query, searchType, sort);
 
   const hasResults = data && (data.content.length > 0 || data.people.length > 0);
 
+  const tabs: { key: SearchType; label: string }[] = [
+    { key: undefined, label: t('search.all') },
+    { key: 'content', label: t('search.movies') },
+    { key: 'person', label: t('search.people') },
+  ];
+
+  const sortOptions: { key: SortMode; label: string }[] =
+    searchType === 'person'
+      ? [
+          { key: 'relevance', label: t('search.sortRelevance') },
+          { key: 'popularity', label: t('search.sortPopularity') },
+        ]
+      : [
+          { key: 'relevance', label: t('search.sortRelevance') },
+          { key: 'rating', label: t('search.sortRating') },
+          { key: 'popularity', label: t('search.sortPopularity') },
+        ];
+
   return (
     <div className="max-w-2xl mx-auto px-4 pt-4">
-      <div className="sticky top-0 z-10 bg-bg pb-3">
+      <div className="sticky top-0 z-10 bg-bg pb-3 space-y-3">
         <SearchInput
           value={query}
           onChange={setQuery}
           placeholder={t('search.placeholder')}
           autoFocus
         />
+
+        {/* Type filter tabs */}
+        <div className="flex gap-2">
+          {tabs.map((tab) => (
+            <button
+              key={tab.label}
+              onClick={() => setSearchTypeAndReset(tab.key)}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                searchType === tab.key
+                  ? 'bg-accent text-bg'
+                  : 'bg-surface-light text-text-muted'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Sort options */}
+        {query.length >= 2 && (
+          <div className="flex gap-2">
+            {sortOptions.map((opt) => (
+              <button
+                key={opt.key}
+                onClick={() => setSort(opt.key)}
+                className={`px-2.5 py-1 rounded text-xs transition-colors ${
+                  sort === opt.key
+                    ? 'text-accent font-semibold'
+                    : 'text-text-muted'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {isLoading && query.length >= 2 && (
@@ -46,9 +122,11 @@ export default function Search() {
           {/* Content results */}
           {data.content.length > 0 && (
             <section>
-              <h2 className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">
-                {t('search.movies')}
-              </h2>
+              {!searchType && (
+                <h2 className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">
+                  {t('search.movies')}
+                </h2>
+              )}
               <div className="space-y-1">
                 {data.content.map((item) => (
                   <button
@@ -66,12 +144,12 @@ export default function Search() {
                       <div className="flex items-center gap-2 text-xs text-text-muted">
                         <span>{formatDate(item.releaseDate)}</span>
                         <span className="capitalize">{item.contentType}</span>
-                        {item.tmdbRating && (
+                        {item.imdbRating && (
                           <span className="flex items-center gap-0.5">
                             <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" className="text-accent">
                               <path d="M12 2l2.4 7.4h7.6l-6 4.6 2.3 7.4-6.3-4.8-6.3 4.8 2.3-7.4-6-4.6h7.6z" />
                             </svg>
-                            {formatRating(item.tmdbRating)}
+                            {formatRating(item.imdbRating)}
                           </span>
                         )}
                       </div>
@@ -85,9 +163,11 @@ export default function Search() {
           {/* People results */}
           {data.people.length > 0 && (
             <section>
-              <h2 className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">
-                {t('search.people')}
-              </h2>
+              {!searchType && (
+                <h2 className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">
+                  {t('search.people')}
+                </h2>
+              )}
               <div className="space-y-1">
                 {data.people.map((person) => (
                   <button

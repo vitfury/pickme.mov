@@ -68,6 +68,7 @@ export interface FeedCard {
   tmdbId: number;
   contentType: ContentType;
   title: string;
+  titleEn: string;
   originalTitle: string;
   posterPath: string | null;
   backdropPath: string | null;
@@ -75,7 +76,6 @@ export interface FeedCard {
   runtime: number | null;
   certification: string | null;
   productionCountries: string[];
-  tmdbRating: number | null;
   imdbRating: number | null;
   overview: string;
   genres: Genre[];
@@ -85,6 +85,7 @@ export interface FeedCard {
   providers: Provider[];
   recommendationReason: string | null;
   feedScore: number;
+  isBookmarked?: boolean;
 }
 
 export interface FeedResponse {
@@ -115,7 +116,7 @@ export interface WatchlistItem {
   title: string;
   posterPath: string | null;
   releaseDate: string;
-  tmdbRating: number | null;
+  imdbRating: number | null;
   contentType: ContentType;
   watched: boolean;
   personalRating: number | null;
@@ -140,7 +141,7 @@ export interface SearchContentResult {
   posterPath: string | null;
   releaseDate: string;
   contentType: ContentType;
-  tmdbRating: number | null;
+  imdbRating: number | null;
 }
 
 export interface SearchPersonResult {
@@ -170,7 +171,7 @@ export interface FilmographyItem {
   title: string;
   posterPath: string | null;
   releaseDate: string;
-  tmdbRating: number | null;
+  imdbRating: number | null;
   role: PersonRole;
   inWatchlist: boolean;
   swiped: SwipeAction | null;
@@ -188,7 +189,6 @@ export interface ContentDetail {
   releaseDate: string;
   runtime: number | null;
   certification: string | null;
-  tmdbRating: number | null;
   imdbRating: number | null;
   imdbId: string | null;
   genres: Genre[];
@@ -205,6 +205,7 @@ export interface ContentDetail {
     inWatchlist: boolean;
     watched: boolean;
     personalRating: number | null;
+    isBookmarked: boolean;
   };
 }
 
@@ -281,6 +282,29 @@ export interface FeedFilters {
 export interface WatchlistFilters {
   filter?: 'all' | 'watched' | 'unwatched';
   sort?: 'added' | 'rating' | 'year' | 'personal_rating' | 'title';
+  order?: 'asc' | 'desc';
+  contentType?: ContentType;
+  page?: number;
+  limit?: number;
+}
+
+export interface BookmarkItem {
+  contentId: number;
+  title: string;
+  posterPath: string | null;
+  releaseDate: string;
+  contentType: ContentType;
+  imdbRating: number | null;
+  addedAt: string;
+}
+
+export interface BookmarkResponse {
+  items: BookmarkItem[];
+  total: number;
+}
+
+export interface BookmarkFilters {
+  sort?: 'added' | 'rating' | 'year' | 'title';
   order?: 'asc' | 'desc';
   contentType?: ContentType;
   page?: number;

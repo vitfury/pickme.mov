@@ -5,6 +5,7 @@ import {
   content,
   userSwipes,
   userPreferences,
+  userBookmarks,
   contentGenres,
   contentPeople,
   contentKeywords,
@@ -44,6 +45,8 @@ interface ScoredContent {
   feedScore: number;
   personalizationScore: number;
   explorationBonus: number;
+  baseQuality: number;
+  isDiscovery?: boolean;
 }
 
 export async function generateFeed(
@@ -110,9 +113,9 @@ export async function generateFeed(
   if (filters.yearMax) {
     conditions.push(sql`EXTRACT(YEAR FROM ${content.releaseDate}) <= ${filters.yearMax}`);
   }
-  conditions.push(sql`GREATEST(${content.tmdbRating}::numeric, ${content.imdbRating}::numeric) >= ${filters.ratingMin ?? DEFAULT_RATING_MIN}`);
+  conditions.push(sql`COALESCE(${content.imdbRating}::numeric, 0) >= ${filters.ratingMin ?? DEFAULT_RATING_MIN}`);
   if (filters.ratingMax) {
-    conditions.push(sql`LEAST(${content.tmdbRating}::numeric, ${content.imdbRating}::numeric) <= ${filters.ratingMax}`);
+    conditions.push(sql`COALESCE(${content.imdbRating}::numeric, 10) <= ${filters.ratingMax}`);
   }
   const runtimeMin = filters.runtimeMin ?? DEFAULT_RUNTIME_MIN;
   const runtimeMax = filters.runtimeMax ?? DEFAULT_RUNTIME_MAX;
@@ -396,11 +399,17 @@ export async function generateFeed(
       explorationBonus * 0.10 +
       randomFactor;
 
-    scored.push({ id: item.id, feedScore, personalizationScore, explorationBonus });
+    scored.push({ id: item.id, feedScore, personalizationScore, explorationBonus, baseQuality: baseQuality });
   }
 
   // Sort by feed score descending
   scored.sort((a, b) => b.feedScore - a.feedScore);
+
+  // Build a pool of discovery candidates: high-quality movies with low personalization
+  // These are movies that are great but the algorithm wouldn't normally surface
+  const discoveryPool = [...scored]
+    .filter((s) => s.baseQuality >= 0.6 && s.personalizationScore < 0.3)
+    .sort((a, b) => b.baseQuality - a.baseQuality);
 
   // Apply session diversity (no 3+ same director/franchise in a row)
   const diverseResults: ScoredContent[] = [];
@@ -409,15 +418,12 @@ export async function generateFeed(
   let candidateIdx = 0;
 
   for (let pos = 0; pos < limit && candidateIdx < scored.length; pos++) {
-    // Every 8th card should be an exploration card
-    if (pos > 0 && pos % 8 === 7) {
-      const explorationCard = scored.find(
-        (s) =>
-          !diverseResults.includes(s) &&
-          s.explorationBonus > 0,
-      );
-      if (explorationCard) {
-        diverseResults.push(explorationCard);
+    // Every 5th card is a discovery pick — a great movie outside the user's bubble
+    if (pos > 0 && pos % 5 === 4) {
+      const discoveryCard = discoveryPool.find((s) => !diverseResults.includes(s));
+      if (discoveryCard) {
+        discoveryCard.isDiscovery = true;
+        diverseResults.push(discoveryCard);
         continue;
       }
     }
@@ -526,6 +532,13 @@ export async function generateFeed(
   const awardsByCard = groupBy(cardAwards, 'contentId');
   const providersByCard = groupBy(cardProviders, 'contentId');
 
+  // Fetch user bookmarks for these cards
+  const bookmarkRows = await db
+    .select({ contentId: userBookmarks.contentId })
+    .from(userBookmarks)
+    .where(and(eq(userBookmarks.userId, userId), inArray(userBookmarks.contentId, finalIds)));
+  const bookmarkedIds = new Set(bookmarkRows.map((r) => r.contentId));
+
   // Build cards in the order of diverseResults
   const cards: FeedCard[] = [];
   for (const scoredItem of diverseResults) {
@@ -572,13 +585,22 @@ export async function generateFeed(
       type: p.providerType,
     }));
 
-    const reason = await generateSingleReason(db, userId, c.id, locale);
+    // Discovery cards get a special reason; personalized cards get the normal reason
+    let reason: string | null;
+    if (scoredItem.isDiscovery) {
+      reason = locale === 'uk'
+        ? 'Популярний фільм, який може вам сподобатись'
+        : 'Popular pick you might enjoy';
+    } else {
+      reason = await generateSingleReason(db, userId, c.id, locale);
+    }
 
     cards.push({
       id: c.id,
       tmdbId: c.tmdbId,
       contentType: c.contentType,
       title: locale === 'uk' ? (c.titleUk || c.titleEn) : c.titleEn,
+      titleEn: c.titleEn,
       originalTitle: c.originalTitle,
       posterPath: c.posterPath,
       backdropPath: c.backdropPath,
@@ -586,8 +608,7 @@ export async function generateFeed(
       runtime: c.runtime,
       certification: c.certification,
       productionCountries: c.productionCountries || [],
-      tmdbRating: c.tmdbRating ? parseFloat(c.tmdbRating) : null,
-      imdbRating: c.imdbRating ? parseFloat(c.imdbRating) : null,
+      imdbRating: c.imdbRating ? parseFloat(c.imdbRating) : c.tmdbRating ? parseFloat(c.tmdbRating) : null,
       overview: locale === 'uk' ? (c.overviewUk || c.overviewEn) : c.overviewEn,
       genres: cardGenreList,
       cast,
@@ -596,6 +617,7 @@ export async function generateFeed(
       providers: cardProvidersList,
       recommendationReason: reason,
       feedScore: feedScoreMap.get(c.id) || 0,
+      isBookmarked: bookmarkedIds.has(c.id),
     });
   }
 

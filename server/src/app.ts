@@ -18,6 +18,7 @@ import peopleRoutes from './routes/people.js';
 import usersRoutes from './routes/users.js';
 import onboardingRoutes from './routes/onboarding.js';
 import contentRoutes from './routes/content.js';
+import bookmarkRoutes from './routes/bookmarks.js';
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -81,6 +82,7 @@ export async function buildApp(): Promise<FastifyInstance> {
     await api.register(usersRoutes, { prefix: '/users' });
     await api.register(onboardingRoutes, { prefix: '/onboarding' });
     await api.register(contentRoutes, { prefix: '/content' });
+    await api.register(bookmarkRoutes, { prefix: '/bookmarks' });
   }, { prefix: '/api/v1' });
 
   // Global error handler

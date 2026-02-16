@@ -285,12 +285,16 @@ export default async function usersRoutes(app: FastifyInstance) {
   app.post('/me/reset-preferences', async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       await request.db
+        .delete(userSwipes)
+        .where(eq(userSwipes.userId, request.userId));
+
+      await request.db
         .delete(userPreferences)
         .where(eq(userPreferences.userId, request.userId));
 
       await request.db
         .update(users)
-        .set({ maturityScore: 0 })
+        .set({ maturityScore: 0, onboardingCompleted: false })
         .where(eq(users.id, request.userId));
 
       return reply.status(204).send();

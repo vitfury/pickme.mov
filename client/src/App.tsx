@@ -7,7 +7,7 @@ import PageShell from '@/components/layout/PageShell';
 import Login from '@/pages/Login';
 import Onboarding from '@/pages/Onboarding';
 import Feed from '@/pages/Feed';
-import Watchlist from '@/pages/Watchlist';
+import Saved from '@/pages/Saved';
 import Search from '@/pages/Search';
 import Profile from '@/pages/Profile';
 import Person from '@/pages/Person';
@@ -33,7 +33,8 @@ export default function App() {
         <Route path="/onboarding" element={<Onboarding />} />
         <Route element={<PageShell />}>
           <Route path="/" element={<Feed />} />
-          <Route path="/watchlist" element={<Watchlist />} />
+          <Route path="/saved" element={<Saved />} />
+          <Route path="/watchlist" element={<Navigate to="/saved" replace />} />
           <Route path="/search" element={<Search />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/person/:id" element={<Person />} />

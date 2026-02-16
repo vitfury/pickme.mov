@@ -1,7 +1,7 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { eq, and, desc } from 'drizzle-orm';
 import { z } from 'zod';
-import { userSwipes, content, users, userWatchlist } from '../db/schema.js';
+import { userSwipes, content, users, userWatchlist, userBookmarks } from '../db/schema.js';
 import { generateFeed } from '../services/recommendation.js';
 import { updatePreferencesForSwipe, reversePreferencesForSwipe } from '../services/preferences.js';
 
@@ -115,6 +115,16 @@ export default async function feedRoutes(app: FastifyInstance) {
           .onConflictDoNothing();
         addedToWatchlist = true;
       }
+
+      // Auto-remove bookmark on like/dislike
+      await request.db
+        .delete(userBookmarks)
+        .where(
+          and(
+            eq(userBookmarks.userId, request.userId),
+            eq(userBookmarks.contentId, body.contentId),
+          ),
+        );
 
       // Get updated maturity score
       const userRow = await request.db

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 const navItems = [
   { to: '/', labelKey: 'nav.feed', icon: FilmIcon },
-  { to: '/watchlist', labelKey: 'nav.watchlist', icon: HeartIcon },
+  { to: '/saved', labelKey: 'nav.saved', icon: BookmarkIcon },
   { to: '/search', labelKey: 'nav.search', icon: SearchIcon },
   { to: '/profile', labelKey: 'nav.profile', icon: UserIcon },
 ] as const;
@@ -49,10 +49,10 @@ function FilmIcon() {
   );
 }
 
-function HeartIcon() {
+function BookmarkIcon() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
     </svg>
   );
 }

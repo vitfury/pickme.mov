@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '@/api/client';
 import { useAuthStore } from '@/stores/authStore';
+import { useUIStore } from '@/stores/uiStore';
 
 const TMDB = 'https://image.tmdb.org/t/p/w342';
 
@@ -32,27 +33,58 @@ const MOVIES: { poster: string; like: boolean }[] = [
 type Phase = 'scatter' | 'stack' | 'swipe';
 
 /* ---- Timing (ms) ---- */
-const SCATTER_DURATION = 1500;  // how long cards stay scattered
-const STACK_TO_SWIPE = 1;    // pause after stacking before swiping starts
-const SWIPE_LIKE_INTERVAL = 1500;   // ms before swiping a like
-const SWIPE_DISLIKE_INTERVAL = 2500; // ms before swiping a dislike
-const SWIPE_ANIM = 0.3;        // seconds for a card to fly off screen
+const SCATTER_DURATION = 1300;
+const STACK_TO_SWIPE = 600;
+const SWIPE_LIKE_INTERVAL = 1500;
+const SWIPE_DISLIKE_INTERVAL = 2500;
+const SWIPE_ANIM = 0.35;
+
+/* ---- Phone frame ---- */
+const PHONE_W = 260;
+const PHONE_RATIO = 1545 / 819;
+const PHONE_H = Math.round(PHONE_W * PHONE_RATIO) - 20; // ~470
+
+/* Phone screen area (% of phone dimensions, measured from iPhone 4 image) */
+const SCR_TOP = 18.8;
+const SCR_LEFT = 8.5;
+const SCR_W_PCT = 82.9;
+const SCR_H_PCT = 65.4;
 
 /* ---- Layout ---- */
 const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
-const STACK_Y = -130;           // shift stack into upper portion
-const VISIBLE_AHEAD = 8;        // cards ahead in stack to render
-const VISIBLE_BEHIND = 3;       // swiped cards still animating off
+const STACK_Y = -80; // phone center offset above viewport center
+/* Phone screen center is ~1.5% below phone center */
+const CARD_STACK_Y = STACK_Y + Math.round(
+  PHONE_H * (SCR_TOP / 100 + SCR_H_PCT / 200 - 0.5),
+) - 2; // nudged down from -22 to -2 (card 20px lower)
+const VISIBLE_AHEAD = 8;
+const VISIBLE_BEHIND = 3;
+const CARD_SCALE_PHONE = 0.86;
+
+/* ---- Clip-path: masks card layer to phone screen area ---- */
+const CLIP_PAD = 8; // expand clip a few px beyond calculated screen to avoid gaps
+const _CLIP_TOP = STACK_Y - PHONE_H * (0.5 - SCR_TOP / 100) - CLIP_PAD;
+const _CLIP_SIDE = PHONE_W * (0.5 - SCR_LEFT / 100) + CLIP_PAD;
+const _CLIP_BOT = -STACK_Y - PHONE_H * (0.5 - (100 - SCR_TOP - SCR_H_PCT) / 100) - CLIP_PAD;
+
+const PHONE_CLIP = `inset(calc(50% + ${_CLIP_TOP.toFixed(1)}px) calc(50% - ${_CLIP_SIDE.toFixed(1)}px) calc(50% + ${_CLIP_BOT.toFixed(1)}px) calc(50% - ${_CLIP_SIDE.toFixed(1)}px) round 6px)`;
+const NO_CLIP = 'inset(0% 0% 0% 0% round 0px)';
 
 export default function Login() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const login = useAuthStore((s) => s.login);
+  const theme = useUIStore((s) => s.theme);
   const [phase, setPhase] = useState<Phase>('scatter');
   const [swipeCount, setSwipeCount] = useState(0);
   const [showDevLogin, setShowDevLogin] = useState(false);
   const [devEmail, setDevEmail] = useState('dev@pickme.mov');
   const [devLoading, setDevLoading] = useState(false);
+
+  /* Dark bg → white phone frame, light bg → black phone frame */
+  const phoneImg = theme === 'dark'
+    ? '/images/iphone-white.png'
+    : '/images/iphone-black.png';
 
   const handleDevLogin = useCallback(async () => {
     setDevLoading(true);
@@ -86,7 +118,10 @@ export default function Login() {
   /* ---- phase timeline ---- */
   useEffect(() => {
     const t1 = setTimeout(() => setPhase('stack'), SCATTER_DURATION);
-    const t2 = setTimeout(() => setPhase('swipe'), SCATTER_DURATION + STACK_TO_SWIPE);
+    const t2 = setTimeout(
+      () => setPhase('swipe'),
+      SCATTER_DURATION + STACK_TO_SWIPE,
+    );
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
@@ -107,14 +142,14 @@ export default function Login() {
   };
 
   const showUI = phase === 'stack' || phase === 'swipe';
+  const showPhone = phase !== 'scatter';
 
   /* ---- build visible card indices ---- */
   const visibleCards: number[] = [];
-  if (phase === 'scatter') {
-    // During scatter, show all original cards
+  if (phase === 'scatter' || phase === 'stack') {
+    /* During scatter + stack fly-in, render ALL cards */
     for (let i = 0; i < MOVIES.length; i++) visibleCards.push(i);
   } else {
-    // During stack/swipe, show a sliding window around swipeCount
     const from = Math.max(0, swipeCount - VISIBLE_BEHIND);
     const to = swipeCount + VISIBLE_AHEAD;
     for (let i = from; i < to; i++) visibleCards.push(i);
@@ -131,35 +166,46 @@ export default function Login() {
         }}
       />
 
-      {/* ---- Cards ---- */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+      {/* ---- Cards layer — clip-path transitions to phone screen ---- */}
+      <div
+        className="absolute inset-0 flex items-center justify-center pointer-events-none"
+        style={{
+          clipPath: showPhone ? PHONE_CLIP : NO_CLIP,
+          transition: 'clip-path 0.8s cubic-bezier(0.22, 1, 0.36, 1)',
+          backgroundColor: showPhone ? '#16161e' : 'transparent',
+        }}
+      >
         {visibleCards.map((vi) => {
           const movie = MOVIES[vi % MOVIES.length];
           const isSwiped = phase === 'swipe' && vi < swipeCount;
-          const depth = vi - swipeCount; // negative = swiped, 0 = top, positive = below
+          const depth = vi - swipeCount;
 
-          const { target, trans } = phase === 'scatter'
-            ? scatterAnim(vi, scatterPos[vi])
-            : isSwiped
-              ? swipedAnim(movie.like)
-              : stackAnim(vi, depth, phase);
+          const { target, trans } =
+            phase === 'scatter'
+              ? scatterAnim(vi, scatterPos[vi])
+              : isSwiped
+                ? swipedAnim(movie.like)
+                : stackAnim(vi, depth, phase);
 
           return (
             <motion.div
               key={vi}
-              className="absolute w-[16.5rem] h-[24rem] rounded-2xl overflow-hidden"
+              className="absolute w-[16.5rem] h-[24rem] overflow-hidden"
               style={{
                 zIndex: 1000 - (vi - swipeCount),
                 willChange: 'transform',
+                borderRadius: phase === 'scatter' ? 16 : 0,
                 backgroundColor: '#16161e',
-                boxShadow: '0 10px 40px rgba(0,0,0,0.6)',
+                boxShadow: phase === 'scatter' ? '0 10px 40px rgba(0,0,0,0.6)' : 'none',
               }}
               initial={{ opacity: 0, scale: 0, x: 0, y: 0, rotate: 0 }}
               animate={target}
               transition={trans}
             >
               <PosterImg src={`${TMDB}${movie.poster}`} />
-              <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/[0.06]" />
+              {phase === 'scatter' && (
+                <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/[0.06]" />
+              )}
 
               {/* Like / Dislike stamp */}
               {isSwiped && (
@@ -180,6 +226,27 @@ export default function Login() {
             </motion.div>
           );
         })}
+      </div>
+
+      {/* ---- Phone frame overlay ---- */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-[1050]">
+        <motion.img
+          src={phoneImg}
+          alt=""
+          style={{
+            width: PHONE_W,
+            height: PHONE_H,
+            filter: 'drop-shadow(0 25px 60px rgba(0,0,0,0.35))',
+          }}
+          initial={{ opacity: 0, scale: 0.85, y: STACK_Y + 30 }}
+          animate={
+            showPhone
+              ? { opacity: 1, scale: 1, y: STACK_Y }
+              : { opacity: 0, scale: 0.85, y: STACK_Y + 30 }
+          }
+          transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+          draggable={false}
+        />
       </div>
 
       {/* ---- Brand & Login — appears once cards stack ---- */}
@@ -295,7 +362,11 @@ export default function Login() {
    Animation helpers
    ================================================================ */
 
-interface ScatterPos { x: number; y: number; rotate: number }
+interface ScatterPos {
+  x: number;
+  y: number;
+  rotate: number;
+}
 
 function scatterAnim(i: number, scatter: ScatterPos) {
   return {
@@ -319,11 +390,11 @@ function scatterAnim(i: number, scatter: ScatterPos) {
 function swipedAnim(like: boolean) {
   return {
     target: {
-      x: like ? 450 : -450,
-      y: STACK_Y - 40,
-      rotate: like ? 18 : -18,
+      x: like ? 180 : -180,
+      y: CARD_STACK_Y - 20,
+      rotate: like ? 12 : -12,
       opacity: 0,
-      scale: 0.9,
+      scale: 0.6,
     },
     trans: {
       duration: SWIPE_ANIM,
@@ -333,13 +404,14 @@ function swipedAnim(like: boolean) {
 }
 
 function stackAnim(i: number, depth: number, phase: Phase) {
+  const isVisible = depth >= 0 && depth < VISIBLE_AHEAD;
   return {
     target: {
       x: Math.sin(i * 4.7) * 1,
-      y: STACK_Y + depth * 2,
+      y: CARD_STACK_Y + depth * 2,
       rotate: 0,
-      opacity: depth < VISIBLE_AHEAD ? 1 : 0,
-      scale: 1 - depth * 0.005,
+      opacity: isVisible ? 1 : 0,
+      scale: CARD_SCALE_PHONE - depth * 0.005,
     },
     trans:
       phase === 'stack'

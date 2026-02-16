@@ -2,6 +2,7 @@
   "nav": {
     "feed": "Стрічка",
     "watchlist": "Обране",
+    "saved": "Збережене",
     "search": "Пошук",
     "profile": "Профіль"
   },
@@ -18,13 +19,38 @@
   "card": {
     "runtime": "{{hours}}г {{minutes}}хв",
     "rating": "Рейтинг",
-    "cast": "Акторський склад",
+    "cast": "Актори",
     "director": "Режисер",
     "overview": "Огляд",
     "providers": "Де дивитись",
     "awards": "Нагороди",
     "winner": "Переможець",
-    "nominated": "Номінант"
+    "nominated": "Номінант",
+    "awardCategory": {
+      "picture": "Найкращий фільм",
+      "director": "Найкращий режисер",
+      "actor": "Найкращий актор",
+      "actress": "Найкраща акторка",
+      "supporting_actor": "Актор другого плану",
+      "supporting_actress": "Акторка другого плану",
+      "original_screenplay": "Оригінальний сценарій",
+      "adapted_screenplay": "Адаптований сценарій",
+      "animated": "Анімаційний фільм",
+      "international": "Міжнародний фільм",
+      "documentary_feature": "Документальний фільм",
+      "documentary_short": "Документальний короткометражний",
+      "short_live_action": "Короткометражний (ігровий)",
+      "short_animated": "Короткометражний (анімаційний)",
+      "score": "Музика",
+      "song": "Пісня",
+      "sound": "Звук",
+      "production_design": "Художнє оформлення",
+      "cinematography": "Операторська робота",
+      "makeup": "Грим та зачіски",
+      "costume_design": "Костюми",
+      "editing": "Монтаж",
+      "visual_effects": "Візуальні ефекти"
+    }
   },
   "filters": {
     "title": "Фільтри",
@@ -46,6 +72,13 @@
     "apply": "Застосувати",
     "reset": "Скинути"
   },
+  "saved": {
+    "title": "Збережене",
+    "watchlist": "Список",
+    "favorites": "Обране",
+    "emptyWatchlist": "Закладок поки немає",
+    "emptyWatchlistHint": "Натисніть закладку на картці, щоб зберегти на потім."
+  },
   "favorites": {
     "title": "Обране",
     "all": "Усі",
@@ -63,8 +96,12 @@
   },
   "search": {
     "placeholder": "Пошук фільмів та акторів...",
-    "movies": "Фільми та серіали",
+    "all": "Все",
+    "movies": "Фільми",
     "people": "Люди",
+    "sortRelevance": "Релевантність",
+    "sortRating": "Рейтинг",
+    "sortPopularity": "Популярність",
     "noResults": "Нічого не знайдено",
     "noResultsHint": "Спробуйте інший запит."
   },
@@ -101,6 +138,7 @@
     "whyRecommended": "Чому рекомендуємо",
     "keywords": "Ключові слова",
     "writers": "Сценаристи",
+    "watchTrailer": "Дивитись трейлер",
     "addToFavorites": "Додати до обраного",
     "inFavorites": "В обраному",
     "markWatched": "Переглянуто",

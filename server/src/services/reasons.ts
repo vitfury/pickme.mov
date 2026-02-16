@@ -53,7 +53,9 @@ export async function generateReasons(
   if (directorPrefs.length > 0 && parseFloat(directorPrefs[0].rawScore || '0') > 2.0) {
     const name = locale === 'uk' ? (directorPrefs[0].nameUk || directorPrefs[0].nameEn) : directorPrefs[0].nameEn;
     const count = directorPrefs[0].interactions || 0;
-    reasons.push(`You liked ${count} other films by ${name}`);
+    reasons.push(locale === 'uk'
+      ? `Вам сподобались ${count} інших фільмів від ${name}`
+      : `You liked ${count} other films by ${name}`);
   }
   if (reasons.length >= MAX_REASONS) return reasons;
 
@@ -81,7 +83,9 @@ export async function generateReasons(
 
   if (actorPrefs.length > 0 && parseFloat(actorPrefs[0].rawScore || '0') > 2.0) {
     const name = locale === 'uk' ? (actorPrefs[0].nameUk || actorPrefs[0].nameEn) : actorPrefs[0].nameEn;
-    reasons.push(`Stars ${name}, who you enjoy`);
+    reasons.push(locale === 'uk'
+      ? `У головній ролі ${name}`
+      : `Stars ${name}, who you enjoy`);
   }
   if (reasons.length >= MAX_REASONS) return reasons;
 
@@ -104,7 +108,9 @@ export async function generateReasons(
     for (const g of contentGenreRows) {
       if (topGenreIds.includes(g.genreId)) {
         const name = locale === 'uk' ? (g.nameUk || g.nameEn) : g.nameEn;
-        reasons.push(`Matches your love of ${name}`);
+        reasons.push(locale === 'uk'
+          ? `Відповідає вашій любові до жанру «${name}»`
+          : `Matches your love of "${name}" genre`);
         break;
       }
     }
@@ -120,7 +126,9 @@ export async function generateReasons(
 
   if (awardRows.length > 0) {
     const hasWon = awardRows.some((a) => a.won);
-    reasons.push(hasWon ? 'Academy Award Winner' : 'Oscar-nominated');
+    reasons.push(locale === 'uk'
+      ? (hasWon ? 'Лауреат премії Оскар' : 'Номінант на Оскар')
+      : (hasWon ? 'Academy Award Winner' : 'Oscar-nominated'));
   }
   if (reasons.length >= MAX_REASONS) return reasons;
 
@@ -148,7 +156,9 @@ export async function generateReasons(
 
   if (collectionPrefs.length > 0 && parseFloat(collectionPrefs[0].rawScore || '0') > 1.0) {
     const name = locale === 'uk' ? (collectionPrefs[0].nameUk || collectionPrefs[0].nameEn) : collectionPrefs[0].nameEn;
-    reasons.push(`From the ${name} collection`);
+    reasons.push(locale === 'uk'
+      ? `З колекції ${name}`
+      : `From the ${name} collection`);
   }
   if (reasons.length >= MAX_REASONS) return reasons;
 
@@ -167,7 +177,9 @@ export async function generateReasons(
     .where(eq(contentKeywords.contentId, contentId));
 
   if (keywordMatches[0] && Number(keywordMatches[0].count) >= 2) {
-    reasons.push('Similar themes to movies you\'ve liked');
+    reasons.push(locale === 'uk'
+      ? 'Схожі теми з фільмами, які вам сподобались'
+      : 'Similar themes to movies you\'ve liked');
   }
   if (reasons.length >= MAX_REASONS) return reasons;
 
@@ -179,7 +191,9 @@ export async function generateReasons(
     .limit(1);
 
   if (contentRow[0] && parseFloat(contentRow[0].baseQualityScore || '0') > 0.7) {
-    reasons.push('Highly rated on TMDB & IMDb');
+    reasons.push(locale === 'uk'
+      ? 'Високий рейтинг на TMDB та IMDb'
+      : 'Highly rated on TMDB & IMDb');
   }
 
   return reasons;

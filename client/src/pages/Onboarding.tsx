@@ -125,13 +125,13 @@ export default function Onboarding() {
             <div className="py-4">
               <Button
                 fullWidth
-                disabled={selectedGenres.length < 3 || selectedGenres.length > 5}
+                disabled={selectedGenres.length < 5 || selectedGenres.length > 10}
                 onClick={goNext}
               >
                 {t('onboarding.next')}
               </Button>
               <p className="text-center text-xs text-text-muted mt-2">
-                {selectedGenres.length}/5
+                {selectedGenres.length}/10
               </p>
             </div>
           </motion.div>

@@ -54,7 +54,7 @@ export default async function watchlistRoutes(app: FastifyInstance) {
       const dir = query.order === 'asc' ? asc : desc;
       switch (query.sort) {
         case 'rating':
-          orderBy = dir(content.tmdbRating);
+          orderBy = dir(content.imdbRating);
           break;
         case 'year':
           orderBy = dir(content.releaseDate);
@@ -76,6 +76,7 @@ export default async function watchlistRoutes(app: FastifyInstance) {
           titleUk: content.titleUk,
           posterPath: content.posterPath,
           releaseDate: content.releaseDate,
+          imdbRating: content.imdbRating,
           tmdbRating: content.tmdbRating,
           contentType: content.contentType,
           watched: userWatchlist.watched,
@@ -111,7 +112,7 @@ export default async function watchlistRoutes(app: FastifyInstance) {
           title: locale === 'uk' ? (item.titleUk || item.titleEn) : item.titleEn,
           posterPath: item.posterPath,
           releaseDate: item.releaseDate,
-          tmdbRating: item.tmdbRating ? parseFloat(item.tmdbRating) : null,
+          imdbRating: item.imdbRating ? parseFloat(item.imdbRating) : item.tmdbRating ? parseFloat(item.tmdbRating) : null,
           contentType: item.contentType,
           watched: item.watched,
           personalRating: item.personalRating,

@@ -2,6 +2,7 @@
   "nav": {
     "feed": "Feed",
     "watchlist": "Favorites",
+    "saved": "Saved",
     "search": "Search",
     "profile": "Profile"
   },
@@ -24,7 +25,32 @@
     "providers": "Where to watch",
     "awards": "Awards",
     "winner": "Winner",
-    "nominated": "Nominated"
+    "nominated": "Nominated",
+    "awardCategory": {
+      "picture": "Best Picture",
+      "director": "Best Director",
+      "actor": "Best Actor",
+      "actress": "Best Actress",
+      "supporting_actor": "Supporting Actor",
+      "supporting_actress": "Supporting Actress",
+      "original_screenplay": "Original Screenplay",
+      "adapted_screenplay": "Adapted Screenplay",
+      "animated": "Animated Feature",
+      "international": "International Film",
+      "documentary_feature": "Documentary Feature",
+      "documentary_short": "Documentary Short",
+      "short_live_action": "Short Film (Live Action)",
+      "short_animated": "Short Film (Animated)",
+      "score": "Original Score",
+      "song": "Original Song",
+      "sound": "Sound",
+      "production_design": "Production Design",
+      "cinematography": "Cinematography",
+      "makeup": "Makeup & Hairstyling",
+      "costume_design": "Costume Design",
+      "editing": "Film Editing",
+      "visual_effects": "Visual Effects"
+    }
   },
   "filters": {
     "title": "Filters",
@@ -46,6 +72,13 @@
     "apply": "Apply",
     "reset": "Reset"
   },
+  "saved": {
+    "title": "Saved",
+    "watchlist": "Watchlist",
+    "favorites": "Favorites",
+    "emptyWatchlist": "No bookmarks yet",
+    "emptyWatchlistHint": "Tap the bookmark icon on feed cards to save for later."
+  },
   "favorites": {
     "title": "Favorites",
     "all": "All",
@@ -63,8 +96,12 @@
   },
   "search": {
     "placeholder": "Search movies and people...",
-    "movies": "Movies & Series",
+    "all": "All",
+    "movies": "Movies",
     "people": "People",
+    "sortRelevance": "Relevance",
+    "sortRating": "Rating",
+    "sortPopularity": "Popularity",
     "noResults": "No results found",
     "noResultsHint": "Try a different search term."
   },
@@ -101,6 +138,7 @@
     "whyRecommended": "Why recommended",
     "keywords": "Keywords",
     "writers": "Writers",
+    "watchTrailer": "Watch Trailer",
     "addToFavorites": "Add to favorites",
     "inFavorites": "In favorites",
     "markWatched": "Mark watched",

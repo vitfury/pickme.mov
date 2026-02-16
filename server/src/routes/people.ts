@@ -103,7 +103,7 @@ export default async function peopleRoutes(app: FastifyInstance) {
       }
 
       const orderBy = query.sort === 'rating'
-        ? desc(content.tmdbRating)
+        ? desc(content.imdbRating)
         : desc(content.releaseDate);
 
       const filmography = await request.db
@@ -113,6 +113,7 @@ export default async function peopleRoutes(app: FastifyInstance) {
           titleUk: content.titleUk,
           posterPath: content.posterPath,
           releaseDate: content.releaseDate,
+          imdbRating: content.imdbRating,
           tmdbRating: content.tmdbRating,
           role: contentPeople.role,
         })
@@ -147,7 +148,7 @@ export default async function peopleRoutes(app: FastifyInstance) {
           title: locale === 'uk' ? (f.titleUk || f.titleEn) : f.titleEn,
           posterPath: f.posterPath,
           releaseDate: f.releaseDate,
-          tmdbRating: f.tmdbRating ? parseFloat(f.tmdbRating) : null,
+          imdbRating: f.imdbRating ? parseFloat(f.imdbRating) : f.tmdbRating ? parseFloat(f.tmdbRating) : null,
           role: f.role,
           inWatchlist: watchlistSet.has(f.contentId),
           swiped: swipeMap.get(f.contentId) || null,

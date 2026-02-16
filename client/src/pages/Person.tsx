@@ -5,13 +5,12 @@ import { usePerson, usePersonFilmography } from '@/api/hooks';
 import { tmdbProfile, tmdbPoster } from '@/utils/image';
 import { formatDate } from '@/utils/format';
 import Badge from '@/components/ui/Badge';
-import Button from '@/components/ui/Button';
 import Spinner from '@/components/ui/Spinner';
 
 export default function Person() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [bioExpanded, setBioExpanded] = useState(false);
 
   const { data: person, isLoading } = usePerson(id ? Number(id) : null);
@@ -105,44 +104,57 @@ export default function Person() {
         </div>
       )}
 
-      {/* Filmography */}
-      {filmography && filmography.items.length > 0 && (
-        <div className="mb-6">
-          <h2 className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">
-            {t('person.filmography')}
-          </h2>
-          <div className="flex gap-3 overflow-x-auto pb-2">
-            {filmography.items.map((item) => (
-              <button
-                key={item.contentId}
-                onClick={() => navigate(`/content/${item.contentId}`)}
-                className="flex-shrink-0 w-24"
-              >
-                <img
-                  src={tmdbPoster(item.posterPath, 'w185')}
-                  alt={item.title}
-                  className="w-24 aspect-[2/3] object-cover rounded-md bg-surface-light"
-                />
-                <p className="text-[11px] text-text mt-1 leading-tight line-clamp-2">
-                  {item.title}
-                </p>
-                <p className="text-[10px] text-text-muted">
-                  {formatDate(item.releaseDate)}
-                </p>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* Filmography grouped by role */}
+      {filmography && filmography.items.length > 0 && (() => {
+        const roleLabels: Record<string, { en: string; uk: string }> = {
+          actor: { en: 'Actor', uk: 'Актор' },
+          director: { en: 'Director', uk: 'Режисер' },
+          writer: { en: 'Writer', uk: 'Сценарист' },
+        };
+        const locale = i18n.language === 'uk' ? 'uk' : 'en';
+        const grouped = new Map<string, typeof filmography.items>();
+        for (const item of filmography.items) {
+          const arr = grouped.get(item.role) || [];
+          arr.push(item);
+          grouped.set(item.role, arr);
+        }
+        // Show knownFor role first, then the rest
+        const roles = [...grouped.keys()].sort((a, b) => {
+          if (a === person?.knownFor) return -1;
+          if (b === person?.knownFor) return 1;
+          return 0;
+        });
 
-      {/* Browse all in feed */}
-      <Button
-        variant="secondary"
-        fullWidth
-        onClick={() => navigate(`/?personId=${id}`)}
-      >
-        {t('person.browseAll')}
-      </Button>
+        return roles.map((role) => (
+          <div key={role} className="mb-6">
+            <h2 className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">
+              {roleLabels[role]?.[locale] || role}
+            </h2>
+            <div className="grid grid-cols-4 gap-x-3 gap-y-4">
+              {grouped.get(role)!.map((item) => (
+                <button
+                  key={item.contentId}
+                  onClick={() => navigate(`/content/${item.contentId}`)}
+                  className="text-left"
+                >
+                  <img
+                    src={tmdbPoster(item.posterPath, 'w185')}
+                    alt={item.title}
+                    className="w-full aspect-[2/3] object-cover rounded-md bg-surface-light"
+                  />
+                  <p className="text-sm text-text mt-1 leading-tight line-clamp-2">
+                    {item.title}
+                  </p>
+                  <p className="text-xs text-text-muted">
+                    {formatDate(item.releaseDate)}
+                  </p>
+                </button>
+              ))}
+            </div>
+          </div>
+        ));
+      })()}
+
     </div>
   );
 }

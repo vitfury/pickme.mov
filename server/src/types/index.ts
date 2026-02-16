@@ -13,6 +13,7 @@ export interface FeedCard {
   tmdbId: number;
   contentType: string;
   title: string;
+  titleEn: string;
   originalTitle: string | null;
   posterPath: string | null;
   backdropPath: string | null;
@@ -20,7 +21,6 @@ export interface FeedCard {
   runtime: number | null;
   certification: string | null;
   productionCountries: string[];
-  tmdbRating: number | null;
   imdbRating: number | null;
   overview: string | null;
   genres: { id: number; name: string; emoji: string | null }[];
@@ -30,6 +30,7 @@ export interface FeedCard {
   providers: { id: number; name: string; logoPath: string | null; type: string }[];
   recommendationReason: string | null;
   feedScore: number;
+  isBookmarked?: boolean;
 }
 
 export interface FeedResponse {
@@ -156,5 +157,16 @@ export interface ContentDetail {
     inWatchlist: boolean;
     watched: boolean;
     personalRating: number | null;
+    isBookmarked: boolean;
   };
+}
+
+export interface BookmarkItem {
+  contentId: number;
+  title: string;
+  posterPath: string | null;
+  releaseDate: string | null;
+  contentType: string;
+  imdbRating: number | null;
+  addedAt: string;
 }

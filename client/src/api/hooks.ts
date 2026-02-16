@@ -9,6 +9,8 @@ import type {
   WatchlistResponse,
   WatchlistFilters,
   WatchlistItem,
+  BookmarkResponse,
+  BookmarkFilters,
   SearchResponse,
   Genre,
   Provider,
@@ -87,6 +89,7 @@ export function useSwipe() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['watchlist'] });
+      queryClient.invalidateQueries({ queryKey: ['bookmarks'] });
     },
   });
 }
@@ -141,14 +144,42 @@ export function useRemoveFromWatchlist() {
   });
 }
 
+// --- Bookmarks ---
+
+export function useBookmarks(filters: BookmarkFilters) {
+  return useQuery<BookmarkResponse>({
+    queryKey: ['bookmarks', filters],
+    queryFn: async () => {
+      const { data } = await api.get('/bookmarks', { params: filters });
+      return data;
+    },
+  });
+}
+
+export function useToggleBookmark() {
+  const queryClient = useQueryClient();
+  return useMutation<{ bookmarked: boolean }, Error, number>({
+    mutationFn: async (contentId) => {
+      const { data } = await api.post('/bookmarks', { contentId });
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bookmarks'] });
+      queryClient.invalidateQueries({ queryKey: ['feed'] });
+      queryClient.invalidateQueries({ queryKey: ['feed-infinite'] });
+    },
+  });
+}
+
 // --- Search ---
 
-export function useSearch(query: string, type?: 'content' | 'person') {
+export function useSearch(query: string, type?: 'content' | 'person', sort?: 'relevance' | 'rating' | 'popularity') {
   return useQuery<SearchResponse>({
-    queryKey: ['search', query, type],
+    queryKey: ['search', query, type, sort],
     queryFn: async () => {
       const params: Record<string, string> = { q: query };
       if (type) params.type = type;
+      if (sort) params.sort = sort;
       const { data } = await api.get('/search', { params });
       return data;
     },
