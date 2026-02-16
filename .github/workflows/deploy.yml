@@ -41,6 +41,5 @@ jobs:
             cp nginx/default.conf nginx/active.conf
             docker compose up --build -d
             docker compose exec -T -w /app/server app node dist/db/migrate.js || true
-            docker compose exec nginx nginx -s reload
             docker image prune -f
 
