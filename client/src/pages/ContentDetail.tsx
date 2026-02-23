@@ -74,17 +74,17 @@ export default function ContentDetail() {
             </div>
           </div>
           <a
-            href={`https://www.youtube.com/results?search_query=${encodeURIComponent((content.originalTitle || content.title) + ' trailer')}`}
+            href={`https://www.youtube.com/results?search_query=${encodeURIComponent(content.title + ' trailer')}`}
             target="_blank"
             rel="noopener noreferrer"
             className="flex flex-col items-center gap-1 flex-shrink-0"
           >
-            <span className="w-11 h-11 flex items-center justify-center rounded-full bg-red-600 text-white shadow-lg">
-              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M10 8.64v6.72L15.27 12 10 8.64zM21.54 7.17s-.21-1.49-.86-2.14c-.82-.87-1.74-.87-2.16-.92C15.48 3.82 12 3.82 12 3.82s-3.48 0-6.52.29c-.42.05-1.34.05-2.16.92-.65.65-.86 2.14-.86 2.14S2.18 8.88 2.18 10.6v1.6c0 1.72.28 3.43.28 3.43s.21 1.49.86 2.14c.82.87 1.74.87 2.16.92 1.57.15 6.52.18 6.52.18s3.48 0 6.52-.29c.42-.05 1.34-.05 2.16-.92.65-.65.86-2.14.86-2.14s.28-1.71.28-3.43v-1.6c0-1.72-.28-3.43-.28-3.43z"/>
+            <span className="w-24 h-16 flex items-center justify-center rounded-xl bg-red-600 text-white shadow-lg">
+              <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M8 5.5v13l11-6.5-11-6.5z"/>
               </svg>
             </span>
-            <span className="text-[10px] text-text-muted font-medium">{t('content.watchTrailer')}</span>
+            <span className="text-xs text-text-muted font-medium">{t('content.watchTrailer')}</span>
           </a>
         </div>
 

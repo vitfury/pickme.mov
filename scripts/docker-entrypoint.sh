@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-# Production entrypoint: run migrations, import seed data if needed, start app
+# Production entrypoint: run migrations, import seed data, start app
 
 SEED_FILE="/app/db/seed-data/seed-data.sql.gz"
 
@@ -9,11 +9,9 @@ echo "Running database migrations..."
 cd /app/server && node dist/db/migrate.js
 cd /app
 
-# Check if content table is empty (first run)
-ROW_COUNT=$(psql "$DATABASE_URL" -t -A -c "SELECT COUNT(*) FROM content;" 2>/dev/null || echo "0")
-
-if [ "$ROW_COUNT" -eq 0 ] && [ -f "$SEED_FILE" ]; then
-  echo "Empty database detected. Importing seed data..."
+# Import seed data (additive — ON CONFLICT DO NOTHING skips existing rows)
+if [ -f "$SEED_FILE" ]; then
+  echo "Importing seed data (additive)..."
 
   gunzip -c "$SEED_FILE" | psql "$DATABASE_URL" --single-transaction -q
 
@@ -30,9 +28,7 @@ SELECT setval('onboarding_seeds_id_seq', COALESCE((SELECT MAX(id) FROM onboardin
 SQL
 
   IMPORTED=$(psql "$DATABASE_URL" -t -A -c "SELECT COUNT(*) FROM content;")
-  echo "Seed data imported: $IMPORTED content rows."
-else
-  echo "Database already has $ROW_COUNT content rows. Skipping seed import."
+  echo "Seed data: $IMPORTED content rows total."
 fi
 
 echo "Starting application..."

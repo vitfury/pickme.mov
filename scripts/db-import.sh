@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Import seed data into the pickme-db Docker container
-# Truncates existing seed data, loads from db/seed-data/seed-data.sql.gz
+# Additive: ON CONFLICT DO NOTHING skips existing rows, inserts only new ones
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
@@ -14,29 +14,7 @@ if [ ! -f "$SEED_FILE" ]; then
   exit 1
 fi
 
-echo "Truncating seed tables..."
-
-docker exec -i "$CONTAINER" psql -U pickme -d pickme <<'SQL'
-TRUNCATE
-  onboarding_seeds,
-  awards,
-  content_providers,
-  content_collections,
-  content_keywords,
-  content_people,
-  content_genres,
-  entity_idf_cache,
-  entity_type_weights,
-  content,
-  streaming_providers,
-  collections,
-  keywords,
-  people,
-  genres
-CASCADE;
-SQL
-
-echo "Importing seed data..."
+echo "Importing seed data (additive — existing rows untouched)..."
 
 gunzip -c "$SEED_FILE" | docker exec -i "$CONTAINER" psql \
   -U pickme \

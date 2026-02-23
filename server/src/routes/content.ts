@@ -163,6 +163,7 @@ export default async function contentRoutes(app: FastifyInstance) {
         certification: c.certification,
         imdbRating: c.imdbRating ? parseFloat(c.imdbRating) : c.tmdbRating ? parseFloat(c.tmdbRating) : null,
         imdbId: c.imdbId,
+        productionCountries: c.productionCountries || [],
         genres: contentGenreRows.map((g) => ({
           id: g.genreId,
           name: locale === 'uk' ? (g.nameUk || g.nameEn) : g.nameEn,

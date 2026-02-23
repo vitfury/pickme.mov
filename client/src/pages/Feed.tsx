@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { motion, useMotionValue, animate as fmAnimate } from 'framer-motion';
+import { motion, useMotionValue, animate as fmAnimate, type AnimationPlaybackControls } from 'framer-motion';
 import { useFeedStore } from '@/stores/feedStore';
 import { useFeedInfinite, useSwipe, useUndo, useToggleBookmark } from '@/api/hooks';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
@@ -16,6 +16,8 @@ interface HistoryEntry {
   cardId?: number;
 }
 
+const NAV_COOLDOWN_MS = 450;
+
 export default function Feed() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -26,11 +28,12 @@ export default function Feed() {
   const [canUndo, setCanUndo] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const isAnimatingRef = useRef(false);
   const actedOnRef = useRef<Set<number>>(new Set());
   const historyRef = useRef<HistoryEntry[]>([]);
   const currentIndexRef = useRef(0);
   const containerHeightRef = useRef(0);
+  const animControlsRef = useRef<AnimationPlaybackControls | null>(null);
+  const lastNavTimeRef = useRef(0);
 
   // Scroll position MotionValue — moves all cards as a group
   const scrollY = useMotionValue(0);
@@ -53,13 +56,20 @@ export default function Feed() {
   // Keep refs in sync
   useEffect(() => { currentIndexRef.current = currentIndex; }, [currentIndex]);
 
+  // Helper: get container height, re-measure if 0
+  const getHeight = useCallback(() => {
+    if (containerHeightRef.current > 0) return containerHeightRef.current;
+    const el = containerRef.current;
+    if (el) containerHeightRef.current = el.clientHeight;
+    return containerHeightRef.current;
+  }, []);
+
   // Measure container height
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
     const measure = () => {
       containerHeightRef.current = el.clientHeight;
-      // Reposition on resize
       scrollY.set(-currentIndexRef.current * containerHeightRef.current);
     };
     measure();
@@ -85,32 +95,42 @@ export default function Feed() {
     return items;
   }, [currentIndex, allCards]);
 
+  // --- Cooldown check (replaces isAnimatingRef) ---
+
+  const canNavigate = useCallback(() => {
+    return Date.now() - lastNavTimeRef.current >= NAV_COOLDOWN_MS;
+  }, []);
+
   // --- Animate scroll to a target index ---
 
   const animateToIndex = useCallback((newIndex: number, instant?: boolean) => {
-    isAnimatingRef.current = true;
+    // Cancel any in-progress animation
+    animControlsRef.current?.stop();
+    animControlsRef.current = null;
+
+    lastNavTimeRef.current = Date.now();
     currentIndexRef.current = newIndex;
     setCurrentIndex(newIndex);
 
-    const target = -newIndex * containerHeightRef.current;
-    if (instant) {
+    const h = getHeight();
+    const target = -newIndex * h;
+
+    if (instant || h === 0) {
       scrollY.set(target);
-      isAnimatingRef.current = false;
       return;
     }
 
-    fmAnimate(scrollY, target, {
+    animControlsRef.current = fmAnimate(scrollY, target, {
       type: 'tween',
       duration: 0.4,
       ease: [0.16, 1, 0.3, 1],
-      onComplete: () => { isAnimatingRef.current = false; },
     });
-  }, [scrollY]);
+  }, [scrollY, getHeight]);
 
   // --- Navigation ---
 
   const goNext = useCallback(() => {
-    if (isAnimatingRef.current) return;
+    if (!canNavigate()) return;
     if (currentIndex >= allCards.length - 1) return;
 
     const currentCard = allCards[currentIndex];
@@ -133,10 +153,10 @@ export default function Feed() {
     if (currentIndex >= allCards.length - 4 && hasNextPage && !isFetchingNextPage) {
       fetchNextPage();
     }
-  }, [currentIndex, allCards, swipeMutation, hasNextPage, isFetchingNextPage, fetchNextPage, animateToIndex]);
+  }, [currentIndex, allCards, swipeMutation, hasNextPage, isFetchingNextPage, fetchNextPage, animateToIndex, canNavigate]);
 
   const goPrev = useCallback(() => {
-    if (isAnimatingRef.current) return;
+    if (!canNavigate()) return;
     if (currentIndex <= 0) return;
 
     historyRef.current.push({
@@ -146,7 +166,7 @@ export default function Feed() {
     setCanUndo(true);
 
     animateToIndex(currentIndex - 1);
-  }, [currentIndex, animateToIndex]);
+  }, [currentIndex, animateToIndex, canNavigate]);
 
   // --- Swipe (like / dislike) ---
 
@@ -179,7 +199,7 @@ export default function Feed() {
 
   const handleUndo = useCallback(async () => {
     if (historyRef.current.length === 0) return;
-    if (isAnimatingRef.current) return;
+    if (!canNavigate()) return;
 
     const entry = historyRef.current.pop()!;
     setCanUndo(historyRef.current.length > 0);
@@ -196,11 +216,14 @@ export default function Feed() {
     }
 
     animateToIndex(entry.previousIndex);
-  }, [undoMutation, animateToIndex]);
+  }, [undoMutation, animateToIndex, canNavigate]);
 
   // --- Vertical drag (from FeedItem) ---
 
   const handleVerticalDrag = useCallback((offsetY: number) => {
+    // Cancel running animation so drag takes over smoothly
+    animControlsRef.current?.stop();
+    animControlsRef.current = null;
     const base = -currentIndexRef.current * containerHeightRef.current;
     scrollY.set(base + offsetY);
   }, [scrollY]);
@@ -208,7 +231,8 @@ export default function Feed() {
   const handleVerticalDragEnd = useCallback(() => {
     // Snap back to current card position
     const target = -currentIndexRef.current * containerHeightRef.current;
-    fmAnimate(scrollY, target, {
+    animControlsRef.current?.stop();
+    animControlsRef.current = fmAnimate(scrollY, target, {
       type: 'spring',
       stiffness: 300,
       damping: 30,
@@ -235,14 +259,14 @@ export default function Feed() {
 
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
-      if (isAnimatingRef.current) return;
+      if (!canNavigate()) return;
       if (e.deltaY > 0) goNext();
       else if (e.deltaY < 0) goPrev();
     };
 
     el.addEventListener('wheel', onWheel, { passive: false });
     return () => el.removeEventListener('wheel', onWheel);
-  }, [goNext, goPrev]);
+  }, [goNext, goPrev, canNavigate]);
 
   // --- Touch navigation ---
 

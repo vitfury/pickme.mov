@@ -9,25 +9,24 @@ import { useUIStore } from '@/stores/uiStore';
 const TMDB = 'https://image.tmdb.org/t/p/w342';
 
 /* ---- Shuffled movie feed: likes & dislikes mixed naturally ---- */
-const MOVIES: { poster: string; like: boolean }[] = [
-  { poster: '/6oom5QYQ2yQTMJIbnvbkBL9cHo6.jpg', like: true },   // LOTR: Fellowship
-  { poster: '/3Gkb6jm6962ADUPaCBqzz9CTbn9.jpg', like: false },  // Twilight
-  { poster: '/jFTVD4XoWQTcg7wdyJKa8PEds5q.jpg', like: true },   // Terminator 2
-  { poster: '/tphkjmQq8WebuVwNXelmjLUXuPJ.jpg', like: false },  // Godzilla
-  { poster: '/3bhkrj58Vtu7enYsRolD1fZdja1.jpg', like: true },   // The Godfather
-  { poster: '/xlaY2zyzMfkhk0HSC5VUwzoZPU1.jpg', like: true },   // Inception
-  { poster: '/zxkY8byBnCsXodEYpK8tmwEGXBI.jpg', like: false },  // The Mummy
-  { poster: '/6FfCtAuVAW8XJjZ7eWeLibRLWTw.jpg', like: true },   // Star Wars
-  { poster: '/ty8TGRuvJLPUmAR1H1nRIsgwvim.jpg', like: true },   // Gladiator
-  { poster: '/sk3FZgh3sRrmr8vyhaitNobMcfh.jpg', like: false },  // Suicide Squad
-  { poster: '/9cqNxx0GxF0bflZmeSMuL5tnGzr.jpg', like: true },   // Shawshank
-  { poster: '/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg', like: true },   // Fight Club
-  { poster: '/9xjZS2rlVxm8SFx8kPC3aIGCOYQ.jpg', like: true },   // Titanic
-  { poster: '/p96dm7sCMn4VYAStA6siNz30G1r.jpg', like: true },   // The Matrix
-  { poster: '/9kKXH6eJpzoFGhCbTN3FVwSQK3n.jpg', like: false },  // King Arthur
-  { poster: '/saHP97rTPS5eLmrLQEcANmKrsFl.jpg', like: true },   // Forrest Gump
-  { poster: '/2Gfjn962aaFSD6eST6QU3oLDZTo.jpg', like: false },  // San Andreas
-  { poster: '/vQWk5YBFWF4bZaofAbv0tShwBvQ.jpg', like: true },   // Pulp Fiction
+const MOVIES: { poster: string; like: boolean; action: 'scroll' | 'swipe'; posY?: string }[] = [
+  { poster: '/tphkjmQq8WebuVwNXelmjLUXuPJ.jpg', like: true, action: 'scroll' },   // Godzilla
+  { poster: '/3bhkrj58Vtu7enYsRolD1fZdja1.jpg', like: true, action: 'scroll' },   // The Godfather
+  { poster: '/3Gkb6jm6962ADUPaCBqzz9CTbn9.jpg', like: false, action: 'swipe' },   // Twilight
+  { poster: '/9kKXH6eJpzoFGhCbTN3FVwSQK3n.jpg', like: true, action: 'scroll' },   // King Arthur
+  { poster: '/xlaY2zyzMfkhk0HSC5VUwzoZPU1.jpg', like: true, action: 'swipe' },    // Inception
+  { poster: '/p96dm7sCMn4VYAStA6siNz30G1r.jpg', like: true, action: 'swipe' },    // The Matrix
+  { poster: '/6oom5QYQ2yQTMJIbnvbkBL9cHo6.jpg', like: true, action: 'swipe' },    // LOTR
+  { poster: '/zxkY8byBnCsXodEYpK8tmwEGXBI.jpg', like: false, action: 'scroll' },  // The Mummy
+  { poster: '/6FfCtAuVAW8XJjZ7eWeLibRLWTw.jpg', like: true, action: 'swipe' },    // Star Wars
+  { poster: '/ty8TGRuvJLPUmAR1H1nRIsgwvim.jpg', like: true, action: 'swipe' },    // Gladiator
+  { poster: '/sk3FZgh3sRrmr8vyhaitNobMcfh.jpg', like: false, action: 'scroll' },  // Suicide Squad
+  { poster: '/9cqNxx0GxF0bflZmeSMuL5tnGzr.jpg', like: true, action: 'swipe' },    // Shawshank
+  { poster: '/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg', like: true, action: 'swipe' },    // Fight Club
+  { poster: '/9xjZS2rlVxm8SFx8kPC3aIGCOYQ.jpg', like: true, action: 'scroll' },   // Titanic
+  { poster: '/saHP97rTPS5eLmrLQEcANmKrsFl.jpg', like: true, action: 'swipe' },    // Forrest Gump
+  { poster: '/2Gfjn962aaFSD6eST6QU3oLDZTo.jpg', like: false, action: 'swipe' },   // San Andreas
+  { poster: '/vQWk5YBFWF4bZaofAbv0tShwBvQ.jpg', like: true, action: 'swipe' },    // Pulp Fiction
 ];
 
 type Phase = 'scatter' | 'stack' | 'swipe';
@@ -37,6 +36,7 @@ const SCATTER_DURATION = 1300;
 const STACK_TO_SWIPE = 600;
 const SWIPE_LIKE_INTERVAL = 1500;
 const SWIPE_DISLIKE_INTERVAL = 2500;
+const SCROLL_INTERVAL = 2000;
 const SWIPE_ANIM = 0.35;
 
 /* ---- Phone frame ---- */
@@ -59,7 +59,7 @@ const CARD_STACK_Y = STACK_Y + Math.round(
 ) - 2; // nudged down from -22 to -2 (card 20px lower)
 const VISIBLE_AHEAD = 8;
 const VISIBLE_BEHIND = 3;
-const CARD_SCALE_PHONE = 0.86;
+const CARD_SCALE_PHONE = 0.81;
 
 /* ---- Clip-path: masks card layer to phone screen area ---- */
 const CLIP_PAD = 8; // expand clip a few px beyond calculated screen to avoid gaps
@@ -76,6 +76,7 @@ export default function Login() {
   const login = useAuthStore((s) => s.login);
   const theme = useUIStore((s) => s.theme);
   const [phase, setPhase] = useState<Phase>('scatter');
+  const [phoneVisible, setPhoneVisible] = useState(false);
   const [swipeCount, setSwipeCount] = useState(0);
   const [showDevLogin, setShowDevLogin] = useState(false);
   const [devEmail, setDevEmail] = useState('dev@pickme.mov');
@@ -118,21 +119,25 @@ export default function Login() {
   /* ---- phase timeline ---- */
   useEffect(() => {
     const t1 = setTimeout(() => setPhase('stack'), SCATTER_DURATION);
-    const t2 = setTimeout(
+    const t2 = setTimeout(() => setPhoneVisible(true), SCATTER_DURATION + 200);
+    const t3 = setTimeout(
       () => setPhase('swipe'),
-      SCATTER_DURATION + STACK_TO_SWIPE,
+      SCATTER_DURATION + 200 + STACK_TO_SWIPE,
     );
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
+      clearTimeout(t3);
     };
   }, []);
 
-  /* ---- endless auto-swipe ---- */
+  /* ---- endless auto-advance ---- */
   useEffect(() => {
     if (phase !== 'swipe') return;
     const current = MOVIES[swipeCount % MOVIES.length];
-    const delay = current.like ? SWIPE_LIKE_INTERVAL : SWIPE_DISLIKE_INTERVAL;
+    const delay = current.action === 'scroll'
+      ? SCROLL_INTERVAL
+      : current.like ? SWIPE_LIKE_INTERVAL : SWIPE_DISLIKE_INTERVAL;
     const timer = setTimeout(() => setSwipeCount((c) => c + 1), delay);
     return () => clearTimeout(timer);
   }, [phase, swipeCount]);
@@ -142,7 +147,7 @@ export default function Login() {
   };
 
   const showUI = phase === 'stack' || phase === 'swipe';
-  const showPhone = phase !== 'scatter';
+  const showPhone = phoneVisible;
 
   /* ---- build visible card indices ---- */
   const visibleCards: number[] = [];
@@ -184,7 +189,7 @@ export default function Login() {
             phase === 'scatter'
               ? scatterAnim(vi, scatterPos[vi])
               : isSwiped
-                ? swipedAnim(movie.like)
+                ? movie.action === 'scroll' ? scrolledAnim() : swipedAnim(movie.like)
                 : stackAnim(vi, depth, phase);
 
           return (
@@ -202,13 +207,13 @@ export default function Login() {
               animate={target}
               transition={trans}
             >
-              <PosterImg src={`${TMDB}${movie.poster}`} />
+              <PosterImg src={`${TMDB}${movie.poster}`} posY={movie.posY} />
               {phase === 'scatter' && (
                 <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/[0.06]" />
               )}
 
-              {/* Like / Dislike stamp */}
-              {isSwiped && (
+              {/* Like / Dislike stamp (swipe only) */}
+              {isSwiped && movie.action === 'swipe' && (
                 <div
                   className={`absolute inset-0 flex items-center justify-center rounded-2xl ${
                     movie.like ? 'bg-like/20' : 'bg-dislike/20'
@@ -387,6 +392,23 @@ function scatterAnim(i: number, scatter: ScatterPos) {
   };
 }
 
+function scrolledAnim() {
+  return {
+    target: {
+      x: 0,
+      y: CARD_STACK_Y - 420,
+      rotate: 0,
+      opacity: 1,
+      scale: CARD_SCALE_PHONE,
+    },
+    trans: {
+      type: 'spring' as const,
+      stiffness: 200,
+      damping: 25,
+    },
+  };
+}
+
 function swipedAnim(like: boolean) {
   return {
     target: {
@@ -429,7 +451,7 @@ function stackAnim(i: number, depth: number, phase: Phase) {
   };
 }
 
-function PosterImg({ src }: { src: string }) {
+function PosterImg({ src, posY }: { src: string; posY?: string }) {
   const [visible, setVisible] = useState(true);
   if (!visible) return null;
   return (
@@ -437,6 +459,7 @@ function PosterImg({ src }: { src: string }) {
       src={src}
       alt=""
       className="absolute inset-0 w-full h-full object-cover"
+      style={posY ? { objectPosition: `center ${posY}` } : undefined}
       loading="eager"
       draggable={false}
       onError={() => setVisible(false)}

@@ -191,6 +191,7 @@ export interface ContentDetail {
   certification: string | null;
   imdbRating: number | null;
   imdbId: string | null;
+  productionCountries: string[];
   genres: Genre[];
   cast: CastMember[];
   directors: Director[];

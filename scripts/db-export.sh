@@ -44,6 +44,7 @@ docker exec "$CONTAINER" pg_dump \
   -d pickme \
   --data-only \
   --column-inserts \
+  --on-conflict-do-nothing \
   --disable-triggers \
   $TABLE_FLAGS \
   | gzip > "$OUTPUT_FILE"
