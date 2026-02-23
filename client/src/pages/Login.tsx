@@ -267,9 +267,6 @@ export default function Login() {
               <span className="text-text">pickme</span>
               <span className="text-accent">.mov</span>
             </h1>
-            <p className="text-text-muted/50 text-[0.65rem] mt-3 tracking-[0.3em] uppercase">
-              {t('login.subtitle')}
-            </p>
           </motion.div>
 
           <motion.div
