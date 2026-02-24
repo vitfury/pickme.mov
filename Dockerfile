@@ -29,6 +29,7 @@ COPY --from=builder /app/package-lock.json ./
 
 COPY db/seed-data/ ./db/seed-data/
 COPY scripts/docker-entrypoint.sh ./scripts/docker-entrypoint.sh
+RUN chmod +x ./scripts/docker-entrypoint.sh
 
 RUN npm ci --workspace=server --omit=dev
 

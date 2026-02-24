@@ -1,6 +1,6 @@
 {
-  "id": "678e978d-3352-4775-b45a-fb84918ef7d6",
-  "prevId": "98a1a14e-98fa-4bde-95bf-8eb135fe934f",
+  "id": "68d0fd4c-d5c3-408b-a135-696c49702118",
+  "prevId": "678e978d-3352-4775-b45a-fb84918ef7d6",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -1449,6 +1449,108 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.user_bookmarks": {
+      "name": "user_bookmarks",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "content_id": {
+          "name": "content_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "user_bookmarks_user_content_unique": {
+          "name": "user_bookmarks_user_content_unique",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "content_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_bookmarks_user": {
+          "name": "idx_bookmarks_user",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "user_bookmarks_user_id_users_id_fk": {
+          "name": "user_bookmarks_user_id_users_id_fk",
+          "tableFrom": "user_bookmarks",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "user_bookmarks_content_id_content_id_fk": {
+          "name": "user_bookmarks_content_id_content_id_fk",
+          "tableFrom": "user_bookmarks",
+          "tableTo": "content",
+          "columnsFrom": [
+            "content_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.user_preferences": {
       "name": "user_preferences",
       "schema": "",
@@ -2068,21 +2170,23 @@
         "actress",
         "supporting_actor",
         "supporting_actress",
-        "screenplay",
-        "cinematography",
-        "score",
-        "song",
+        "original_screenplay",
+        "adapted_screenplay",
         "animated",
         "international",
-        "editing",
-        "production_design",
-        "costume_design",
-        "makeup",
+        "documentary_feature",
+        "documentary_short",
+        "short_live_action",
+        "short_animated",
+        "score",
+        "song",
         "sound",
-        "visual_effects",
-        "documentary",
-        "short_film",
-        "other"
+        "production_design",
+        "cinematography",
+        "makeup",
+        "costume_design",
+        "editing",
+        "visual_effects"
       ]
     },
     "public.content_type": {
