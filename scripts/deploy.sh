@@ -8,10 +8,6 @@ set -euo pipefail
 APP_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$APP_DIR"
 
-# Source nvm if available (VPS setup)
-export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
-[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-
 # --- Base image rebuild detection ---
 NEED_BASE_REBUILD=false
 
@@ -34,15 +30,13 @@ if [ "$NEED_BASE_REBUILD" = true ]; then
   echo "==> Base image rebuilt."
 fi
 
-# --- Host builds ---
-echo "==> Installing dependencies..."
-npm ci
-
-echo "==> Building server..."
-npm run build -w server
-
-echo "==> Building client..."
-npm run build -w client
+# --- Build inside Docker ---
+echo "==> Building server & client inside Docker..."
+docker run --rm \
+  -v "$APP_DIR":/app \
+  -w /app \
+  node:20-alpine \
+  sh -c "npm ci --workspaces && npm run build -w server && npm run build -w client"
 
 # --- Nginx config ---
 cp nginx/default.conf nginx/active.conf
