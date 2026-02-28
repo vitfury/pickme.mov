@@ -1,12 +1,15 @@
 services:
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: app
+    image: pickme-app-base
     container_name: pickme-app
+    command: ["./scripts/docker-entrypoint.sh"]
     expose:
       - "3000"
+    volumes:
+      - ./server/dist:/app/server/dist:ro
+      - ./server/drizzle:/app/server/drizzle:ro
+      - ./db/seed-data:/app/db/seed-data:ro
+      - ./scripts/docker-entrypoint.sh:/app/scripts/docker-entrypoint.sh:ro
     environment:
       - NODE_ENV=production
       - PORT=3000
@@ -45,15 +48,13 @@ services:
     restart: unless-stopped
 
   nginx:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: nginx
+    image: nginx:alpine
     container_name: pickme-nginx
     ports:
       - "80:80"
       - "443:443"
     volumes:
+      - ./client/dist:/usr/share/nginx/html:ro
       - ./nginx/active.conf:/etc/nginx/conf.d/default.conf:ro
       - certbot-webroot:/var/www/certbot:ro
       - certbot-certs:/etc/letsencrypt:ro

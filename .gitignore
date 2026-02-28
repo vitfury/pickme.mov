@@ -26,3 +26,8 @@ scripts/.seed-progress.json
 
 # Docker
 logs/
+
+# Deploy marker files
+.base-image-built
+.base-image-lockfile
+.base-image-server-pkg
