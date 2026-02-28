@@ -38,6 +38,9 @@ docker run --rm \
   node:20-alpine \
   sh -c "npm ci --workspaces && npm run build -w server && npm run build -w client"
 
+# --- Ensure scripts are executable ---
+chmod +x scripts/docker-entrypoint.sh
+
 # --- Nginx config ---
 cp nginx/default.conf nginx/active.conf
 
