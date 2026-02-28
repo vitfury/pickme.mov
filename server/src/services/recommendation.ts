@@ -128,11 +128,13 @@ export async function generateFeed(
   if (filters.certification && filters.certification.length > 0) {
     conditions.push(inArray(content.certification, filters.certification));
   }
+  let countryCondition: any;
   if (filters.countries && filters.countries.length > 0) {
-    conditions.push(sql`${content.productionCountries} && ARRAY[${sql.join(filters.countries.map(c => sql`${c}`), sql`, `)}]::text[]`);
+    countryCondition = sql`${content.productionCountries} && ARRAY[${sql.join(filters.countries.map(c => sql`${c}`), sql`, `)}]::text[]`;
   } else {
-    conditions.push(sql`NOT (${content.productionCountries} && ARRAY[${sql.join(DEFAULT_EXCLUDED_COUNTRIES.map(c => sql`${c}`), sql`, `)}]::text[])`);
+    countryCondition = sql`NOT (${content.productionCountries} && ARRAY[${sql.join(DEFAULT_EXCLUDED_COUNTRIES.map(c => sql`${c}`), sql`, `)}]::text[])`;
   }
+  conditions.push(countryCondition);
 
   // Fetch unseen content with base quality scores (fetch more than needed for diversity)
   const offset = filters.offset || 0;
@@ -223,7 +225,23 @@ export async function generateFeed(
     .orderBy(desc(content.baseQualityScore))
     .limit(fetchLimit);
 
-  if (unseenContent.length === 0) {
+  // Fetch a separate pool of Ukrainian movies (they rank low on quality due to
+  // popularity/revenue metrics, so they'd never appear in the main pool naturally)
+  const uaConditions = conditions
+    .filter((c) => c !== countryCondition)
+    .concat(sql`${content.productionCountries} && ARRAY['UA']::text[]`);
+  const uaPool = await db
+    .select({
+      id: content.id,
+      baseQualityScore: content.baseQualityScore,
+      releaseDate: content.releaseDate,
+    })
+    .from(content)
+    .where(and(...uaConditions))
+    .orderBy(desc(content.baseQualityScore))
+    .limit(20);
+
+  if (unseenContent.length === 0 && uaPool.length === 0) {
     return { cards: [], remaining: 0, maturityScore, offset: 0 };
   }
 
@@ -249,8 +267,17 @@ export async function generateFeed(
     .slice(0, 3)
     .map((p) => p.entityId);
 
+  // Merge main + UA pools for scoring (deduplicate in case of overlap)
+  const allContent = [...unseenContent];
+  const mainIds = new Set(unseenContent.map((c) => c.id));
+  const uaIds = new Set<number>();
+  for (const ua of uaPool) {
+    uaIds.add(ua.id);
+    if (!mainIds.has(ua.id)) allContent.push(ua);
+  }
+
   // Score each piece of unseen content
-  const contentIds = unseenContent.map((c) => c.id);
+  const contentIds = allContent.map((c) => c.id);
 
   // Batch fetch all entity links for scoring
   const [genreLinks, peopleLinks, keywordLinks, collectionLinks] = await Promise.all([
@@ -300,7 +327,7 @@ export async function generateFeed(
   const now = Date.now();
   const scored: ScoredContent[] = [];
 
-  for (const item of unseenContent) {
+  for (const item of allContent) {
     let totalSignal = 0;
     let matchingEntities = 0;
     let explorationBonus = 0;
@@ -411,6 +438,12 @@ export async function generateFeed(
     .filter((s) => s.baseQuality >= 0.6 && s.personalizationScore < 0.3)
     .sort((a, b) => b.baseQuality - a.baseQuality);
 
+  // Build Ukrainian movie pool (sorted by feed score) for periodic injection
+  const uaScoredPool = scored
+    .filter((s) => uaIds.has(s.id))
+    .sort((a, b) => b.feedScore - a.feedScore);
+  let uaPoolIdx = 0;
+
   // Apply session diversity (no 3+ same director/franchise in a row)
   const diverseResults: ScoredContent[] = [];
   const recentDirectors: number[] = [];
@@ -418,6 +451,15 @@ export async function generateFeed(
   let candidateIdx = 0;
 
   for (let pos = 0; pos < limit && candidateIdx < scored.length; pos++) {
+    // Every 10th card is a Ukrainian movie
+    if (pos > 0 && pos % 10 === 9 && uaPoolIdx < uaScoredPool.length) {
+      const uaCard = uaScoredPool[uaPoolIdx++];
+      if (!diverseResults.includes(uaCard)) {
+        diverseResults.push(uaCard);
+        continue;
+      }
+    }
+
     // Every 5th card is a discovery pick — a great movie outside the user's bubble
     if (pos > 0 && pos % 5 === 4) {
       const discoveryCard = discoveryPool.find((s) => !diverseResults.includes(s));

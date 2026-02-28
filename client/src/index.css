@@ -72,3 +72,12 @@ body {
   background: var(--color-surface-light);
   border-radius: 2px;
 }
+
+/* PWA safe area utilities for iPhone notch/Dynamic Island */
+.safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
