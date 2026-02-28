@@ -140,17 +140,6 @@ export async function generateFeed(
   const offset = filters.offset || 0;
   const fetchLimit = (limit + offset) * 5;
 
-  let unseenQuery = db
-    .select({
-      id: content.id,
-      baseQualityScore: content.baseQualityScore,
-      releaseDate: content.releaseDate,
-    })
-    .from(content)
-    .where(and(...conditions))
-    .orderBy(desc(content.baseQualityScore))
-    .limit(fetchLimit);
-
   // Sub-filter by genre IDs
   if (filters.genres && filters.genres.length > 0) {
     const genreContentIds = await db
@@ -329,7 +318,7 @@ export async function generateFeed(
 
   for (const item of allContent) {
     let totalSignal = 0;
-    let matchingEntities = 0;
+
     let explorationBonus = 0;
 
     // Genre signals
@@ -343,7 +332,7 @@ export async function generateFeed(
         const daysSinceUpdate = (now - new Date(pref.lastUpdated!).getTime()) / (1000 * 60 * 60 * 24);
         const timeDecay = Math.exp(-0.01 * daysSinceUpdate);
         totalSignal += rawScore * tw * idf * timeDecay;
-        matchingEntities++;
+
       } else {
         // Underexplored genre bonus
         if (!topGenrePrefs.includes(g.genreId)) {
@@ -366,7 +355,7 @@ export async function generateFeed(
         const timeDecay = Math.exp(-0.01 * daysSinceUpdate);
         const billingFactor = (entityType === 'actor' && p.billingOrder && p.billingOrder > 3) ? 0.5 : 1.0;
         totalSignal += rawScore * tw * idf * timeDecay * billingFactor;
-        matchingEntities++;
+
       }
     }
 
@@ -381,7 +370,7 @@ export async function generateFeed(
         const daysSinceUpdate = (now - new Date(pref.lastUpdated!).getTime()) / (1000 * 60 * 60 * 24);
         const timeDecay = Math.exp(-0.01 * daysSinceUpdate);
         totalSignal += rawScore * tw * idf * timeDecay;
-        matchingEntities++;
+
       }
     }
 
@@ -397,7 +386,7 @@ export async function generateFeed(
         const daysSinceUpdate = (now - new Date(pref.lastUpdated!).getTime()) / (1000 * 60 * 60 * 24);
         const timeDecay = Math.exp(-0.01 * daysSinceUpdate);
         totalSignal += rawScore * tw * idf * timeDecay;
-        matchingEntities++;
+
       }
     }
 
@@ -412,11 +401,11 @@ export async function generateFeed(
         const daysSinceUpdate = (now - new Date(pref.lastUpdated!).getTime()) / (1000 * 60 * 60 * 24);
         const timeDecay = Math.exp(-0.01 * daysSinceUpdate);
         totalSignal += rawScore * tw * idf * timeDecay;
-        matchingEntities++;
+
       }
     }
 
-    const personalizationScore = totalSignal / Math.max(1, matchingEntities);
+    const personalizationScore = totalSignal;
     const baseQuality = parseFloat(item.baseQualityScore || '0');
     const randomFactor = Math.random() * 0.20 * 0.10;
 
