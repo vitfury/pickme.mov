@@ -8,10 +8,6 @@ set -euo pipefail
 APP_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$APP_DIR"
 
-echo "==> Pulling latest code..."
-git fetch origin main
-git reset --hard origin/main
-
 # Source nvm if available (VPS setup)
 export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
