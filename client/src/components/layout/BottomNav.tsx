@@ -12,7 +12,7 @@ export default function BottomNav() {
   const { t } = useTranslation();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-surface/95 backdrop-blur-sm border-t border-border safe-bottom">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-surface/95 backdrop-blur-sm border-t border-border">
       <div className="flex items-center justify-around h-14 max-w-lg mx-auto">
         {navItems.map(({ to, labelKey, icon: Icon }) => (
           <NavLink
@@ -30,6 +30,7 @@ export default function BottomNav() {
           </NavLink>
         ))}
       </div>
+      <div className="safe-bottom-spacer" />
     </nav>
   );
 }
