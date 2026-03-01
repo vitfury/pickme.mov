@@ -139,7 +139,7 @@ export default function FeedItem({ card, onSwipe, onNavigate, onVerticalDrag, on
         <img
           src={tmdbPoster(card.posterPath, 'w780')}
           alt={card.title}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-full w-auto max-w-none"
+          className="absolute inset-0 w-full h-full object-cover"
           draggable={false}
         />
 
