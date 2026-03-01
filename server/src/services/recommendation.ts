@@ -113,9 +113,9 @@ export async function generateFeed(
   if (filters.yearMax) {
     conditions.push(sql`EXTRACT(YEAR FROM ${content.releaseDate}) <= ${filters.yearMax}`);
   }
-  conditions.push(sql`COALESCE(${content.imdbRating}::numeric, 0) >= ${filters.ratingMin ?? DEFAULT_RATING_MIN}`);
+  conditions.push(sql`COALESCE(${content.imdbRating}::numeric, ${content.tmdbRating}::numeric, 0) >= ${filters.ratingMin ?? DEFAULT_RATING_MIN}`);
   if (filters.ratingMax) {
-    conditions.push(sql`COALESCE(${content.imdbRating}::numeric, 10) <= ${filters.ratingMax}`);
+    conditions.push(sql`COALESCE(${content.imdbRating}::numeric, ${content.tmdbRating}::numeric, 10) <= ${filters.ratingMax}`);
   }
   const runtimeMin = filters.runtimeMin ?? DEFAULT_RUNTIME_MIN;
   const runtimeMax = filters.runtimeMax ?? DEFAULT_RUNTIME_MAX;
