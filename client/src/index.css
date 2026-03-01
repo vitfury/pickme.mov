@@ -93,7 +93,7 @@ body {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
-.safe-bottom-spacer {
-  height: constant(safe-area-inset-bottom);
-  height: env(safe-area-inset-bottom);
+.safe-bottom-half {
+  padding-bottom: calc(constant(safe-area-inset-bottom) / 3);
+  padding-bottom: calc(env(safe-area-inset-bottom) / 3);
 }
