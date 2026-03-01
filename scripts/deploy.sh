@@ -30,6 +30,9 @@ if [ "$NEED_BASE_REBUILD" = true ]; then
   echo "==> Base image rebuilt."
 fi
 
+# --- Write git hash for client version display ---
+git rev-parse --short HEAD > .git-hash
+
 # --- Build inside Docker ---
 echo "==> Building server & client inside Docker..."
 docker run --rm \

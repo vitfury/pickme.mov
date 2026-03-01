@@ -235,6 +235,11 @@ export default function Profile() {
         </Button>
       </div>
 
+      {/* Version */}
+      <p className="text-[10px] text-text-muted/50 text-center pt-2">
+        {__APP_VERSION__} &middot; {new Date(__BUILD_TIME__).toLocaleString()}
+      </p>
+
       {/* Reset confirmation modal */}
       <Modal
         open={resetModalOpen}
