@@ -16,7 +16,7 @@ export default function TopBar() {
   const setFilterDrawerOpen = useUIStore((s) => s.setFilterDrawerOpen);
 
   return (
-    <header className="relative z-40 bg-bg backdrop-blur-md safe-top">
+    <header className="relative z-40 bg-bg backdrop-blur-md">
       <div className="flex items-center justify-between px-4 h-12 max-w-lg mx-auto">
         <div className="flex gap-1">
           {tabs.map(({ key, labelKey }) => (

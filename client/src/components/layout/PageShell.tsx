@@ -10,7 +10,7 @@ export default function PageShell() {
   const isFeed = location.pathname === FEED_PATH;
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full safe-top">
       {isFeed && <TopBar />}
       <main className={isFeed ? 'flex-1 min-h-0' : 'flex-1 overflow-y-auto pb-16'}>
         <Outlet />
