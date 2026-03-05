@@ -23,14 +23,14 @@ export default function Feed() {
   const navigate = useNavigate();
   const contentType = useFeedStore((s) => s.contentType);
   const activeFilters = useFeedStore((s) => s.activeFilters);
-
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const currentIndex = useFeedStore((s) => s.currentIndex);
+  const setCurrentIndex = useFeedStore((s) => s.setCurrentIndex);
   const [canUndo, setCanUndo] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const actedOnRef = useRef<Set<number>>(new Set());
   const historyRef = useRef<HistoryEntry[]>([]);
-  const currentIndexRef = useRef(0);
+  const currentIndexRef = useRef(currentIndex);
   const containerHeightRef = useRef(0);
   const animControlsRef = useRef<AnimationPlaybackControls | null>(null);
   const lastNavTimeRef = useRef(0);

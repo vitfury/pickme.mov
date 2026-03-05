@@ -72,24 +72,24 @@ export async function generateFeed(
 
   // Get content IDs to exclude from feed:
   // - Permanently exclude: like, dislike
-  // - Exclude today's skips (they naturally reappear on future days)
+  // - Exclude skips for 30 days (they reappear after cooldown)
   const permanentSwipes = await db
     .select({ contentId: userSwipes.contentId })
     .from(userSwipes)
     .where(and(eq(userSwipes.userId, userId), ne(userSwipes.action, 'skip')));
 
-  const todaySkips = await db
+  const recentSkips = await db
     .select({ contentId: userSwipes.contentId })
     .from(userSwipes)
     .where(and(
       eq(userSwipes.userId, userId),
       eq(userSwipes.action, 'skip'),
-      sql`${userSwipes.createdAt}::date = CURRENT_DATE`,
+      sql`${userSwipes.createdAt} >= NOW() - INTERVAL '30 days'`,
     ));
 
   const swipedIds = [
     ...permanentSwipes.map((r) => r.contentId),
-    ...todaySkips.map((r) => r.contentId),
+    ...recentSkips.map((r) => r.contentId),
   ];
 
   // Build base query conditions for unseen content

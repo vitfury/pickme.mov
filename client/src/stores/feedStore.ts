@@ -11,11 +11,13 @@ interface FeedState {
   contentType: ContentType;
   swipedCardIds: Set<number>;
   lastSwipe: LastSwipe | null;
+  currentIndex: number;
   setFilters: (filters: FeedFilters) => void;
   setContentType: (type: ContentType) => void;
   addSwipedCard: (id: number) => void;
   removeSwipedCard: (id: number) => void;
   setLastSwipe: (swipe: LastSwipe | null) => void;
+  setCurrentIndex: (index: number) => void;
   clearSwiped: () => void;
 }
 
@@ -24,10 +26,11 @@ export const useFeedStore = create<FeedState>()((set) => ({
   contentType: 'movie',
   swipedCardIds: new Set(),
   lastSwipe: null,
+  currentIndex: 0,
 
-  setFilters: (filters) => set({ activeFilters: filters, swipedCardIds: new Set() }),
+  setFilters: (filters) => set({ activeFilters: filters, swipedCardIds: new Set(), currentIndex: 0 }),
 
-  setContentType: (type) => set({ contentType: type, swipedCardIds: new Set() }),
+  setContentType: (type) => set({ contentType: type, swipedCardIds: new Set(), currentIndex: 0 }),
 
   addSwipedCard: (id) =>
     set((state) => {
@@ -45,5 +48,7 @@ export const useFeedStore = create<FeedState>()((set) => ({
 
   setLastSwipe: (swipe) => set({ lastSwipe: swipe }),
 
-  clearSwiped: () => set({ swipedCardIds: new Set(), lastSwipe: null }),
+  setCurrentIndex: (index) => set({ currentIndex: index }),
+
+  clearSwiped: () => set({ swipedCardIds: new Set(), lastSwipe: null, currentIndex: 0 }),
 }));
