@@ -42,7 +42,7 @@ export interface FeedResponse {
 
 export interface SwipeResponse {
   success: boolean;
-  addedToWatchlist: boolean;
+  isWatched: boolean;
   maturityScore: number;
   preferencesUpdated: string[];
 }

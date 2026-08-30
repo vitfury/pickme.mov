@@ -1,5 +1,8 @@
 export type ContentType = 'movie' | 'series' | 'animation';
 export type SwipeAction = 'like' | 'dislike' | 'skip';
+// What the API may report for a title: the three swipe verbs, plus 'watched'
+// for a viewing recorded without an opinion (e.g. through the MCP server).
+export type ContentAction = SwipeAction | 'watched';
 export type PersonRole = 'actor' | 'director' | 'writer';
 export type ProviderType = 'flatrate' | 'rent' | 'buy';
 export type AwardCategory =
@@ -97,7 +100,7 @@ export interface FeedResponse {
 
 export interface SwipeResponse {
   success: boolean;
-  addedToWatchlist: boolean;
+  isWatched: boolean;
   maturityScore: number;
   preferencesUpdated: string[];
 }
@@ -118,21 +121,13 @@ export interface WatchlistItem {
   releaseDate: string;
   imdbRating: number | null;
   contentType: ContentType;
-  watched: boolean;
-  personalRating: number | null;
-  watchedDate: string | null;
-  notes: string | null;
+  watchedAt: string | null;
   addedAt: string;
 }
 
 export interface WatchlistResponse {
   items: WatchlistItem[];
   total: number;
-  counts: {
-    all: number;
-    watched: number;
-    unwatched: number;
-  };
 }
 
 export interface SearchContentResult {
@@ -174,7 +169,7 @@ export interface FilmographyItem {
   imdbRating: number | null;
   role: PersonRole;
   inWatchlist: boolean;
-  swiped: SwipeAction | null;
+  swiped: ContentAction | null;
 }
 
 export interface ContentDetail {
@@ -202,10 +197,9 @@ export interface ContentDetail {
   collections: { id: number; name: string }[];
   recommendationReasons: string[];
   userStatus: {
-    swiped: SwipeAction | null;
+    swiped: ContentAction | null;
     inWatchlist: boolean;
     watched: boolean;
-    personalRating: number | null;
     isBookmarked: boolean;
   };
 }
@@ -281,8 +275,7 @@ export interface FeedFilters {
 }
 
 export interface WatchlistFilters {
-  filter?: 'all' | 'watched' | 'unwatched';
-  sort?: 'added' | 'rating' | 'year' | 'personal_rating' | 'title';
+  sort?: 'added' | 'rating' | 'year' | 'title';
   order?: 'asc' | 'desc';
   contentType?: ContentType;
   page?: number;
@@ -310,4 +303,17 @@ export interface BookmarkFilters {
   contentType?: ContentType;
   page?: number;
   limit?: number;
+}
+
+export interface ApiKey {
+  id: number;
+  name: string;
+  keyPrefix: string;
+  lastUsedAt: string | null;
+  createdAt: string | null;
+}
+
+// The plaintext key is present only in the response that created it
+export interface CreatedApiKey extends ApiKey {
+  key: string;
 }

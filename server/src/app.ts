@@ -19,6 +19,8 @@ import usersRoutes from './routes/users.js';
 import onboardingRoutes from './routes/onboarding.js';
 import contentRoutes from './routes/content.js';
 import bookmarkRoutes from './routes/bookmarks.js';
+import apiKeyRoutes from './routes/api-keys.js';
+import mcpRoutes from './routes/mcp.js';
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -83,7 +85,12 @@ export async function buildApp(): Promise<FastifyInstance> {
     await api.register(onboardingRoutes, { prefix: '/onboarding' });
     await api.register(contentRoutes, { prefix: '/content' });
     await api.register(bookmarkRoutes, { prefix: '/bookmarks' });
+    await api.register(apiKeyRoutes, { prefix: '/api-keys' });
   }, { prefix: '/api/v1' });
+
+  // MCP lives outside /api/v1: it is addressed by clients as a bare endpoint
+  // URL and authenticates with an API key rather than the session cookie.
+  await app.register(mcpRoutes, { prefix: '/mcp' });
 
   // Global error handler
   app.setErrorHandler((error: FastifyError, request, reply) => {

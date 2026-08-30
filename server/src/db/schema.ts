@@ -14,14 +14,13 @@ import {
   primaryKey,
   uniqueIndex,
   index,
-  check,
 } from 'drizzle-orm/pg-core';
-import { relations, sql } from 'drizzle-orm';
+import { relations } from 'drizzle-orm';
 
 // ─── Enums ───────────────────────────────────────────────────────────────────
 
 export const contentTypeEnum = pgEnum('content_type', ['movie', 'series', 'animation']);
-export const swipeActionEnum = pgEnum('swipe_action', ['like', 'dislike', 'skip']);
+export const swipeActionEnum = pgEnum('swipe_action', ['like', 'dislike', 'skip', 'watched']);
 export const personRoleEnum = pgEnum('person_role', ['actor', 'director', 'writer']);
 export const providerTypeEnum = pgEnum('provider_type', ['flatrate', 'rent', 'buy']);
 export const entityTypeEnum = pgEnum('entity_type', [
@@ -241,6 +240,11 @@ export const userSwipes = pgTable('user_swipes', {
   contentId: integer('content_id').notNull().references(() => content.id, { onDelete: 'cascade' }),
   action: swipeActionEnum('action').notNull(),
   contentType: contentTypeEnum('content_type').notNull(),
+  // Seen-it axis, independent of the opinion axis above. A like or a dislike
+  // both imply the title was watched; 'skip' does not, and 'watched' records a
+  // viewing with no opinion attached (how the MCP server marks a title seen).
+  isWatched: boolean('is_watched').notNull().default(false),
+  watchedAt: timestamp('watched_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 }, (table) => [
   uniqueIndex('user_swipes_user_content_unique').on(table.userId, table.contentId),
@@ -248,6 +252,7 @@ export const userSwipes = pgTable('user_swipes', {
   index('idx_user_swipes_user_action').on(table.userId, table.action),
   index('idx_user_swipes_user_type').on(table.userId, table.contentType),
   index('idx_user_swipes_created').on(table.userId, table.createdAt),
+  index('idx_user_swipes_user_watched').on(table.userId, table.isWatched),
 ]);
 
 // ─── User Preferences ────────────────────────────────────────────────────────
@@ -265,27 +270,6 @@ export const userPreferences = pgTable('user_preferences', {
   index('idx_user_prefs_lookup').on(table.userId, table.entityType, table.entityId),
 ]);
 
-// ─── User Watchlist ──────────────────────────────────────────────────────────
-
-export const userWatchlist = pgTable('user_watchlist', {
-  id: serial('id').primaryKey(),
-  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  contentId: integer('content_id').notNull().references(() => content.id, { onDelete: 'cascade' }),
-  watched: boolean('watched').default(false),
-  personalRating: smallint('personal_rating'),
-  watchedDate: date('watched_date'),
-  notes: text('notes'),
-  sortOrder: integer('sort_order'),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
-}, (table) => [
-  uniqueIndex('user_watchlist_user_content_unique').on(table.userId, table.contentId),
-  index('idx_watchlist_user').on(table.userId),
-  index('idx_watchlist_user_watched').on(table.userId, table.watched),
-  index('idx_watchlist_user_order').on(table.userId, table.sortOrder),
-  check('personal_rating_check', sql`personal_rating BETWEEN 1 AND 10`),
-]);
-
 // ─── User Bookmarks ─────────────────────────────────────────────────────────
 
 export const userBookmarks = pgTable('user_bookmarks', {
@@ -296,6 +280,24 @@ export const userBookmarks = pgTable('user_bookmarks', {
 }, (table) => [
   uniqueIndex('user_bookmarks_user_content_unique').on(table.userId, table.contentId),
   index('idx_bookmarks_user').on(table.userId),
+]);
+
+// ─── API Keys ────────────────────────────────────────────────────────────────
+
+// Bearer credentials for the MCP server. Only the SHA-256 hash is stored; the
+// plaintext key is shown to the user exactly once, at creation.
+export const apiKeys = pgTable('api_keys', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  name: varchar('name', { length: 100 }).notNull(),
+  keyPrefix: varchar('key_prefix', { length: 20 }).notNull(),
+  keyHash: varchar('key_hash', { length: 64 }).notNull(),
+  lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
+  revokedAt: timestamp('revoked_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+}, (table) => [
+  uniqueIndex('api_keys_hash_unique').on(table.keyHash),
+  index('idx_api_keys_user').on(table.userId),
 ]);
 
 // ─── Entity IDF Cache ────────────────────────────────────────────────────────
@@ -331,7 +333,6 @@ export const entityTypeWeights = pgTable('entity_type_weights', {
 export const usersRelations = relations(users, ({ many }) => ({
   swipes: many(userSwipes),
   preferences: many(userPreferences),
-  watchlist: many(userWatchlist),
   bookmarks: many(userBookmarks),
 }));
 
@@ -343,7 +344,6 @@ export const contentRelations = relations(content, ({ many }) => ({
   providers: many(contentProviders),
   awards: many(awards),
   swipes: many(userSwipes),
-  watchlistEntries: many(userWatchlist),
   bookmarks: many(userBookmarks),
   onboardingSeeds: many(onboardingSeeds),
 }));
@@ -408,11 +408,6 @@ export const userPreferencesRelations = relations(userPreferences, ({ one }) => 
   user: one(users, { fields: [userPreferences.userId], references: [users.id] }),
 }));
 
-export const userWatchlistRelations = relations(userWatchlist, ({ one }) => ({
-  user: one(users, { fields: [userWatchlist.userId], references: [users.id] }),
-  content: one(content, { fields: [userWatchlist.contentId], references: [content.id] }),
-}));
-
 export const userBookmarksRelations = relations(userBookmarks, ({ one }) => ({
   user: one(users, { fields: [userBookmarks.userId], references: [users.id] }),
   content: one(content, { fields: [userBookmarks.contentId], references: [content.id] }),
@@ -420,4 +415,8 @@ export const userBookmarksRelations = relations(userBookmarks, ({ one }) => ({
 
 export const onboardingSeedsRelations = relations(onboardingSeeds, ({ one }) => ({
   content: one(content, { fields: [onboardingSeeds.contentId], references: [content.id] }),
+}));
+
+export const apiKeysRelations = relations(apiKeys, ({ one }) => ({
+  user: one(users, { fields: [apiKeys.userId], references: [users.id] }),
 }));

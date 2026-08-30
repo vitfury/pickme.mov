@@ -30,8 +30,22 @@
 - Session diversity: no 3+ same-director/franchise in a row
 - Exploration: every ~8th card from underexplored genres
 
-### "Seen It Already" Action
-- NO separate action. Users should like or dislike watched movies to train the algorithm.
+### Watched vs. Liked (revised)
+Opinion and viewing are two axes, and the app records both on one row per title
+(`user_swipes`):
+- A **like or dislike means the user has seen it** — you cannot judge what you
+  have not watched — so either one sets `is_watched`. A dislike also covers "not
+  interested, never going to watch it"; that is deliberate, and the cost is that
+  a dislike is not proof of a viewing.
+- **Skip** says nothing about either axis and returns after 30 days.
+- **`watched`** is a fourth action for a viewing with no opinion attached. Only
+  the MCP server writes it, for the history the user accumulated before this app
+  existed.
+- Anything `is_watched` is excluded from the feed and from MCP search by default.
+
+Superseded: the original decision had no "seen it" concept at all, and the
+`watched` flag lived inside the favourites list, so only liked titles could be
+marked. Favourites are now simply the liked swipes — there is no separate table.
 
 ### "Why Recommended" Transparency
 - Show recommendation reasons in the detail view (pull-down), NOT on the card face

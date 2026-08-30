@@ -7,7 +7,6 @@ import {
   content,
   awards,
   userSwipes,
-  userWatchlist,
   users,
 } from '../db/schema.js';
 
@@ -132,15 +131,10 @@ export default async function peopleRoutes(app: FastifyInstance) {
             .where(and(eq(userSwipes.userId, request.userId), inArray(userSwipes.contentId, contentIds)))
         : [];
 
-      const watchlistItems = contentIds.length > 0
-        ? await request.db
-            .select({ contentId: userWatchlist.contentId })
-            .from(userWatchlist)
-            .where(and(eq(userWatchlist.userId, request.userId), inArray(userWatchlist.contentId, contentIds)))
-        : [];
-
       const swipeMap = new Map(swipes.map((s) => [s.contentId, s.action]));
-      const watchlistSet = new Set(watchlistItems.map((w) => w.contentId));
+      const watchlistSet = new Set(
+        swipes.filter((s) => s.action === 'like').map((s) => s.contentId),
+      );
 
       return {
         items: filmography.map((f) => ({

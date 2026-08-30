@@ -1,7 +1,7 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, sql } from 'drizzle-orm';
 import { z } from 'zod';
-import { userSwipes, content, users, userWatchlist, userBookmarks } from '../db/schema.js';
+import { userSwipes, content, users, userBookmarks } from '../db/schema.js';
 import { generateFeed } from '../services/recommendation.js';
 import { updatePreferencesForSwipe, reversePreferencesForSwipe } from '../services/preferences.js';
 
@@ -68,6 +68,11 @@ export default async function feedRoutes(app: FastifyInstance) {
         return reply.status(404).send({ error: 'Content not found' });
       }
 
+      // An opinion implies the title was seen: you cannot like or dislike what you
+      // have not watched. A skip says nothing either way, and never clears a
+      // viewing already recorded (e.g. marked through the MCP server).
+      const impliesWatched = body.action === 'like' || body.action === 'dislike';
+
       // Record swipe (upsert)
       await request.db
         .insert(userSwipes)
@@ -76,20 +81,29 @@ export default async function feedRoutes(app: FastifyInstance) {
           contentId: body.contentId,
           action: body.action,
           contentType: contentRow[0].contentType,
+          isWatched: impliesWatched,
+          watchedAt: impliesWatched ? new Date() : null,
         })
         .onConflictDoUpdate({
           target: [userSwipes.userId, userSwipes.contentId],
           set: {
             action: body.action,
             createdAt: new Date(),
+            ...(impliesWatched
+              ? {
+                  isWatched: true,
+                  // keep the first viewing date if one is already on record
+                  watchedAt: sql`COALESCE(${userSwipes.watchedAt}, NOW())`,
+                }
+              : {}),
           },
         });
 
-      // Skip: just record, no preferences/watchlist/maturity updates
+      // Skip: just record, no preferences/maturity updates
       if (body.action === 'skip') {
         return {
           success: true,
-          addedToWatchlist: false,
+          isWatched: false,
           maturityScore: 0,
           preferencesUpdated: [],
         };
@@ -103,19 +117,7 @@ export default async function feedRoutes(app: FastifyInstance) {
         body.action,
       );
 
-      // Add to watchlist on like
-      let addedToWatchlist = false;
-      if (body.action === 'like') {
-        await request.db
-          .insert(userWatchlist)
-          .values({
-            userId: request.userId,
-            contentId: body.contentId,
-          })
-          .onConflictDoNothing();
-        addedToWatchlist = true;
-      }
-
+      // Watching it settles the question the bookmark was asking
       // Auto-remove bookmark on like/dislike
       await request.db
         .delete(userBookmarks)
@@ -135,7 +137,7 @@ export default async function feedRoutes(app: FastifyInstance) {
 
       return {
         success: true,
-        addedToWatchlist,
+        isWatched: impliesWatched,
         maturityScore: userRow[0]?.maturityScore || 0,
         preferencesUpdated,
       };
@@ -162,26 +164,14 @@ export default async function feedRoutes(app: FastifyInstance) {
 
       const swipe = lastSwipe[0];
 
-      // Reverse preference updates (skip has no preferences to reverse)
-      if (swipe.action !== 'skip') {
+      // Reverse preference updates ('skip' and 'watched' carry no opinion)
+      if (swipe.action === 'like' || swipe.action === 'dislike') {
         await reversePreferencesForSwipe(
           request.db,
           request.userId,
           swipe.contentId,
           swipe.action,
         );
-
-        // Remove from watchlist if it was a like
-        if (swipe.action === 'like') {
-          await request.db
-            .delete(userWatchlist)
-            .where(
-              and(
-                eq(userWatchlist.userId, request.userId),
-                eq(userWatchlist.contentId, swipe.contentId),
-              ),
-            );
-        }
       }
 
       // Delete the swipe record

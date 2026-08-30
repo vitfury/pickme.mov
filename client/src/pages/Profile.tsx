@@ -7,6 +7,7 @@ import { useUserStats, useResetPreferences, useUpdateProfile } from '@/api/hooks
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import Spinner from '@/components/ui/Spinner';
+import McpKeys from '@/components/profile/McpKeys';
 import i18n from '@/i18n/config';
 
 export default function Profile() {
@@ -221,6 +222,9 @@ export default function Profile() {
           </div>
         ) : null}
       </div>
+
+      {/* MCP access */}
+      <McpKeys />
 
       {/* Actions */}
       <div className="space-y-2 pt-2">

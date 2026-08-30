@@ -71,12 +71,16 @@ export async function generateFeed(
   const personalizationWeight = 0.50 * maturity;
 
   // Get content IDs to exclude from feed:
-  // - Permanently exclude: like, dislike
+  // - Permanently exclude: anything with an opinion, and anything watched
+  //   (a title can be marked watched while still sitting on an old skip)
   // - Exclude skips for 30 days (they reappear after cooldown)
   const permanentSwipes = await db
     .select({ contentId: userSwipes.contentId })
     .from(userSwipes)
-    .where(and(eq(userSwipes.userId, userId), ne(userSwipes.action, 'skip')));
+    .where(and(
+      eq(userSwipes.userId, userId),
+      or(ne(userSwipes.action, 'skip'), eq(userSwipes.isWatched, true)),
+    ));
 
   const recentSkips = await db
     .select({ contentId: userSwipes.contentId })
@@ -84,6 +88,7 @@ export async function generateFeed(
     .where(and(
       eq(userSwipes.userId, userId),
       eq(userSwipes.action, 'skip'),
+      eq(userSwipes.isWatched, false),
       sql`${userSwipes.createdAt} >= NOW() - INTERVAL '30 days'`,
     ));
 

@@ -14,7 +14,6 @@ import {
   collections,
   streamingProviders,
   userSwipes,
-  userWatchlist,
   userBookmarks,
   users,
 } from '../db/schema.js';
@@ -57,7 +56,6 @@ export default async function contentRoutes(app: FastifyInstance) {
         contentProviderRows,
         contentAwardRows,
         swipeRow,
-        watchlistRow,
         bookmarkRow,
       ] = await Promise.all([
         request.db
@@ -103,14 +101,9 @@ export default async function contentRoutes(app: FastifyInstance) {
           .from(awards)
           .where(eq(awards.contentId, contentId)),
         request.db
-          .select({ action: userSwipes.action })
+          .select({ action: userSwipes.action, isWatched: userSwipes.isWatched })
           .from(userSwipes)
           .where(and(eq(userSwipes.userId, request.userId), eq(userSwipes.contentId, contentId)))
-          .limit(1),
-        request.db
-          .select({ watched: userWatchlist.watched, personalRating: userWatchlist.personalRating })
-          .from(userWatchlist)
-          .where(and(eq(userWatchlist.userId, request.userId), eq(userWatchlist.contentId, contentId)))
           .limit(1),
         request.db
           .select({ id: userBookmarks.id })
@@ -191,9 +184,8 @@ export default async function contentRoutes(app: FastifyInstance) {
         recommendationReasons: reasons,
         userStatus: {
           swiped: swipeRow[0]?.action || null,
-          inWatchlist: watchlistRow.length > 0,
-          watched: watchlistRow[0]?.watched || false,
-          personalRating: watchlistRow[0]?.personalRating || null,
+          inWatchlist: swipeRow[0]?.action === 'like',
+          watched: swipeRow[0]?.isWatched || false,
           isBookmarked: bookmarkRow.length > 0,
         },
       };

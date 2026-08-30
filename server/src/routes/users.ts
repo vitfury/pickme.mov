@@ -5,7 +5,6 @@ import {
   users,
   userSwipes,
   userPreferences,
-  userWatchlist,
   content,
   genres,
   people,
@@ -122,16 +121,17 @@ export default async function usersRoutes(app: FastifyInstance) {
         .from(userSwipes)
         .where(and(eq(userSwipes.userId, request.userId), eq(userSwipes.action, 'skip')));
 
-      // Watchlist counts
+      // Favorites are the liked titles; watched counts every title seen,
+      // however it was recorded
       const watchlistSize = await request.db
         .select({ count: sql<number>`count(*)` })
-        .from(userWatchlist)
-        .where(eq(userWatchlist.userId, request.userId));
+        .from(userSwipes)
+        .where(and(eq(userSwipes.userId, request.userId), eq(userSwipes.action, 'like')));
 
       const watchedCount = await request.db
         .select({ count: sql<number>`count(*)` })
-        .from(userWatchlist)
-        .where(and(eq(userWatchlist.userId, request.userId), eq(userWatchlist.watched, true)));
+        .from(userSwipes)
+        .where(and(eq(userSwipes.userId, request.userId), eq(userSwipes.isWatched, true)));
 
       // Top genres
       const topGenres = await request.db
@@ -323,16 +323,14 @@ export default async function usersRoutes(app: FastifyInstance) {
           contentType: content.contentType,
           releaseDate: content.releaseDate,
           tmdbRating: content.tmdbRating,
-          watched: userWatchlist.watched,
-          personalRating: userWatchlist.personalRating,
-          watchedDate: userWatchlist.watchedDate,
-          notes: userWatchlist.notes,
-          addedAt: userWatchlist.createdAt,
+          watched: userSwipes.isWatched,
+          watchedDate: userSwipes.watchedAt,
+          addedAt: userSwipes.createdAt,
         })
-        .from(userWatchlist)
-        .innerJoin(content, eq(userWatchlist.contentId, content.id))
-        .where(eq(userWatchlist.userId, request.userId))
-        .orderBy(desc(userWatchlist.createdAt));
+        .from(userSwipes)
+        .innerJoin(content, eq(userSwipes.contentId, content.id))
+        .where(and(eq(userSwipes.userId, request.userId), eq(userSwipes.action, 'like')))
+        .orderBy(desc(userSwipes.createdAt));
 
       const exportData = watchlistItems.map((item) => ({
         title: locale === 'uk' ? (item.titleUk || item.titleEn) : item.titleEn,
@@ -340,14 +338,12 @@ export default async function usersRoutes(app: FastifyInstance) {
         releaseDate: item.releaseDate,
         tmdbRating: item.tmdbRating ? parseFloat(item.tmdbRating) : null,
         watched: item.watched,
-        personalRating: item.personalRating,
-        watchedDate: item.watchedDate,
-        notes: item.notes,
+        watchedDate: item.watchedDate?.toISOString() || null,
         addedAt: item.addedAt?.toISOString() || null,
       }));
 
       if (query.format === 'csv') {
-        const headers = ['title', 'contentType', 'releaseDate', 'tmdbRating', 'watched', 'personalRating', 'watchedDate', 'notes', 'addedAt'];
+        const headers = ['title', 'contentType', 'releaseDate', 'tmdbRating', 'watched', 'watchedDate', 'addedAt'];
         const csvRows = [headers.join(',')];
         for (const item of exportData) {
           const row = headers.map((h) => {

@@ -8,7 +8,6 @@ import type {
   UndoResponse,
   WatchlistResponse,
   WatchlistFilters,
-  WatchlistItem,
   BookmarkResponse,
   BookmarkFilters,
   SearchResponse,
@@ -18,6 +17,8 @@ import type {
   ContentDetail,
   PersonDetail,
   FilmographyItem,
+  ApiKey,
+  CreatedApiKey,
   User,
   UserStats,
   UserPreferences,
@@ -111,23 +112,6 @@ export function useWatchlist(filters: WatchlistFilters) {
     queryFn: async () => {
       const { data } = await api.get('/watchlist', { params: filters });
       return data;
-    },
-  });
-}
-
-export function useUpdateWatchlistItem() {
-  const queryClient = useQueryClient();
-  return useMutation<
-    WatchlistItem,
-    Error,
-    { contentId: number; updates: Partial<Pick<WatchlistItem, 'watched' | 'personalRating' | 'watchedDate' | 'notes'>> }
-  >({
-    mutationFn: async ({ contentId, updates }) => {
-      const { data } = await api.patch(`/watchlist/${contentId}`, updates);
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['watchlist'] });
     },
   });
 }
@@ -375,6 +359,41 @@ export function useResetPreferences() {
       queryClient.invalidateQueries({ queryKey: ['user-stats'] });
       queryClient.invalidateQueries({ queryKey: ['user-preferences'] });
       queryClient.invalidateQueries({ queryKey: ['feed'] });
+    },
+  });
+}
+
+export function useApiKeys() {
+  return useQuery<{ keys: ApiKey[] }>({
+    queryKey: ['api-keys'],
+    queryFn: async () => {
+      const { data } = await api.get('/api-keys');
+      return data;
+    },
+  });
+}
+
+export function useCreateApiKey() {
+  const queryClient = useQueryClient();
+  return useMutation<CreatedApiKey, Error, { name: string }>({
+    mutationFn: async ({ name }) => {
+      const { data } = await api.post('/api-keys', { name });
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['api-keys'] });
+    },
+  });
+}
+
+export function useRevokeApiKey() {
+  const queryClient = useQueryClient();
+  return useMutation<void, Error, number>({
+    mutationFn: async (id) => {
+      await api.delete(`/api-keys/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['api-keys'] });
     },
   });
 }

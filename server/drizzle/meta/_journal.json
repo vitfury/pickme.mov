@@ -43,6 +43,20 @@
       "when": 1771246707766,
       "tag": "0004_rainy_puma",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1788102299381,
+      "tag": "0006_watched_axis",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1788102317890,
+      "tag": "0007_api_keys",
+      "breakpoints": true
     }
   ]
 }

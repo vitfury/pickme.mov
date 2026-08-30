@@ -8,18 +8,16 @@ import EmptyState from '@/components/ui/EmptyState';
 import type { WatchlistFilters, BookmarkFilters } from '@/types';
 
 type TopTab = 'watchlist' | 'favorites';
-type FavoritesTab = 'all' | 'unwatched' | 'watched';
 type Sort = 'added' | 'rating' | 'year' | 'title';
 
 export default function Saved() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [topTab, setTopTab] = useState<TopTab>('watchlist');
-  const [favTab, setFavTab] = useState<FavoritesTab>('all');
   const [sort, setSort] = useState<Sort>('added');
 
   const bookmarkFilters: BookmarkFilters = { sort, order: 'desc' };
-  const watchlistFilters: WatchlistFilters = { filter: favTab, sort, order: 'desc' };
+  const watchlistFilters: WatchlistFilters = { sort, order: 'desc' };
 
   const { data: bookmarkData, isLoading: bookmarksLoading } = useBookmarks(bookmarkFilters);
   const { data: watchlistData, isLoading: watchlistLoading } = useWatchlist(watchlistFilters);
@@ -27,12 +25,6 @@ export default function Saved() {
   const topTabs: { key: TopTab; labelKey: string }[] = [
     { key: 'watchlist', labelKey: 'saved.watchlist' },
     { key: 'favorites', labelKey: 'saved.favorites' },
-  ];
-
-  const favTabs: { key: FavoritesTab; labelKey: string }[] = [
-    { key: 'all', labelKey: 'favorites.all' },
-    { key: 'unwatched', labelKey: 'favorites.unwatched' },
-    { key: 'watched', labelKey: 'favorites.watched' },
   ];
 
   const sorts: { key: Sort; labelKey: string }[] = [
@@ -111,28 +103,8 @@ export default function Saved() {
           )}
         </>
       ) : (
-        /* Favorites tab — liked/superliked items */
+        /* Favorites tab — liked titles */
         <>
-          <div className="flex gap-1 mb-3">
-            {favTabs.map(({ key, labelKey }) => (
-              <button
-                key={key}
-                onClick={() => setFavTab(key)}
-                className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                  favTab === key
-                    ? 'bg-surface-light text-accent'
-                    : 'text-text-muted hover:text-text'
-                }`}
-              >
-                {t(labelKey)}
-                {watchlistData?.counts && (
-                  <span className="ml-1 text-xs opacity-60">
-                    {watchlistData.counts[key]}
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
 
           <div className="flex gap-1 mb-4">
             {sorts.map(({ key, labelKey }) => (
@@ -172,18 +144,6 @@ export default function Saved() {
                     alt={item.title}
                     className="w-full aspect-[2/3] object-cover rounded-md bg-surface-light"
                   />
-                  {item.watched && (
-                    <div className="absolute top-1 right-1 w-5 h-5 bg-like rounded-full flex items-center justify-center">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                    </div>
-                  )}
-                  {item.personalRating && (
-                    <div className="absolute bottom-1 right-1 bg-black/70 text-accent text-[10px] font-bold px-1 rounded">
-                      {item.personalRating}
-                    </div>
-                  )}
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 rounded-md transition-colors" />
                 </button>
               ))}
