@@ -48,6 +48,14 @@ chmod +x scripts/docker-entrypoint.sh
 echo "==> Restarting containers..."
 docker compose up -d
 
+# nginx bind-mounts nginx/default.conf as a single file. git rewrites that file
+# with a new inode on pull, and the container keeps the old one, so a config
+# change is invisible to `up -d` and even to `nginx -s reload` — the container
+# has to be recreated. Recreating also re-resolves the app container's IP, which
+# otherwise leaves nginx serving 502s after the app is replaced above.
+echo "==> Recreating nginx (picks up config and the app's new address)..."
+docker compose up -d --force-recreate nginx
+
 # --- Cleanup ---
 docker image prune -f
 
