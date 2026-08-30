@@ -50,30 +50,16 @@ services:
   nginx:
     image: nginx:alpine
     container_name: pickme-nginx
+    # Origin is reachable only from localhost; cloudflared publishes it.
     ports:
-      - "80:80"
-      - "443:443"
+      - "127.0.0.1:80:80"
     volumes:
       - ./client/dist:/usr/share/nginx/html:ro
-      - ./nginx/active.conf:/etc/nginx/conf.d/default.conf:ro
-      - certbot-webroot:/var/www/certbot:ro
-      - certbot-certs:/etc/letsencrypt:ro
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
       - app
     restart: unless-stopped
 
-  certbot:
-    image: certbot/certbot
-    container_name: pickme-certbot
-    volumes:
-      - certbot-webroot:/var/www/certbot
-      - certbot-certs:/etc/letsencrypt
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done'"
-
 volumes:
   pgdata:
-    driver: local
-  certbot-webroot:
-    driver: local
-  certbot-certs:
     driver: local

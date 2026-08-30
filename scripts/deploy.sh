@@ -44,9 +44,6 @@ docker run --rm \
 # --- Ensure scripts are executable ---
 chmod +x scripts/docker-entrypoint.sh
 
-# --- Nginx config ---
-cp nginx/default.conf nginx/active.conf
-
 # --- Restart containers ---
 echo "==> Restarting containers..."
 docker compose up -d
