@@ -15,8 +15,11 @@ export default function TopBar() {
   const setContentType = useFeedStore((s) => s.setContentType);
   const setFilterDrawerOpen = useUIStore((s) => s.setFilterDrawerOpen);
 
+  // Без backdrop-blur: фон непрозорий, блюрити крізь нього нічого, а Safari
+  // через нього растеризував панель окремим шаром і на дробовому зсуві
+  // safe-area малював її між пікселями — все виглядало розмитим
   return (
-    <header className="relative z-40 bg-bg backdrop-blur-md">
+    <header className="relative z-40 bg-bg">
       <div className="flex items-center justify-between px-4 h-12 max-w-lg mx-auto">
         <div className="flex gap-1">
           {tabs.map(({ key, labelKey }) => (
