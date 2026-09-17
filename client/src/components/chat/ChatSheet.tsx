@@ -123,7 +123,6 @@ export default function ChatSheet() {
               </header>
 
               <div ref={scrollRef} className="chat-msgs">
-                {messages.length === 0 && <EmptyState />}
                 {messages.map((message, i) => (
                   <Bubble key={message.id} message={message} isLast={i === messages.length - 1} />
                 ))}
@@ -176,28 +175,6 @@ export default function ChatSheet() {
         </>
       )}
     </AnimatePresence>
-  );
-}
-
-/**
- * Порожній стан: не «запитай що завгодно», а перелік того, що асистент реально
- * вміє. Пошук очевидний, а от що він може писати в профіль — ні, і без підказки
- * цим просто не користуються.
- */
-function EmptyState() {
-  const { t } = useTranslation();
-  const raw = t('chat.emptyCan', { returnObjects: true });
-  const can = Array.isArray(raw) ? (raw as string[]) : [];
-
-  return (
-    <div className="chat-empty">
-      <p className="chat-empty__lead">{t('chat.emptyLead')}</p>
-      <ul className="chat-empty__list">
-        {can.map((line) => (
-          <li key={line}>{line}</li>
-        ))}
-      </ul>
-    </div>
   );
 }
 

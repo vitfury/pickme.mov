@@ -184,48 +184,6 @@ body {
   padding: 16px;
 }
 
-/* Порожній стан. Блідіший за звичайний muted: це підказка, а не повідомлення —
-   вона не має конкурувати за увагу з першою відповіддю, яка з'явиться вище. */
-.chat-empty {
-  margin: auto 0;
-  max-width: 34ch;
-  align-self: center;
-  color: color-mix(in srgb, var(--color-text-muted) 72%, transparent);
-}
-
-.chat-empty__lead {
-  margin: 0;
-  font-size: 13px;
-  line-height: 1.6;
-  text-wrap: balance;
-}
-
-.chat-empty__list {
-  margin: 14px 0 0;
-  padding: 0;
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-  font-size: 12.5px;
-  line-height: 1.45;
-}
-
-.chat-empty__list li {
-  position: relative;
-  padding-left: 16px;
-}
-
-/* Крапка золотом — єдиний акцент у блоці, тримає перелік разом */
-.chat-empty__list li::before {
-  content: '';
-  position: absolute;
-  left: 2px; top: 7px;
-  width: 4px; height: 4px;
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--color-accent) 55%, transparent);
-}
-
 .chat-row { display: flex; gap: 8px; align-items: flex-start; }
 .chat-row--user { justify-content: flex-end; }
 .chat-col { display: flex; flex-direction: column; gap: 8px; min-width: 0; flex: 1; }

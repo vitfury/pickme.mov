@@ -235,13 +235,6 @@
       "short": "Under 100 minutes",
       "kid": "Watch with a kid"
     },
-    "emptyLead": "Finds films and series by genre, year, cast, awards, or just the mood you are in.",
-    "emptyCan": [
-      "Marks films you have already watched",
-      "Likes and dislikes — which trains your recommendations",
-      "Saves films to Saved, to watch later",
-      "Reads your taste profile to suggest a film you will actually like"
-    ],
     "error": "Oops, the assistant is taking the day off. Try again a bit later.",
     "newChat": "New chat",
     "moreRequest": "Rated these — show me more!",
