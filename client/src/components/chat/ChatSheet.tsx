@@ -73,6 +73,7 @@ export default function ChatSheet() {
             transition={{ duration: 0.18 }}
             onClick={() => setOpen(false)}
             className="fixed inset-0 z-[60] bg-overlay"
+            style={{ touchAction: 'none' }}
           />
           <div
             className="chat-inset fixed inset-x-0 top-0 z-[65] flex pointer-events-none"

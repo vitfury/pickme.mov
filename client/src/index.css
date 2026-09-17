@@ -129,6 +129,7 @@ body {
    ============================================================ */
 
 .chat-panel {
+  overscroll-behavior: none;
   background: color-mix(in srgb, var(--color-accent) 5%, var(--color-surface-light));
   border: 1px solid var(--color-border);
   border-radius: 18px;
@@ -178,6 +179,8 @@ body {
 .chat-msgs {
   flex: 1;
   overflow-y: auto;
+  /* contain: докручений до краю список не передає скрол сторінці під чатом */
+  overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
   gap: 14px;
