@@ -149,10 +149,10 @@ export default function FeedItem({ card, onSwipe, onNavigate, onVerticalDrag, on
 
         {/* Bottom gradient + info */}
         <div
-          /* pb-25 = calc(var(--spacing) * 25) = 100px. Ромб ШІ повернутий на 45°,
-             тож його габарит — діагональ 70.7px, а не 50; разом із обідком
-             верхівка сягає ~92px від низу екрана і накривала жанри. */
-          className="absolute bottom-0 inset-x-0 pointer-events-none pb-25 px-6"
+          /* pb-27.5 = calc(var(--spacing) * 27.5) = 110px: 100px, щоб ромб ШІ
+             (діагональ 70.7px + обідок, верхівка ~92px від низу) не накривав
+             жанри, плюс 10px повітря на прохання власника. */
+          className="absolute bottom-0 inset-x-0 pointer-events-none pb-27.5 px-6"
           style={{ paddingTop: '30vh', background: 'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.9) 60%, rgba(0,0,0,1) 100%)' }}
         >
           <h2 className="text-3xl font-bold text-white leading-tight line-clamp-2 drop-shadow-lg">
