@@ -143,7 +143,8 @@
     "addToFavorites": "Add to favorites",
     "inFavorites": "In favorites",
     "markWatched": "Mark watched",
-    "yourRating": "Your rating"
+    "yourRating": "Your rating",
+    "trailerQuery": "trailer"
   },
   "onboarding": {
     "genreTitle": "Pick 3-5 genres",

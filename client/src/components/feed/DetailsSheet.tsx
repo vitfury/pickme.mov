@@ -70,7 +70,7 @@ export default function DetailsSheet({ card, onClose }: DetailsSheetProps) {
                 </div>
               </div>
               <a
-                href={`https://www.youtube.com/results?search_query=${encodeURIComponent(card.title + ' trailer')}`}
+                href={`https://www.youtube.com/results?search_query=${encodeURIComponent(`${card.title} ${t('content.trailerQuery')}`)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex flex-col items-center gap-1 flex-shrink-0"

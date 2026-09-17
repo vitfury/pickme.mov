@@ -143,7 +143,8 @@
     "addToFavorites": "Додати до обраного",
     "inFavorites": "В обраному",
     "markWatched": "Переглянуто",
-    "yourRating": "Ваша оцінка"
+    "yourRating": "Ваша оцінка",
+    "trailerQuery": "трейлер"
   },
   "onboarding": {
     "genreTitle": "Оберіть 3-5 жанрів",
