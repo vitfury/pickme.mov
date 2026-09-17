@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { useEffect, useRef } from 'react';
+import { Routes, Route, Navigate, useLocation, useNavigationType } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/uiStore';
@@ -14,6 +14,28 @@ import Profile from '@/pages/Profile';
 import Person from '@/pages/Person';
 import ContentDetail from '@/pages/ContentDetail';
 import AuthCallback from '@/pages/AuthCallback';
+
+/**
+ * Повернення зі сторінки, відкритої з чату, знову відчиняє чат — незалежно
+ * від того, чим користувач повернувся: кнопкою ← у застосунку, свайпом iOS
+ * чи кнопкою браузера. Всі три — POP-навігація, тож ловимо її тут, а не в
+ * обробнику конкретної кнопки.
+ */
+function ChatReopenOnBack() {
+  const location = useLocation();
+  const navigationType = useNavigationType();
+  const previous = useRef(location);
+
+  useEffect(() => {
+    const prev = previous.current;
+    previous.current = location;
+    if (navigationType === 'POP' && (prev.state as { fromChat?: boolean } | null)?.fromChat) {
+      useUIStore.getState().setChatOpen(true);
+    }
+  }, [location, navigationType]);
+
+  return null;
+}
 
 export default function App() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
@@ -39,6 +61,8 @@ export default function App() {
   }, [i18n]);
 
   return (
+    <>
+    <ChatReopenOnBack />
     <Routes>
       <Route path="/auth/callback" element={<AuthCallback />} />
       <Route
@@ -59,5 +83,6 @@ export default function App() {
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </>
   );
 }

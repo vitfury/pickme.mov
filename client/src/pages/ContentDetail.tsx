@@ -1,7 +1,6 @@
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useContentDetail } from '@/api/hooks';
-import { useUIStore } from '@/stores/uiStore';
 import { tmdbBackdrop, tmdbPoster } from '@/utils/image';
 import { formatRuntime, formatDate, formatRating } from '@/utils/format';
 import Spinner from '@/components/ui/Spinner';
@@ -9,16 +8,11 @@ import Spinner from '@/components/ui/Spinner';
 export default function ContentDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const location = useLocation();
-  const setChatOpen = useUIStore((s) => s.setChatOpen);
   const { t } = useTranslation();
 
-  // Якщо сюди прийшли з картки в чаті, «назад» повертає туди, де юзер був,
-  // і знову відчиняє чат — розмова нікуди не дівалась, вона в сторі
-  const goBack = () => {
-    if ((location.state as { fromChat?: boolean } | null)?.fromChat) setChatOpen(true);
-    navigate(-1);
-  };
+  // Відкриття чату при поверненні робить ChatReopenOnBack в App.tsx —
+  // однаково для кнопки, свайпа iOS і кнопки браузера
+  const goBack = () => navigate(-1);
   const { data: content, isLoading } = useContentDetail(id ? Number(id) : null);
 
   if (isLoading) {
