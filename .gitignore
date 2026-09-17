@@ -8,6 +8,9 @@ dist/
 # Drizzle
 drizzle/meta/
 
+# Claude Code local settings
+.claude/
+
 # IDE
 .vscode/
 .idea/

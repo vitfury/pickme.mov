@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Палець угору ×10 — pickme.mov</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500&family=Rubik:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --sheet:#101016; --sheet-2:#16161e; --rule:#26262f; --rule-soft:#1c1c24;
+    --ink:#e6e6ec; --ink-2:#9a9aa8; --ink-3:#63636f;
+    --gold:#d4a843; --like:#2ee66e; --dislike:#ff5757;
+    --surface:#1e1e30; --card:#26263a;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--sheet); color:var(--ink);
+    font-family:'IBM Plex Mono',monospace; font-size:13px; line-height:1.6; }
+  .wrap { max-width:1200px; margin:0 auto; padding:0 24px 80px; }
+  .masthead { display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between;
+    gap:24px; padding:40px 0 20px; border-bottom:1px solid var(--gold); }
+  h1 { font-family:'Bebas Neue',Impact,sans-serif; font-size:clamp(38px,7vw,62px);
+    line-height:.92; margin:0; }
+  h1 em { font-style:normal; color:var(--gold); }
+  .meta { display:grid; grid-template-columns:auto auto; gap:2px 16px; font-size:11px;
+    color:var(--ink-3); text-transform:uppercase; letter-spacing:.08em; }
+  .meta b { color:var(--ink-2); font-weight:500; }
+  .lede { max-width:64ch; margin:18px 0 28px; color:var(--ink-2); font-size:13.5px; }
+  .lede b { color:var(--ink); font-weight:500; }
+
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr));
+    gap:1px; background:var(--rule-soft); border:1px solid var(--rule-soft); }
+  .frame { background:var(--sheet); padding:22px 20px; display:flex; flex-direction:column; gap:14px; }
+  .fh { display:flex; align-items:baseline; gap:10px; }
+  .idx { font-family:'Bebas Neue',Impact,sans-serif; font-size:26px; color:var(--gold); }
+  .fh h2 { margin:0; font-family:'Rubik',sans-serif; font-size:15px; font-weight:600; }
+  .note { margin:0; font-size:11.5px; color:var(--ink-2); }
+
+  /* Великий показ пари */
+  .stage { display:flex; align-items:center; justify-content:center; gap:34px;
+    background:#0a0a0f; border:1px solid var(--rule); border-radius:6px; padding:22px 10px; }
+  .stage .up { color:var(--like); }
+  .stage .down { color:var(--dislike); }
+  .stage .down svg, .stage .down .emo { transform:rotate(180deg); }
+  .emo { font-size:56px; line-height:1; display:inline-block; }
+
+  /* Контекст: як на плитці в чаті */
+  .ctx { display:flex; align-items:center; gap:11px; background:var(--surface);
+    border-radius:14px; padding:7px; font-family:'Rubik',sans-serif; }
+  .ctx .poster { width:34px; height:51px; border-radius:7px; flex-shrink:0;
+    background:linear-gradient(160deg,#4a3d20,#26263a); }
+  .ctx .tt { font-size:12.5px; font-weight:500; }
+  .ctx .mm { font-size:11px; color:var(--ink-2); }
+  .ctx .mm b { color:var(--gold); font-weight:500; }
+  .ctx .acts { margin-left:auto; display:flex; gap:6px; padding-left:8px; }
+  .ctx .act { width:32px; height:32px; border-radius:50%; display:flex;
+    align-items:center; justify-content:center; }
+  .ctx .act.l { color:var(--like); background:color-mix(in srgb,var(--like) 12%,transparent); }
+  .ctx .act.d { color:var(--dislike); background:color-mix(in srgb,var(--dislike) 12%,transparent); }
+  .ctx .act.d svg, .ctx .act.d .emo2 { transform:rotate(180deg); }
+  .emo2 { font-size:15px; line-height:1; display:inline-block; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <div>
+    <h1>Палець угору <em>×10</em></h1>
+    <p class="lede">Десять кандидатів на іконку оцінки. У кожному кадрі: <b>пара велика</b>
+    (дизлайк — та сама форма, повернута на 180°) і <b>контекст 1:1</b> — кнопки 32px на плитці
+    чату, як у застосунку. Обраний варіант стане єдиним для стрічки, онбордингу, чату й логіна.</p>
+  </div>
+  <div class="meta">
+    <span>Проєкт</span><b>pickme.mov</b>
+    <span>Аркуш</span><b>іконки / 05</b>
+    <span>Кольори</span><b>#2ee66e / #ff5757</b>
+  </div>
+</header>
+
+<div class="grid" id="grid"></div>
+
+</div>
+<script>
+/* Кожен варіант: name, note, svg-функція (розмір) або emoji */
+function S(size, inner, extra) {
+  return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 '+(extra||24)+' '+(extra||24)+'" '+inner;
+}
+const V = [
+ { n:'Bootstrap Fill', note:'М’який, заокруглений, з «пальцями»-борозенками на кулаку. Найдетальніший.',
+   f:(s)=>S(s,'fill="currentColor"><path d="M6.956 1.745C7.021.81 7.908.087 8.864.325l.261.066c.463.116.874.456 1.012.965.22.816.533 2.511.062 4.51a9.84 9.84 0 0 1 .443-.051c.713-.065 1.669-.072 2.516.21.518.173.994.681 1.2 1.273.184.532.16 1.162-.234 1.733.058.119.103.242.138.363.077.27.113.567.113.856 0 .289-.036.586-.113.856-.039.135-.09.273-.16.404.169.387.107.819-.003 1.148a3.163 3.163 0 0 1-.488.901c.054.152.076.312.076.465 0 .305-.089.625-.253.912C13.1 15.522 12.437 16 11.5 16H8c-.605 0-1.07-.081-1.466-.218a4.82 4.82 0 0 1-.97-.484l-.048-.03c-.504-.307-.999-.609-2.068-.722C2.682 14.464 2 13.846 2 13V9c0-.85.685-1.432 1.357-1.615.849-.232 1.574-.787 2.132-1.41.56-.627.914-1.28 1.039-1.639.199-.575.356-1.539.428-2.59z"/></svg>',16) },
+ { n:'Bootstrap Outline', note:'Той самий силует тонкою лінією. Найлегший за вагою.',
+   f:(s)=>S(s,'fill="currentColor"><path d="M8.864.046C7.908-.193 7.02.53 6.956 1.466c-.072 1.051-.23 2.016-.428 2.59-.125.36-.479 1.013-1.04 1.639-.557.623-1.282 1.178-2.131 1.41C2.685 7.288 2 7.87 2 8.72v4.001c0 .845.682 1.464 1.448 1.545 1.07.114 1.564.415 2.068.723l.048.03c.272.165.578.348.97.484.397.136.861.217 1.466.217h3.5c.937 0 1.599-.477 1.934-1.064a1.86 1.86 0 0 0 .254-.912c0-.152-.023-.312-.077-.464.201-.263.38-.578.488-.901.11-.33.172-.762.004-1.149.069-.13.12-.269.159-.403.077-.27.113-.568.113-.857 0-.288-.036-.585-.113-.856a2.144 2.144 0 0 0-.138-.362 1.9 1.9 0 0 0 .234-1.734c-.206-.592-.682-1.1-1.2-1.272-.847-.282-1.803-.276-2.516-.211a9.84 9.84 0 0 0-.443.05 9.365 9.365 0 0 0-.062-4.509A1.38 1.38 0 0 0 9.125.111L8.864.046zM11.5 14.721H8c-.51 0-.863-.069-1.14-.164-.281-.097-.506-.228-.776-.393l-.04-.024c-.555-.339-1.198-.731-2.49-.868-.333-.036-.554-.29-.554-.55V8.72c0-.254.226-.543.62-.65 1.095-.3 1.977-.996 2.614-1.708.635-.71 1.064-1.475 1.238-1.978.243-.7.407-1.768.482-2.85.025-.362.36-.594.667-.518l.262.066c.16.04.258.143.288.255a8.34 8.34 0 0 1-.145 4.725.5.5 0 0 0 .595.644l.003-.001.014-.003.058-.014a8.908 8.908 0 0 1 1.036-.157c.663-.06 1.457-.054 2.11.164.175.058.45.3.57.65.107.308.087.67-.266 1.022l-.353.353.353.354c.043.043.105.141.154.315.048.167.075.37.075.581 0 .212-.027.414-.075.582-.05.174-.111.272-.154.315l-.353.353.353.354c.047.047.109.177.005.488a2.224 2.224 0 0 1-.505.805l-.353.353.353.354c.006.005.041.05.041.17a.866.866 0 0 1-.121.416c-.165.288-.503.56-1.066.56z"/></svg>',16) },
+ { n:'Heroicons Solid', note:'Органічний, «пухкий», манжета окремо. Впізнаваний стиль Tailwind-родини.',
+   f:(s)=>S(s,'fill="currentColor"><path d="M7.493 18.75c-.425 0-.82-.236-.975-.632A7.48 7.48 0 0 1 6 15.375c0-1.75.599-3.358 1.602-4.634.151-.192.373-.309.6-.397.473-.183.89-.514 1.212-.924a9.042 9.042 0 0 1 2.861-2.4c.723-.384 1.35-.956 1.653-1.715a4.498 4.498 0 0 0 .322-1.672V3a.75.75 0 0 1 .75-.75 2.25 2.25 0 0 1 2.25 2.25c0 1.152-.26 2.243-.723 3.218-.266.558.107 1.282.725 1.282h3.126c1.026 0 1.945.694 2.054 1.715.045.422.068.85.068 1.285a11.95 11.95 0 0 1-2.649 7.521c-.388.482-.987.729-1.605.729H14.23c-.483 0-.964-.078-1.423-.23l-3.114-1.04a4.501 4.501 0 0 0-1.423-.23h-.777ZM2.331 10.727a11.969 11.969 0 0 0-.831 4.398 12 12 0 0 0 .52 3.507C2.28 19.482 3.105 20 3.994 20H4.9c.445 0 .72-.498.523-.898a8.963 8.963 0 0 1-.924-3.977c0-1.708.476-3.305 1.302-4.666.245-.403-.028-.959-.5-.959H4.25c-.832 0-1.612.453-1.918 1.227Z"/></svg>') },
+ { n:'Tabler Round', note:'Контур із м’якими кутами, широка долоня. Дружній, не technical.',
+   f:(s)=>S(s,'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 11v8a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1h3a4 4 0 0 0 4-4V6a2 2 0 0 1 4 0v5h3a2 2 0 0 1 2 2l-1 5a2 3 0 0 1-2 2h-7a3 3 0 0 1-3-3"/></svg>') },
+ { n:'Tabler Bold', note:'Та сама форма, але залита і з товстим обводом — «жирна» версія контуру.',
+   f:(s)=>S(s,'fill="color-mix(in srgb, currentColor 30%, transparent)" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 11v8a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1h3a4 4 0 0 0 4-4V6a2 2 0 0 1 4 0v5h3a2 2 0 0 1 2 2l-1 5a2 3 0 0 1-2 2h-7a3 3 0 0 1-3-3"/></svg>') },
+ { n:'Емодзі 👍', note:'Системний кольоровий емодзі. Нуль роботи, максимум людяності — але не перефарбуєш і виглядає по-різному на iOS/Android.',
+   emoji:true },
+ { n:'Піксельний', note:'8-бітний, зі сходинок. Аркадно-кіношний вайб, пасує до «плівкової» теми.',
+   f:(s)=>S(s,'fill="currentColor" shape-rendering="crispEdges"><rect x="2" y="11" width="4" height="10"/><rect x="8" y="11" width="13" height="10"/><rect x="10" y="7" width="6" height="4"/><rect x="13" y="3" width="4" height="4"/></svg>') },
+ { n:'Гострий', note:'Кастомний кутастий — єдиний, що римується з гострими радіусами системи (4-8px).',
+   f:(s)=>S(s,'fill="currentColor"><path d="M2 10h4v12H2z"/><path d="M8 22V10.5L13.5 2l2.4 1.7-1.7 5.8H22l-2.2 12.5z"/></svg>') },
+ { n:'Duotone', note:'Material у два тони: долоня напівпрозора, манжета щільна. Глибина без контуру.',
+   f:(s)=>S(s,'fill="currentColor"><path d="M1 21h4V9H1v12z"/><path opacity=".45" d="M23 10c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.58 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"/></svg>') },
+ { n:'Стікер', note:'Material із товстою обвідкою кольору тла (paint-order) — читається як наліпка, добре відділяється від будь-якого фону.',
+   f:(s)=>S(s,'fill="currentColor" stroke="#0a0a0f" stroke-width="2.6" paint-order="stroke fill" stroke-linejoin="round"><path d="M1 21h4V9H1v12zM23 10c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.58 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"/></svg>') },
+];
+
+const grid = document.getElementById('grid');
+grid.innerHTML = V.map((v,i)=>{
+  const big = v.emoji ? '<span class="emo">👍</span>' : v.f(56);
+  const bigD = v.emoji ? '<span class="emo" style="transform:none">👎</span>' : v.f(56);
+  const smU = v.emoji ? '<span class="emo2">👍</span>' : v.f(15);
+  const smD = v.emoji ? '<span class="emo2" style="transform:none">👎</span>' : v.f(15);
+  return `
+  <figure class="frame" style="margin:0">
+    <div class="fh"><span class="idx">${String(i+1).padStart(2,'0')}</span><h2>${v.n}</h2></div>
+    <div class="stage">
+      <span class="up">${big}</span>
+      <span class="down">${bigD}</span>
+    </div>
+    <div class="ctx">
+      <span class="poster"></span>
+      <span><div class="tt">Вартові галактики</div><div class="mm">2014 · <b>★ 7.9</b></div></span>
+      <span class="acts">
+        <span class="act l">${smU}</span>
+        <span class="act d">${smD}</span>
+      </span>
+    </div>
+    <p class="note">${v.note}</p>
+  </figure>`;
+}).join('');
+</script>
+</body>
+</html>

@@ -8,8 +8,8 @@
   --color-accent-hover: #e0b84f;
   --color-text: #e8e8ed;
   --color-text-muted: #8a8a9a;
-  --color-like: #4ade80;
-  --color-dislike: #f87171;
+  --color-like: #2ee66e;
+  --color-dislike: #ff5757;
 
   --color-skip: #94a3b8;
   --color-border: #2a2a3a;
@@ -29,8 +29,8 @@
   --color-accent-hover: #b3841f;
   --color-text: #1a1a2e;
   --color-text-muted: #6b6b80;
-  --color-like: #22c55e;
-  --color-dislike: #ef4444;
+  --color-like: #17c653;
+  --color-dislike: #f13333;
   --color-skip: #64748b;
   --color-border: #d4d4dc;
   --color-overlay: rgba(245, 245, 247, 0.85);
@@ -80,6 +80,592 @@ body {
 ::-webkit-scrollbar-thumb {
   background: var(--color-surface-light);
   border-radius: 2px;
+}
+
+/* Кнопка ШІ в центрі нижньої навігації.
+   Ромб = квадрат, повернутий на 45°. Два кільця (зазор кольором фону
+   плюс золотий обідок) роблять з нього клавішу в гнізді.
+   Тінь висить на неповернутій обгортці: у box-shadow зміщення рахується
+   в системі координат елемента, тож на повернутому ромбі «0 6px» поїхало б
+   по діагоналі. drop-shadow на батьку від повороту дитини не залежить. */
+.ai-dock {
+  filter: drop-shadow(0 5px 9px rgba(0, 0, 0, 0.5));
+}
+
+.ai-dock-btn {
+  width: 50px;
+  height: 50px;
+  border-radius: 9px;
+  transform: rotate(45deg);
+  background-color: var(--color-accent);
+  color: var(--color-bg);
+  box-shadow:
+    0 0 0 5px var(--color-bg),
+    0 0 0 6.5px color-mix(in srgb, var(--color-accent) 70%, transparent);
+  transition: transform 160ms ease, box-shadow 220ms ease, background-color 200ms ease;
+}
+
+.ai-dock-btn:active {
+  transform: rotate(45deg) scale(0.9);
+}
+
+.ai-dock-btn[data-open='true'] {
+  background-color: var(--color-accent-hover);
+  box-shadow:
+    0 0 0 5px var(--color-bg),
+    0 0 0 8px var(--color-accent);
+}
+
+/* Знак контрповертаємо, щоб зірочки стояли рівно */
+.ai-dock-mark {
+  transform: rotate(-45deg);
+}
+
+/* ============================================================
+   Панель чату — оболонка «Фойє»: тепле фоє кінотеатру.
+   Свідоме відхилення від системи: радіуси тут 14-18px замість
+   системних 4-8. Решта застосунку лишається гострою — м'якість
+   працює як межа «тут з тобою розмовляють».
+   ============================================================ */
+
+.chat-panel {
+  background: color-mix(in srgb, var(--color-accent) 5%, var(--color-surface-light));
+  border: 1px solid var(--color-border);
+  border-radius: 18px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+  font-family: 'Rubik', var(--font-sans);
+}
+
+.chat-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-shrink: 0;
+  padding: 12px 16px;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent);
+}
+
+.chat-head__title {
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.chat-head__title small {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--color-text-muted);
+}
+
+.chat-head__actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+.chat-x {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px; height: 30px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  color: var(--color-text-muted);
+  background: color-mix(in srgb, var(--color-text) 6%, transparent);
+  transition: color 0.15s, background 0.15s;
+}
+.chat-x:hover { color: var(--color-text); background: color-mix(in srgb, var(--color-text) 12%, transparent); }
+
+.chat-msgs {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+}
+
+/* Порожній стан. Блідіший за звичайний muted: це підказка, а не повідомлення —
+   вона не має конкурувати за увагу з першою відповіддю, яка з'явиться вище. */
+.chat-empty {
+  margin: auto 0;
+  max-width: 34ch;
+  align-self: center;
+  color: color-mix(in srgb, var(--color-text-muted) 72%, transparent);
+}
+
+.chat-empty__lead {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  text-wrap: balance;
+}
+
+.chat-empty__list {
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.chat-empty__list li {
+  position: relative;
+  padding-left: 16px;
+}
+
+/* Крапка золотом — єдиний акцент у блоці, тримає перелік разом */
+.chat-empty__list li::before {
+  content: '';
+  position: absolute;
+  left: 2px; top: 7px;
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-accent) 55%, transparent);
+}
+
+.chat-row { display: flex; gap: 8px; align-items: flex-start; }
+.chat-row--user { justify-content: flex-end; }
+.chat-col { display: flex; flex-direction: column; gap: 8px; min-width: 0; flex: 1; }
+
+/* Аватар — той самий ромб, що й кнопка в навігації */
+.chat-ava {
+  flex-shrink: 0;
+  width: 26px; height: 26px;
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transform: rotate(45deg);
+  background: var(--color-accent);
+  color: var(--color-bg);
+}
+.chat-ava svg { transform: rotate(-45deg); }
+
+.chat-bub {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 16px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  background: color-mix(in srgb, var(--color-text) 6%, transparent);
+}
+
+.chat-bub--user {
+  max-width: 86%;
+  border-bottom-right-radius: 5px;
+  background: var(--color-accent);
+  color: var(--color-bg);
+  font-weight: 500;
+}
+
+.chat-row:not(.chat-row--user) .chat-bub { border-top-left-radius: 5px; }
+
+/* Збій асистента — не помилка користувача, тож без червоної тривоги:
+   спокійна нотатка в тон панелі, щоб не виглядало як щось зламане назавжди. */
+.chat-err {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 16px;
+  border-top-left-radius: 5px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+  background: color-mix(in srgb, var(--color-text) 5%, transparent);
+  border: 1px dashed color-mix(in srgb, var(--color-border) 90%, transparent);
+}
+
+@keyframes chat-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+
+/* Постерні картки. Після друку тексту плитки випливають одна за одною —
+   зсув фази задає inline animation-delay (i × 160мс) на кожному слоті. */
+.chat-cards { display: flex; flex-direction: column; gap: 7px; }
+
+.chat-cards--anim .chat-card-slot {
+  animation: card-in 0.4s cubic-bezier(0.2, 0.8, 0.3, 1) backwards;
+}
+
+@keyframes card-in {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.chat-card {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  padding: 7px;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--color-text) 5%, transparent);
+  border: 1px solid transparent;
+  transition: border-color 0.15s, background 0.15s;
+}
+.chat-card:hover { border-color: color-mix(in srgb, var(--color-accent) 40%, transparent); }
+.chat-card:active { transform: scale(0.99); }
+
+.chat-card--skeleton { height: 68px; animation: chat-pulse 1.4s ease infinite; }
+
+.chat-card__poster {
+  width: 38px;
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+  border-radius: 7px;
+  flex-shrink: 0;
+  background: var(--color-surface);
+}
+
+.chat-card__body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.chat-card__title {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chat-card__meta { font-size: 11.5px; color: var(--color-text-muted); }
+.chat-card__meta b { color: var(--color-accent); font-weight: 500; }
+
+/* Лайк/дизлайк прямо на плитці: зірка — як у свайп-оверлеї стрічки, хрест —
+   як дизлайк там само. Оцінка згортає плитку, тож стани «оцінено» не треба. */
+.chat-card__acts {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+  flex-shrink: 0;
+  padding-left: 8px;
+}
+
+.chat-card__act {
+  width: 32px; height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: transform 0.12s, background 0.15s;
+}
+.chat-card__act:active { transform: scale(0.85); }
+
+.chat-card__act--like {
+  color: var(--color-like);
+  background: color-mix(in srgb, var(--color-like) 12%, transparent);
+}
+.chat-card__act--like:hover { background: color-mix(in srgb, var(--color-like) 22%, transparent); }
+
+.chat-card__act--dislike {
+  color: var(--color-dislike);
+  background: color-mix(in srgb, var(--color-dislike) 12%, transparent);
+}
+.chat-card__act--dislike:hover { background: color-mix(in srgb, var(--color-dislike) 22%, transparent); }
+
+.chat-card__act--save {
+  color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+}
+.chat-card__act--save:hover { background: color-mix(in srgb, var(--color-accent) 22%, transparent); }
+
+/* Підвал: підказки + пілюля вводу */
+.chat-foot {
+  flex-shrink: 0;
+  padding: 10px 12px 12px;
+  border-top: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent);
+}
+
+/* Переносимо, а не прокручуємо: за горизонтальним скролом половина підказок
+   ховалась, і їх ніхто не шукав. Скільки стане в ряд — два чи три — вирішує
+   сама ширина чипа, тож на вузькій панелі виходить три ряди, на широкій один. */
+.chat-sugg {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-bottom: 10px;
+}
+
+.chat-sugg button {
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 1.3;
+  color: var(--color-text-muted);
+  background: color-mix(in srgb, var(--color-text) 6%, transparent);
+  transition: color 0.15s, background 0.15s;
+}
+.chat-sugg button:hover { color: var(--color-text); background: color-mix(in srgb, var(--color-accent) 16%, transparent); }
+
+.chat-inrow { display: flex; align-items: flex-end; gap: 8px; }
+
+.chat-pill {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  padding: 4px 6px 4px 14px;
+  border-radius: 999px;
+  background: var(--color-surface);
+  border: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent);
+  transition: border-color 0.15s;
+}
+.chat-pill:focus-within { border-color: color-mix(in srgb, var(--color-accent) 55%, transparent); }
+
+.chat-pill textarea {
+  flex: 1;
+  resize: none;
+  max-height: 96px;
+  padding: 6px 0;
+  background: none;
+  border: 0;
+  outline: none;
+  color: var(--color-text);
+  font: inherit;
+  font-size: 13.5px;
+  line-height: 1.45;
+}
+.chat-pill textarea::placeholder { color: var(--color-text-muted); }
+
+.chat-send {
+  flex-shrink: 0;
+  width: 38px; height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: var(--color-bg);
+  transition: transform 0.15s, opacity 0.15s;
+}
+.chat-send:disabled { opacity: 0.3; pointer-events: none; }
+.chat-send:active { transform: scale(0.9); }
+
+/* ============================================================
+   Лоадер очікування: кінобудка — проєктор, конус світла,
+   порошинки в промені, слово горить на «екрані» в кінці.
+   Модель думає 10-15 секунд щоразу, тож це єдине, що тримає
+   відчуття, що застосунок живий.
+   ============================================================ */
+
+.pj-loader {
+  position: relative;
+  height: 96px;
+  margin: 2px 0;
+  cursor: crosshair;
+}
+
+/* Корпус проєктора з бабінами зверху і лінзою збоку.
+   Поява: корпус виїжджає з-за лівої грані, і лише коли став на місце —
+   різко вмикається промінь (.pj-beamwrap нижче). Зникнення дзеркальне:
+   промінь гасне миттєво, корпус від'їжджає назад за грань. */
+.pj-body {
+  position: absolute;
+  left: 6px; top: 50%;
+  transform: translateY(-50%);
+  width: 26px; height: 20px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  animation: pj-body-in 0.4s cubic-bezier(0.2, 0.8, 0.3, 1) backwards;
+  transition: transform 0.45s cubic-bezier(0.6, 0, 0.8, 0.4);
+}
+
+@keyframes pj-body-in {
+  from { transform: translate(-90px, -50%); }
+  to   { transform: translate(0, -50%); }
+}
+
+/* Промінь + пил + слово: одна обгортка, щоб вмикати все разом одним махом,
+   не воюючи з власними анімаціями прозорості конуса й порошинок.
+   steps(1, end) тримає нуль до кінця кроку і вмикає світло стрибком —
+   саме так клацає лампа, а не «проявляється». */
+.pj-beamwrap {
+  position: absolute;
+  inset: 0;
+  animation: pj-beam-on 0.5s steps(1, end) backwards;
+}
+
+@keyframes pj-beam-on {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Зникнення: промінь і слово гаснуть миттєво, корпус їде вліво, екран — вправо */
+.pj-loader.is-leaving .pj-beamwrap { animation: none; opacity: 0; }
+.pj-loader.is-leaving .pj-word { animation: none; opacity: 0; }
+.pj-loader.is-leaving .pj-body { transform: translate(-90px, -50%); }
+.pj-loader.is-leaving .pj-screenwrap { transform: translate(130px, -50%); opacity: 0; }
+
+.pj-body::before {            /* лінза */
+  content: '';
+  position: absolute;
+  right: -5px; top: 50%;
+  transform: translateY(-50%);
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  box-shadow: 0 0 8px 2px color-mix(in srgb, var(--color-accent) 65%, transparent);
+}
+
+/* Дві бабіни над корпусом. Обертання видно лише завдяки спицям (хрест із
+   двох перекладин): коло без нічого всередині крутиться непомітно. Подавальна
+   і приймальна навмисно на різних швидкостях — так у справжнього проєктора,
+   і саме розсинхрон робить рух живим. */
+.pj-reel {
+  position: absolute;
+  top: -9px;
+  width: 10px; height: 10px;
+  border: 1.4px solid var(--color-accent);
+  border-radius: 50%;
+  animation: pj-reel 2.6s linear infinite;
+}
+
+.pj-reel--a { left: 1px; }
+.pj-reel--b { right: 1px; animation-duration: 1.6s; }
+
+.pj-reel::before,
+.pj-reel::after {
+  content: '';
+  position: absolute;
+  left: 50%; top: 50%;
+  background: var(--color-accent);
+  border-radius: 1px;
+}
+.pj-reel::before { width: 7.2px; height: 1.2px; transform: translate(-50%, -50%); }
+.pj-reel::after  { width: 1.2px; height: 7.2px; transform: translate(-50%, -50%); }
+
+@keyframes pj-reel { to { transform: rotate(360deg); } }
+
+.pj-cone {
+  position: absolute;
+  left: 34px; top: 50%;
+  /* -150px: промінь упирається в екран, що стоїть праворуч, а не летить повз */
+  width: calc(100% - 150px);
+  height: 84px;
+  margin-top: -42px;
+  transform-origin: 0 50%;
+  transition: transform 0.25s ease-out;
+  clip-path: polygon(0 46%, 100% 0, 100% 100%, 0 54%);
+  /* Маска мʼяко розчиняє правий кінець променя — разом із порошинками,
+     бо вони діти конуса. Без неї clip-path обрізав би світло рівною лінією. */
+  mask-image: linear-gradient(90deg, #000 0%, #000 62%, transparent 99%);
+  -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 62%, transparent 99%);
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--color-accent) 50%, transparent),
+    color-mix(in srgb, var(--color-accent) 14%, transparent) 55%,
+    color-mix(in srgb, var(--color-accent) 5%, transparent));
+  animation: pj-flicker 3.4s steps(2, jump-none) infinite;
+}
+
+@keyframes pj-flicker {
+  0%, 100% { opacity: 0.85; }
+  46% { opacity: 1; }
+  47% { opacity: 0.6; }
+  48% { opacity: 0.95; }
+  73% { opacity: 0.8; }
+}
+
+/* Порошинки. Кожна прибита до своєї позиції по довжині променя (--dx у
+   відсотках) і лише локально дрейфує вниз-праворуч, проявляючись і згасаючи.
+   Ніяких польотів через увесь конус: політ залежав від ширини панелі і на
+   широких лишав правий бік порожнім. Статичний спред працює всюди однаково. */
+.pj-cone i {
+  position: absolute;
+  top: 50%; left: var(--dx, 50%);
+  width: var(--ds, 1.6px); height: var(--ds, 1.6px);
+  border-radius: 50%;
+  background: var(--color-accent-hover);
+  opacity: 0;
+  animation: pj-dust var(--dd, 4s) linear infinite;
+  animation-delay: var(--dl, 0s);
+}
+
+@keyframes pj-dust {
+  0%   { transform: translate(0, var(--dy0, 0px)) scale(0.6); opacity: 0; }
+  15%  { opacity: 1; }
+  80%  { opacity: 0.7; }
+  100% { transform: translate(30px, calc(var(--dy0, 0px) + 20px)) scale(1); opacity: 0; }
+}
+
+/* Екран праворуч, ледь розвернутий до проєктора: перспектива на обгортці,
+   rotateY на самому полотні. Кут відʼємний: права грань подається вперед,
+   ліва тікає вглиб — нормаль полотна дивиться вліво, на проєктор, як картина
+   на правій стіні коридору. Текст нахилений разом, бо живе всередині.
+   Виїжджає з-за правої грані синхронно з корпусом проєктора зліва. */
+.pj-screenwrap {
+  position: absolute;
+  right: 2px; top: 50%;
+  transform: translateY(-50%);
+  perspective: 300px;
+  animation: pj-screen-in 0.4s cubic-bezier(0.2, 0.8, 0.3, 1) backwards;
+  transition: transform 0.45s cubic-bezier(0.6, 0, 0.8, 0.4), opacity 0.3s;
+}
+
+@keyframes pj-screen-in {
+  from { transform: translate(130px, -50%); opacity: 0; }
+  to   { transform: translate(0, -50%); opacity: 1; }
+}
+
+.pj-screen {
+  width: 150px;
+  min-height: 74px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 12px;
+  transform: rotateY(-14deg);
+  border-radius: 5px;
+  background: linear-gradient(100deg,
+    color-mix(in srgb, var(--color-accent) 22%, var(--color-surface)) 0%,
+    color-mix(in srgb, var(--color-accent) 9%, var(--color-surface)) 70%);
+  border: 1px solid color-mix(in srgb, var(--color-accent) 40%, transparent);
+  box-shadow: 0 0 22px color-mix(in srgb, var(--color-accent) 18%, transparent);
+}
+
+/* Слово — це світло з проєктора: вмикається стрибком разом із променем */
+.pj-word {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.35;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  text-wrap: balance;
+  color: color-mix(in srgb, #ffffff 70%, var(--color-accent));
+  text-shadow:
+    0 0 3px var(--color-bg),
+    0 0 14px color-mix(in srgb, var(--color-accent) 85%, transparent),
+    0 0 30px color-mix(in srgb, var(--color-accent) 50%, transparent);
+  animation: pj-beam-on 0.5s steps(1, end) backwards;
+}
+
+[data-theme='light'] .pj-word {
+  color: color-mix(in srgb, #4a3608 65%, var(--color-accent));
+  text-shadow: 0 0 3px var(--color-bg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pj-reel { animation-duration: 8s; }
+  .pj-reel--b { animation-duration: 5s; }
+  .pj-cone { animation-duration: 9s; }
+  .pj-cone i { animation-duration: calc(var(--dd, 4s) * 3); }
+}
+
+/* Рівне повітря навколо плаваючої панелі чату — однакове з усіх чотирьох боків.
+   Ключова деталь: відсотки в padding CSS рахує від ШИРИНИ контейнера, і для
+   верху з низом теж. Тому 10% дає буквально однакову кількість пікселів з
+   кожного боку. Через vh/vw так не вийшло б: 10vw і 10vh — різні числа.
+   max() потрібен лише там, де виріз екрана вимагає більшого просвіту. */
+.chat-inset {
+  padding: max(10%, env(safe-area-inset-top, 0px))
+           max(10%, env(safe-area-inset-right, 0px))
+           max(10%, env(safe-area-inset-bottom, 0px))
+           max(10%, env(safe-area-inset-left, 0px));
 }
 
 /* PWA safe area utilities for iPhone notch/Dynamic Island */

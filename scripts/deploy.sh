@@ -39,7 +39,7 @@ docker run --rm \
   -v "$APP_DIR":/app \
   -w /app \
   node:20-alpine \
-  sh -c "npm ci --workspaces && npm run build -w server && npm run build -w client"
+  sh -c "npm ci --workspaces && npm run build -w server && npm run build -w bot && npm run build -w client"
 
 # --- Ensure scripts are executable ---
 chmod +x scripts/docker-entrypoint.sh

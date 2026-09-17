@@ -1,0 +1,1832 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ШІ-чат: вісім лоадерів для «Фойє» — pickme.mov</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500&family=Oswald:wght@400;500;600&family=Rubik:wght@400;500;600;700&display=swap">
+
+<style>
+/* ============================================================
+   СПЕЦ-АРКУШ №3: вісім лоадерів для обраної оболонки «ФОЙЄ».
+   Оболонка чату (бульбашки, чипи, пігулка вводу, ромб-аватар)
+   скопійована з ai-chat-mockups.html №02 і НЕ змінюється —
+   між вісьмома екранами відрізняється лише лоадер.
+   ============================================================ */
+
+:root {
+  --sheet:     #101016;
+  --sheet-2:   #16161e;
+  --rule:      #26262f;
+  --rule-soft: #1c1c24;
+  --ink:       #e6e6ec;
+  --ink-2:     #9a9aa8;
+  --ink-3:     #63636f;
+  --gold:      #d4a843;
+  --gold-hi:   #e8c569;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--sheet);
+  color: var(--ink);
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px 90px; }
+
+/* ---------- Шапка ---------- */
+
+.masthead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 42px 0 20px;
+  border-bottom: 1px solid var(--gold);
+}
+.masthead h1 {
+  font-family: 'Oswald', Impact, sans-serif;
+  font-weight: 500;
+  font-size: clamp(34px, 6vw, 58px);
+  line-height: 0.98;
+  letter-spacing: 0.015em;
+  text-transform: uppercase;
+  margin: 0;
+}
+.masthead h1 em { font-style: normal; color: var(--gold); }
+.meta {
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 2px 16px;
+  font-size: 11px;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.meta b { color: var(--ink-2); font-weight: 500; }
+.lede { max-width: 66ch; margin: 18px 0 0; color: var(--ink-2); font-size: 13.5px; }
+.lede strong { color: var(--ink); font-weight: 500; }
+
+/* ---------- Панель керування ---------- */
+
+.controls {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 26px;
+  padding: 12px 0;
+  background: linear-gradient(var(--sheet) 72%, transparent);
+}
+.ctl {
+  appearance: none;
+  border: 1px solid var(--rule);
+  background: var(--sheet-2);
+  color: var(--ink-2);
+  font: inherit;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 7px 14px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: color .15s, border-color .15s, background .15s;
+}
+.ctl:hover { color: var(--ink); border-color: var(--ink-3); }
+.ctl[aria-pressed="true"] { color: #0f0f14; background: var(--gold); border-color: var(--gold); }
+.ctl:focus-visible { outline: 2px solid var(--gold-hi); outline-offset: 2px; }
+.ctl-hint { color: var(--ink-3); font-size: 11px; margin-left: auto; }
+
+/* ---------- Секції макетів ---------- */
+
+.mock { margin-top: 54px; border-top: 1px solid var(--rule-soft); padding-top: 26px; }
+.mock-head { display: flex; gap: 16px; align-items: flex-start; margin-bottom: 20px; }
+.idx {
+  font-family: 'Bebas Neue', Impact, sans-serif;
+  font-size: 42px;
+  line-height: 0.9;
+  color: var(--gold);
+  min-width: 52px;
+}
+.mock-head h2 {
+  margin: 0 0 6px;
+  font-family: 'Oswald', sans-serif;
+  font-weight: 500;
+  font-size: 24px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.mock-head h2 span { color: var(--ink-3); font-size: 15px; letter-spacing: 0.06em; margin-left: 10px; }
+.note { margin: 0; max-width: 72ch; font-size: 12px; line-height: 1.65; color: var(--ink-2); }
+.note b { color: var(--gold); font-weight: 500; }
+
+.stagewrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 26px;
+  align-items: flex-start;
+}
+.aside {
+  flex: 1 1 220px;
+  max-width: 340px;
+  font-size: 11.5px;
+  color: var(--ink-3);
+  line-height: 1.7;
+  padding-top: 6px;
+}
+.aside dt { color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.07em; font-size: 10px; margin-top: 14px; }
+.aside dd { margin: 2px 0 0; }
+.aside .k { color: var(--gold); }
+
+/* ============================================================
+   ЕКРАН — токени скопійовані з client/src/index.css
+   ============================================================ */
+
+.screen {
+  --app-bg:        #0a0a0f;
+  --app-surface:   #141420;
+  --app-surface-2: #1e1e30;
+  --app-border:    #2a2a3a;
+  --app-text:      #e8e8ed;
+  --app-muted:     #8a8a9a;
+  --app-gold:      #d4a843;
+  --app-gold-hi:   #e0b84f;
+  --app-like:      #4ade80;
+  --app-dislike:   #f87171;
+  --app-overlay:   rgba(10, 10, 15, 0.85);
+
+  position: relative;
+  flex: 0 0 auto;
+  width: min(392px, 100%);
+  height: 700px;
+  overflow: hidden;
+  background: var(--app-bg);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  font-family: 'Rubik', system-ui, sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--app-text);
+  isolation: isolate;
+}
+[data-app-theme="light"] .screen {
+  --app-bg:        #f5f5f7;
+  --app-surface:   #ffffff;
+  --app-surface-2: #eeeef0;
+  --app-border:    #d4d4dc;
+  --app-text:      #1a1a2e;
+  --app-muted:     #6b6b80;
+  --app-gold:      #c4922e;
+  --app-gold-hi:   #b3841f;
+  --app-like:      #22c55e;
+  --app-dislike:   #ef4444;
+  --app-overlay:   rgba(245, 245, 247, 0.85);
+}
+
+/* Підкладка: натяк на стрічку карток + нижня навігація з ромбом */
+.appbg { position: absolute; inset: 0; }
+.appbg .ghostcard {
+  position: absolute;
+  left: 50%; top: 44px;
+  transform: translateX(-50%);
+  width: 210px; height: 300px;
+  border-radius: 8px;
+  border: 1px solid var(--app-border);
+  background: linear-gradient(160deg,
+    color-mix(in srgb, var(--app-gold) 18%, var(--app-surface-2)),
+    var(--app-surface) 70%);
+}
+.appbg .nav {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 54px;
+  background: var(--app-surface);
+  border-top: 1px solid var(--app-border);
+  display: grid;
+  grid-template-columns: 1fr 1fr 70px 1fr 1fr;
+  align-items: center;
+}
+.appbg .nav i {
+  justify-self: center;
+  width: 18px; height: 18px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--app-muted) 45%, transparent);
+}
+.appbg .diamond {
+  justify-self: center;
+  align-self: center;
+  width: 40px; height: 40px;
+  transform: rotate(45deg) translateY(-6px);
+  border-radius: 7px;
+  background: var(--app-gold);
+  box-shadow: 0 0 0 3px var(--app-bg), 0 0 0 4.5px var(--app-gold);
+  display: flex; align-items: center; justify-content: center;
+}
+.appbg .diamond s { transform: rotate(-45deg); text-decoration: none; color: #14140f; font-size: 15px; }
+.dim { position: absolute; inset: 0; background: var(--app-overlay); }
+
+/* Панель «Фойє» — оболонка з макета №02, без змін */
+.panelwrap { position: absolute; inset: 0; padding: 8.5%; }
+.panel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: color-mix(in srgb, var(--app-gold) 5%, var(--app-surface-2));
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  box-shadow: 0 24px 60px -12px rgba(0,0,0,.55), 0 4px 16px rgba(0,0,0,.3);
+  overflow: hidden;
+  font-family: 'Rubik', system-ui, sans-serif;
+}
+.p-head {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid color-mix(in srgb, var(--app-gold) 30%, var(--app-border));
+}
+.p-title { font-weight: 600; font-size: 13px; letter-spacing: 0.02em; }
+.p-title small { display: block; font-weight: 400; font-size: 10.5px; color: var(--app-muted); }
+.p-x {
+  appearance: none; border: 0; background: none;
+  color: var(--app-muted); font-size: 15px; line-height: 1;
+  cursor: pointer; padding: 4px 6px; border-radius: 4px;
+}
+.p-x:hover { color: var(--app-text); background: color-mix(in srgb, var(--app-text) 8%, transparent); }
+.msgs {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  scrollbar-width: thin;
+}
+.msgs > * { flex-shrink: 0; }
+.p-foot { flex: 0 0 auto; padding: 10px 12px 12px; border-top: 1px solid var(--app-border); }
+
+.ava {
+  width: 26px; height: 26px;
+  flex: 0 0 auto;
+  transform: rotate(45deg);
+  border-radius: 6px;
+  background: var(--app-gold);
+  display: flex; align-items: center; justify-content: center;
+  margin-top: 2px;
+}
+.ava s { transform: rotate(-45deg); text-decoration: none; font-size: 12px; color: #14140f; }
+.mrow { display: flex; gap: 9px; align-items: flex-start; }
+.mrow.user { justify-content: flex-end; }
+.bub {
+  max-width: 78%;
+  padding: 9px 13px;
+  border-radius: 16px;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+.user .bub {
+  background: var(--app-gold);
+  color: #17130a;
+  border-bottom-right-radius: 5px;
+  font-weight: 500;
+}
+.ai .bub {
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-top-left-radius: 5px;
+}
+.chips { display: flex; flex-wrap: wrap; gap: 6px; padding-left: 35px; }
+.chip {
+  font-size: 10.5px;
+  color: var(--app-gold);
+  border: 1px solid color-mix(in srgb, var(--app-gold) 45%, transparent);
+  background: color-mix(in srgb, var(--app-gold) 9%, transparent);
+  border-radius: 20px;
+  padding: 3px 10px;
+}
+.chip::before { content: '✓ '; }
+.chip.run::before { content: ''; }
+.chip.run i {
+  display: inline-block;
+  width: 5px; height: 5px;
+  margin-right: 5px;
+  border-radius: 50%;
+  background: var(--app-gold);
+  animation: blink 1s ease infinite;
+}
+@keyframes blink { 50% { opacity: .2; } }
+
+/* Картки-постери */
+.cards { display: flex; flex-direction: column; gap: 8px; padding-left: 35px; }
+.card {
+  display: flex; gap: 10px;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  padding: 8px;
+}
+.card:hover { border-color: color-mix(in srgb, var(--app-gold) 55%, var(--app-border)); }
+.pp {
+  position: relative;
+  flex: 0 0 auto;
+  width: 52px; height: 74px;
+  border-radius: 6px;
+  overflow: hidden;
+  background:
+    linear-gradient(165deg,
+      color-mix(in srgb, var(--app-gold) var(--mix, 30%), var(--app-surface-2)) 0%,
+      var(--app-surface-2) 62%,
+      color-mix(in srgb, var(--app-bg) 70%, var(--app-surface-2)) 100%);
+  border: 1px solid var(--app-border);
+  display: flex; align-items: center; justify-content: center;
+}
+.pp::before {
+  content: '';
+  position: absolute; inset: 3px;
+  border: 1px solid color-mix(in srgb, var(--app-text) 16%, transparent);
+  border-radius: 3px;
+}
+.pp b {
+  font-family: 'Oswald', sans-serif;
+  font-weight: 600;
+  font-size: 21px;
+  color: color-mix(in srgb, var(--app-gold) 80%, var(--app-text));
+  text-shadow: 0 1px 6px rgba(0,0,0,.35);
+}
+.card .cb { min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 2px; }
+.card .ct { font-weight: 600; font-size: 12.5px; }
+.card .cm { font-size: 11px; color: var(--app-muted); }
+.card .cm b { color: var(--app-gold); font-weight: 600; }
+.card .cw { font-size: 10.5px; color: var(--app-muted); font-style: italic; }
+
+.sugg { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none; }
+.sugg button {
+  flex: 0 0 auto;
+  font: inherit;
+  font-size: 11px;
+  color: var(--app-text);
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: 20px;
+  padding: 5px 12px;
+  cursor: pointer;
+}
+.sugg button:hover { border-color: var(--app-gold); color: var(--app-gold); }
+.inrow { display: flex; align-items: center; gap: 8px; }
+.pill {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: 24px;
+  padding: 8px 8px 8px 14px;
+}
+.pill input {
+  flex: 1; min-width: 0;
+  background: none; border: 0; outline: none;
+  color: var(--app-text);
+  font: inherit; font-size: 12.5px;
+}
+.mic {
+  border: 0; background: none;
+  color: var(--app-muted);
+  font-size: 14px; cursor: pointer;
+  padding: 2px 4px;
+}
+.mic:hover { color: var(--app-gold); }
+.send2 {
+  flex: 0 0 auto;
+  width: 38px; height: 38px;
+  border: 0; border-radius: 50%;
+  background: var(--app-gold);
+  color: #17130a;
+  font-size: 15px;
+  cursor: pointer;
+  box-shadow: 0 3px 10px color-mix(in srgb, var(--app-gold) 40%, transparent);
+}
+.send2:hover { background: var(--app-gold-hi); }
+
+/* Спільне для лоадерів */
+.ld { position: relative; }
+.ldword { transition: opacity .2s; }
+.ldword.swap { animation: wordin .45s ease; }
+@keyframes wordin { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.ldcap {
+  font-size: 11px;
+  color: var(--app-muted);
+  text-align: center;
+}
+.ldcap::after {
+  content: '';
+  display: inline-block;
+  width: 4px; height: 4px;
+  margin-left: 6px;
+  border-radius: 50%;
+  background: var(--app-gold);
+  vertical-align: middle;
+  animation: blink 1s ease infinite;
+}
+
+/* ============================================================
+   Л01 — ТАБЛО «SOLARI»: перекидні літери
+   ============================================================ */
+
+.lda { padding-left: 35px; cursor: pointer; user-select: none; }
+.lda .brd {
+  background: color-mix(in srgb, var(--app-bg) 72%, var(--app-surface));
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  padding: 12px 8px 9px;
+  box-shadow: inset 0 2px 8px rgba(0,0,0,.25);
+}
+.lda .frow { display: flex; gap: 3px; justify-content: center; }
+.lda .tile {
+  position: relative;
+  width: 18px; height: 26px;
+  border-radius: 3px;
+  background: linear-gradient(
+    color-mix(in srgb, var(--app-text) 10%, var(--app-surface)) 48%,
+    color-mix(in srgb, var(--app-bg) 45%, var(--app-surface)) 52%);
+  border: 1px solid color-mix(in srgb, var(--app-border) 80%, transparent);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 600;
+  font-size: 13px;
+  color: color-mix(in srgb, var(--app-gold) 65%, var(--app-text));
+  will-change: transform;
+}
+.lda .tile::after {
+  content: '';
+  position: absolute; left: 1px; right: 1px; top: 50%;
+  height: 1px;
+  background: color-mix(in srgb, var(--app-bg) 65%, transparent);
+}
+.lda .tile.tick { animation: flaptick .09s linear; }
+@keyframes flaptick {
+  0% { transform: scaleY(1); }
+  50% { transform: scaleY(.12); filter: brightness(1.35); }
+  100% { transform: scaleY(1); }
+}
+.lda .seat {
+  margin-top: 8px;
+  text-align: center;
+  font-size: 9.5px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--app-muted);
+}
+.lda .seat b { color: var(--app-gold); font-weight: 500; }
+.lda .ldcap { margin-top: 7px; }
+
+/* ============================================================
+   Л02 — ЗООТРОП: барабан, що оживлює зірочку
+   ============================================================ */
+
+.ldb { display: flex; gap: 14px; align-items: center; padding-left: 35px; cursor: grab; user-select: none; }
+.ldb .drum { position: relative; width: 96px; height: 96px; flex: 0 0 auto; }
+.ldb .ringr {
+  position: absolute; inset: 0;
+  border-radius: 50%;
+  background: repeating-conic-gradient(
+    color-mix(in srgb, var(--app-text) 24%, var(--app-surface)) 0deg 23deg,
+    color-mix(in srgb, var(--app-bg) 85%, var(--app-surface)) 23deg 30deg);
+  -webkit-mask: radial-gradient(circle, transparent 55%, #000 56%);
+  mask: radial-gradient(circle, transparent 55%, #000 56%);
+  will-change: transform;
+}
+.ldb .drum::before {
+  content: '';
+  position: absolute; inset: -4px;
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--app-gold) 55%, var(--app-border));
+  box-shadow: 0 0 14px -4px color-mix(in srgb, var(--app-gold) 50%, transparent);
+}
+.ldb .win {
+  position: absolute; inset: 26px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--app-gold) 9%, var(--app-surface));
+  border: 1px solid var(--app-border);
+  overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+}
+.ldb .fig {
+  font-size: 22px;
+  line-height: 1;
+  color: var(--app-gold);
+  text-shadow: 0 0 10px color-mix(in srgb, var(--app-gold) 55%, transparent);
+  will-change: transform;
+}
+.ldb .shd {
+  position: absolute;
+  left: 50%; bottom: 7px;
+  width: 20px; height: 4px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--app-bg) 60%, transparent);
+  will-change: transform, opacity;
+}
+.ldb .side { min-width: 0; }
+.ldb .side .ldword { display: block; font-size: 11.5px; color: var(--app-text); margin-bottom: 3px; }
+.ldb .rpm {
+  font-size: 10px;
+  color: var(--app-muted);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.ldb .rpm b {
+  font-family: 'Bebas Neue', Impact, sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  color: var(--app-gold);
+  letter-spacing: .06em;
+}
+
+/* ============================================================
+   Л03 — ЗАВІСА: оксамит розсувається на сеанс
+   ============================================================ */
+
+.ldc { padding-left: 35px; }
+.ldc .stagebox {
+  position: relative;
+  height: 108px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--app-gold) 35%, var(--app-border));
+  background: color-mix(in srgb, var(--app-bg) 78%, var(--app-surface));
+}
+.ldc .scr {
+  position: absolute; inset: 12px 16px 12px;
+  border-radius: 4px;
+  background:
+    radial-gradient(85% 90% at 50% 45%,
+      color-mix(in srgb, var(--app-gold) 26%, var(--app-surface)),
+      color-mix(in srgb, var(--app-gold) 6%, var(--app-surface)) 75%);
+  animation: scrglow var(--t3, 13s) ease-in-out infinite;
+}
+@keyframes scrglow {
+  0%, 8%   { opacity: 0; }
+  30%      { opacity: .55; }
+  45%, 80% { opacity: 1; }
+  92%, 100%{ opacity: 0; }
+}
+.ldc .star {
+  position: absolute;
+  left: 50%; top: 38%;
+  font-size: 26px; line-height: 1;
+  color: var(--app-gold);
+  text-shadow: 0 0 14px color-mix(in srgb, var(--app-gold) 70%, transparent);
+  animation: starlife var(--t3, 13s) ease-in-out infinite;
+}
+@keyframes starlife {
+  0%, 42%  { opacity: 0; transform: translate(-50%, -50%) scale(.3) rotate(-40deg); }
+  48%      { opacity: 1; transform: translate(-50%, -50%) scale(1.25) rotate(8deg); }
+  52%      { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+  62%      { transform: translate(-50%, -50%) scale(1.12) rotate(14deg); }
+  72%      { transform: translate(-50%, -50%) scale(1) rotate(-6deg); }
+  80%      { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+  86%, 100%{ opacity: 0; transform: translate(-50%, -50%) scale(.5) rotate(30deg); }
+}
+.ldc .wordwrap {
+  position: absolute;
+  left: 0; right: 0; bottom: 16px;
+  text-align: center;
+  animation: wordlife var(--t3, 13s) ease-in-out infinite;
+}
+@keyframes wordlife {
+  0%, 26%  { opacity: 0; }
+  36%, 80% { opacity: 1; }
+  90%, 100%{ opacity: 0; }
+}
+.ldc .wordwrap .ldword {
+  font-size: 10.5px;
+  color: color-mix(in srgb, var(--app-gold) 55%, var(--app-text));
+  letter-spacing: .04em;
+}
+.ldc .pelmet {
+  position: absolute;
+  left: 0; right: 0; top: 0;
+  height: 12px;
+  background:
+    repeating-linear-gradient(90deg,
+      color-mix(in srgb, var(--app-gold) 55%, var(--app-surface)) 0 9px,
+      color-mix(in srgb, var(--app-gold) 30%, var(--app-bg)) 9px 20px);
+  border-bottom: 2px solid color-mix(in srgb, var(--app-gold) 70%, var(--app-border));
+  z-index: 3;
+}
+.ldc .cur {
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 57%;
+  z-index: 2;
+  background:
+    repeating-linear-gradient(90deg,
+      color-mix(in srgb, var(--app-gold) 42%, var(--app-surface)) 0 8px,
+      color-mix(in srgb, var(--app-gold) 16%, var(--app-bg)) 8px 15px,
+      color-mix(in srgb, var(--app-gold) 30%, var(--app-surface)) 15px 22px);
+  will-change: transform;
+}
+.ldc .cur.l { left: 0;  transform-origin: left center;  animation: curl var(--t3, 13s) ease-in-out infinite; }
+.ldc .cur.r { right: 0; transform-origin: right center; animation: curr var(--t3, 13s) ease-in-out infinite; }
+@keyframes curl {
+  0%, 7%    { transform: translateX(0) scaleX(1); }
+  27%, 82%  { transform: translateX(-12%) scaleX(.16); }
+  95%, 100% { transform: translateX(0) scaleX(1); }
+}
+@keyframes curr {
+  0%, 7%    { transform: translateX(0) scaleX(1); }
+  27%, 82%  { transform: translateX(12%) scaleX(.16); }
+  95%, 100% { transform: translateX(0) scaleX(1); }
+}
+.ldc .ldcap { margin-top: 7px; }
+
+/* ============================================================
+   Л04 — ФОНОГРАМА: оптична доріжка звуку
+   ============================================================ */
+
+.ldd { padding-left: 35px; cursor: crosshair; }
+.ldd .film {
+  position: relative;
+  height: 88px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--app-bg) 80%, var(--app-surface));
+  border: 1px solid var(--app-border);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  padding: 0 18px;
+  transition: box-shadow .4s;
+}
+.ldd .film.peak {
+  box-shadow:
+    0 0 22px -4px color-mix(in srgb, var(--app-gold) 55%, transparent),
+    inset 0 0 26px -8px color-mix(in srgb, var(--app-gold) 45%, transparent);
+}
+.ldd .film::before, .ldd .film::after {
+  content: '';
+  position: absolute; top: 4px; bottom: 4px;
+  width: 8px;
+  background-image: radial-gradient(
+    color-mix(in srgb, var(--app-text) 35%, transparent) 1.6px, transparent 2px);
+  background-size: 8px 12px;
+  background-position: center 2px;
+}
+.ldd .film::before { left: 5px; }
+.ldd .film::after { right: 5px; }
+.ldd .wave {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 62px;
+}
+.ldd .wave i {
+  flex: 1;
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(
+    color-mix(in srgb, var(--app-gold) 55%, var(--app-text)),
+    var(--app-gold) 50%,
+    color-mix(in srgb, var(--app-gold) 55%, var(--app-text)));
+  transform: scaleY(.06);
+  will-change: transform;
+}
+.ldd .tag {
+  position: absolute;
+  right: 20px; top: 6px;
+  font-family: 'Bebas Neue', Impact, sans-serif;
+  font-size: 10px;
+  letter-spacing: .22em;
+  color: var(--app-muted);
+}
+.ldd .ldrow {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 10px; margin-top: 7px;
+}
+.ldd .ldword { font-size: 11px; color: var(--app-muted); }
+.ldd .db {
+  font-size: 9.5px; color: var(--app-muted); letter-spacing: .1em;
+}
+.ldd .db b { color: var(--app-gold); font-weight: 500; }
+
+/* ============================================================
+   Л05 — КВИТОК: відрив по перфорації
+   ============================================================ */
+
+.lde { padding-left: 35px; height: 132px; cursor: pointer; user-select: none; }
+.lde .booth { position: relative; width: 190px; height: 100%; margin: 0 auto; }
+.lde .roll {
+  position: absolute;
+  left: 50%; top: 0;
+  transform: translateX(-50%);
+  width: 168px; height: 14px;
+  border-radius: 7px;
+  background: repeating-linear-gradient(90deg,
+    color-mix(in srgb, var(--app-gold) 80%, var(--app-text)) 0 7px,
+    var(--app-gold) 7px 14px);
+  box-shadow: 0 2px 6px rgba(0,0,0,.3);
+  z-index: 3;
+}
+.lde .tik {
+  position: absolute;
+  left: 50%; top: 12px;
+  transform: translateX(-50%);
+  width: 150px;
+  padding: 9px 10px 8px;
+  background: var(--app-gold);
+  color: #17130a;
+  border-radius: 0 0 7px 7px;
+  text-align: center;
+  z-index: 2;
+  will-change: transform, opacity;
+}
+.lde .tik::before {
+  content: '';
+  position: absolute; left: 6px; right: 6px; top: 3px;
+  border-top: 1.5px dashed rgba(23,19,10,.4);
+}
+.lde .tik .tw { font-weight: 600; font-size: 11px; line-height: 1.35; }
+.lde .tik .tn {
+  margin-top: 3px;
+  font-family: 'Bebas Neue', Impact, sans-serif;
+  font-size: 10px;
+  letter-spacing: .24em;
+  opacity: .65;
+}
+.lde .tik.fresh { animation: tikfeed .5s cubic-bezier(.2, .9, .3, 1.15); }
+@keyframes tikfeed {
+  from { transform: translate(-50%, -34px); opacity: 0; }
+  to   { transform: translate(-50%, 0); opacity: 1; }
+}
+.lde .tik.tear { animation: tiktear .65s cubic-bezier(.4, 0, .8, .4) forwards; }
+@keyframes tiktear {
+  0%   { transform: translate(-50%, 0) rotate(0deg); }
+  22%  { transform: translate(-46%, 3px) rotate(4deg); }
+  100% { transform: translate(-18%, 84px) rotate(34deg); opacity: 0; }
+}
+.lde .pile { position: absolute; left: 0; right: 0; bottom: 12px; height: 26px; }
+.lde .pile s {
+  position: absolute;
+  bottom: 0;
+  width: 54px; height: 17px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--app-gold) 72%, var(--app-surface));
+  border: 1px solid color-mix(in srgb, var(--app-gold) 50%, var(--app-border));
+  text-decoration: none;
+  animation: stubland .35s ease-out;
+}
+@keyframes stubland {
+  from { transform: translateY(-16px) rotate(0deg); opacity: 0; }
+}
+.lde .pile.sweep { animation: pilesweep .6s ease-in forwards; }
+@keyframes pilesweep {
+  to { transform: translateX(150px) rotate(6deg); opacity: 0; }
+}
+.lde .cnt {
+  position: absolute;
+  right: 0; top: 40px;
+  font-size: 9.5px;
+  color: var(--app-muted);
+  letter-spacing: .12em;
+  writing-mode: vertical-rl;
+}
+.lde .cnt b { color: var(--app-gold); font-weight: 500; }
+.lde .ldcap { position: absolute; left: 0; right: 0; bottom: -6px; }
+
+/* ============================================================
+   Л06 — ДІАПРОЕКТОР: карусель слайдів
+   ============================================================ */
+
+.ldf { display: flex; gap: 12px; align-items: center; padding-left: 35px; }
+.ldf .tray { position: relative; width: 68px; height: 68px; flex: 0 0 auto; }
+.ldf .disc {
+  position: absolute; inset: 0;
+  border-radius: 50%;
+  background: repeating-conic-gradient(
+    color-mix(in srgb, var(--app-text) 18%, var(--app-surface)) 0deg 13deg,
+    color-mix(in srgb, var(--app-bg) 70%, var(--app-surface)) 13deg 30deg);
+  -webkit-mask: radial-gradient(circle, transparent 26%, #000 27%);
+  mask: radial-gradient(circle, transparent 26%, #000 27%);
+  border: 1px solid var(--app-border);
+  transition: transform .38s cubic-bezier(.3, 1.4, .4, 1);
+  will-change: transform;
+}
+.ldf .hub {
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 14px; height: 14px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: var(--app-gold);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--app-gold) 25%, transparent);
+}
+.ldf .scrn {
+  flex: 1;
+  height: 100px;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+  background: color-mix(in srgb, var(--app-bg) 78%, var(--app-surface));
+  border: 1px solid var(--app-border);
+}
+.ldf .scrn.thunk { animation: thunkshake .32s linear; }
+@keyframes thunkshake {
+  0% { transform: translateY(0); }
+  30% { transform: translateY(2.5px); }
+  55% { transform: translateY(-1.5px); }
+  100% { transform: translateY(0); }
+}
+.ldf .slide {
+  position: absolute; inset: 8px;
+  border-radius: 4px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 7px;
+  background:
+    radial-gradient(90% 110% at 30% 20%,
+      color-mix(in srgb, var(--app-gold) var(--sg, 30%), var(--app-surface)),
+      color-mix(in srgb, var(--app-bg) 55%, var(--app-surface)) 80%);
+  border: 1px solid color-mix(in srgb, var(--app-text) 14%, transparent);
+  filter: blur(0);
+  transition: filter .5s ease .22s, transform .5s ease;
+  will-change: transform, filter, opacity;
+}
+.ldf .slide .sw {
+  font-size: 10.5px;
+  font-weight: 500;
+  color: color-mix(in srgb, var(--app-gold) 40%, var(--app-text));
+  background: color-mix(in srgb, var(--app-bg) 62%, transparent);
+  border-radius: 10px;
+  padding: 2px 9px;
+}
+.ldf .slide.in { animation: slidein .5s cubic-bezier(.25, .9, .3, 1.1); filter: blur(4px); }
+@keyframes slidein {
+  0%  { transform: translateY(-112%); }
+  70% { transform: translateY(3%); }
+  100%{ transform: translateY(0); }
+}
+.ldf .slide.focus { filter: blur(0); }
+.ldf .slide.updown { transform: rotate(180deg); }
+.ldf .slide.out { animation: slideout .4s ease-in forwards; }
+@keyframes slideout { to { transform: translateY(112%); opacity: .4; } }
+.ldf .side6 { position: absolute; left: 8px; top: 6px; z-index: 2; }
+.ldf .side6 .num {
+  font-family: 'Bebas Neue', Impact, sans-serif;
+  font-size: 12px;
+  letter-spacing: .18em;
+  color: color-mix(in srgb, var(--app-text) 60%, transparent);
+  text-shadow: 0 1px 3px rgba(0,0,0,.4);
+}
+
+/* ============================================================
+   Л07 — СТЕРЕОКІНО: анагліф лайк/дизлайк сходиться в золото
+   ============================================================ */
+
+.ldg { padding-left: 35px; height: 118px; cursor: crosshair; user-select: none; }
+.ldg .fld {
+  position: relative;
+  height: 84px;
+  border-radius: 12px;
+  border: 1px solid var(--app-border);
+  background: color-mix(in srgb, var(--app-bg) 65%, var(--app-surface));
+  overflow: hidden;
+}
+.ldg .lay {
+  position: absolute;
+  left: 50%; top: 50%;
+  font-size: 38px;
+  line-height: 1;
+  margin: -23px 0 0 -19px;
+  width: 38px; height: 46px;
+  text-align: center;
+  will-change: transform, opacity;
+}
+.ldg .lay.r { color: var(--app-dislike); opacity: .72; }
+.ldg .lay.g { color: var(--app-like); opacity: .72; }
+.ldg .lay.au {
+  color: var(--app-gold);
+  opacity: 0;
+  text-shadow: 0 0 16px color-mix(in srgb, var(--app-gold) 80%, transparent);
+}
+.ldg .ringp {
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 30px; height: 30px;
+  margin: -15px 0 0 -15px;
+  border-radius: 50%;
+  border: 2px solid var(--app-gold);
+  opacity: 0;
+  will-change: transform, opacity;
+}
+.ldg .fld.lock .ringp { animation: ringpulse 1s ease-out 2; }
+@keyframes ringpulse {
+  0% { opacity: .9; transform: scale(.6); }
+  100% { opacity: 0; transform: scale(3.4); }
+}
+.ldg .badge {
+  position: absolute;
+  right: 8px; top: 6px;
+  font-family: 'Bebas Neue', Impact, sans-serif;
+  font-size: 11px;
+  letter-spacing: .28em;
+  color: var(--app-muted);
+}
+.ldg .ldcap { margin-top: 8px; }
+
+/* ============================================================
+   Л08 — РОЗКАДРОВКА: сториборд малює сам себе
+   ============================================================ */
+
+.ldh { padding-left: 35px; position: relative; overflow: hidden; }
+.ldh .board {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.ldh .frm {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  background: color-mix(in srgb, var(--app-text) 4%, var(--app-surface));
+  border: 1px solid var(--app-border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.ldh .frm svg { position: absolute; inset: 3px; width: calc(100% - 6px); height: calc(100% - 6px); }
+.ldh .frm path, .ldh .frm circle, .ldh .frm polyline {
+  fill: none;
+  stroke: color-mix(in srgb, var(--app-text) 72%, var(--app-muted));
+  stroke-width: .06;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: var(--kf) var(--t8, 14s) linear infinite;
+}
+.ldh .frm .au { stroke: var(--app-gold); }
+@keyframes sb1 { 0%, 2%  { stroke-dashoffset: 1; } 12% { stroke-dashoffset: 0; } 96% { stroke-dashoffset: 0; } 99%, 100% { stroke-dashoffset: 1; } }
+@keyframes sb2 { 0%, 15% { stroke-dashoffset: 1; } 25% { stroke-dashoffset: 0; } 96% { stroke-dashoffset: 0; } 99%, 100% { stroke-dashoffset: 1; } }
+@keyframes sb3 { 0%, 28% { stroke-dashoffset: 1; } 38% { stroke-dashoffset: 0; } 96% { stroke-dashoffset: 0; } 99%, 100% { stroke-dashoffset: 1; } }
+@keyframes sb4 { 0%, 41% { stroke-dashoffset: 1; } 51% { stroke-dashoffset: 0; } 96% { stroke-dashoffset: 0; } 99%, 100% { stroke-dashoffset: 1; } }
+@keyframes sb5 { 0%, 54% { stroke-dashoffset: 1; } 64% { stroke-dashoffset: 0; } 96% { stroke-dashoffset: 0; } 99%, 100% { stroke-dashoffset: 1; } }
+@keyframes sb6 { 0%, 67% { stroke-dashoffset: 1; } 77% { stroke-dashoffset: 0; } 96% { stroke-dashoffset: 0; } 99%, 100% { stroke-dashoffset: 1; } }
+.ldh .frm .no {
+  position: absolute;
+  right: 3px; bottom: 1px;
+  font-family: 'Bebas Neue', Impact, sans-serif;
+  font-size: 9px;
+  letter-spacing: .1em;
+  color: color-mix(in srgb, var(--app-muted) 70%, transparent);
+}
+.ldh .stamp {
+  position: absolute;
+  left: 50%; top: 42%;
+  z-index: 2;
+  transform: translate(-50%, -50%) rotate(-8deg);
+  border: 2.5px solid var(--app-dislike);
+  color: var(--app-dislike);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--app-bg) 40%, transparent);
+  opacity: 0;
+  animation: stampin var(--t8, 14s) linear infinite;
+  will-change: transform, opacity;
+}
+@keyframes stampin {
+  0%, 80%  { opacity: 0; transform: translate(-50%, -50%) rotate(-8deg) scale(2.6); }
+  83%      { opacity: 1; transform: translate(-50%, -50%) rotate(-8deg) scale(.94); }
+  85%      { transform: translate(-50%, -50%) rotate(-8deg) scale(1.04); }
+  87%, 95% { opacity: 1; transform: translate(-50%, -50%) rotate(-8deg) scale(1); }
+  98%, 100%{ opacity: 0; transform: translate(-50%, -50%) rotate(-8deg) scale(1); }
+}
+.ldh .ldcap { margin-top: 8px; }
+
+/* ---------- Reduced motion: уповільнюємо, не вимикаємо ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .screen { --t3: 34s; --t8: 36s; }
+  .lda .tile.tick { animation-duration: .3s; }
+  .ldf .disc { transition-duration: 1s; }
+  .ldf .slide.in { animation-duration: 1.4s; }
+  .ldf .slide.out { animation-duration: 1.2s; }
+  .lde .tik.tear { animation-duration: 1.8s; }
+  .lde .tik.fresh { animation-duration: 1.4s; }
+  .ldg .fld.lock .ringp { animation-duration: 2.5s; }
+  .chip.run i, .ldcap::after { animation-duration: 3s; }
+}
+
+/* ---------- Адаптив ---------- */
+@media (max-width: 720px) {
+  .stagewrap { flex-direction: column; }
+  .aside { max-width: none; }
+  .mock-head { flex-direction: column; gap: 6px; }
+}
+
+.footer {
+  margin-top: 70px;
+  padding-top: 18px;
+  border-top: 1px solid var(--rule);
+  font-size: 11px;
+  color: var(--ink-3);
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <div>
+    <h1>Вісім лоадерів <em>для «Фойє»</em></h1>
+    <p class="lede">Оболонка чату вирішена — це <strong>«Фойє»</strong> з аркуша №02: м'які бульбашки,
+    ромб-аватар ✦, чипи, пігулка з мікрофоном, Rubik. Тут вона повторена вісім разів
+    <strong>без жодної зміни</strong> — між екранами відрізняється лише лоадер очікування.
+    Кожен живе на циклі ~12–15 с, як реальна пауза міркування моделі, і має власну
+    драматургію: секунда одинадцята не схожа на другу.</p>
+  </div>
+  <div class="meta">
+    <span>Проєкт</span><b>pickme.mov</b>
+    <span>Аркуш</span><b>ШІ-чат / 03</b>
+    <span>Оболонка</span><b>№02 «Фойє»</b>
+    <span>Кадрів</span><b>8</b>
+  </div>
+</header>
+
+<div class="controls">
+  <button class="ctl" id="th-dark" aria-pressed="true">Темна тема</button>
+  <button class="ctl" id="th-light" aria-pressed="false">Світла тема</button>
+  <button class="ctl" id="replay">⟲ Перезапустити лоадери</button>
+  <span class="ctl-hint">01, 02, 04, 05, 07 — інтерактивні: наводьте й клацайте</span>
+</div>
+
+<main id="mocks" data-app-theme="dark">
+
+<!-- ============================================================ 01 -->
+<section class="mock" id="mock1">
+  <div class="mock-head">
+    <span class="idx">01</span>
+    <div>
+      <h2>Табло «Соларі» <span>перекидні літери</span></h2>
+      <p class="note"><b>Механічне табло вокзалу-кінотеатру</b>: чотирнадцять перекидних плашок
+      клацають випадковими літерами й складаються у смішний статус. За 15 секунд табло
+      перебирає шість фраз — від «ГОРТАЮ АФІШУ» до «ЩЕ СЕКУНДОЧКУ», а внизу тим часом
+      «шукається» ваш ряд і місце. <b>Клік — табло достроково клацає наступну фразу.</b></p>
+    </div>
+  </div>
+  <div class="stagewrap">
+    <div class="screen" data-shell data-loader="flap"></div>
+    <dl class="aside">
+      <dt>Арка 15 с</dt><dd>6 фраз × ~2.5 с; плашки хвилею зліва направо, кожна тріпоче 3–7 разів перед тим, як завмерти. Номер ряду/місця добігає до фінальних значень до кінця циклу.</dd>
+      <dt>Інтерактив</dt><dd><span class="k">Клік — дострокове перегортання.</span></dd>
+      <dt>Механіка</dt><dd>Тільки transform: scaleY на плашках; літери підмінює JS у середині фліпа.</dd>
+    </dl>
+  </div>
+</section>
+
+<!-- ============================================================ 02 -->
+<section class="mock" id="mock2">
+  <div class="mock-head">
+    <span class="idx">02</span>
+    <div>
+      <h2>Зоотроп <span>барабан оживлює зірочку</span></h2>
+      <p class="note"><b>Іграшка з-перед кіно</b>: барабан зі щілинами розкручується, і статична
+      зірочка у віконці оживає — спершу смикається покадрово, на повній швидкості стрибає
+      плавно, а під кінець циклу падає у «слоу-мо повтор», як ефектний дубль. Лічильник об/хв
+      чесно показує розгін. <b>Наведіть — ви «підкручуєте» барабан, і зірочка скаче швидше.</b></p>
+    </div>
+  </div>
+  <div class="stagewrap">
+    <div class="screen" data-shell data-loader="zoetrope"></div>
+    <dl class="aside">
+      <dt>Арка 13 с</dt><dd>0–4 с розгін (стробоскопічний стукіт) → 4–9 с плавні 24 к/с → 9–11.5 с слоу-мо повтор стрибка → розгін і петля.</dd>
+      <dt>Інтерактив</dt><dd><span class="k">Hover — докрутка барабана ×2.2, плавно через rAF.</span></dd>
+      <dt>Механіка</dt><dd>Один rAF: кут барабана + 12 фаз стрибка зірочки (transform), тінь стискається у польоті.</dd>
+    </dl>
+  </div>
+</section>
+
+<!-- ============================================================ 03 -->
+<section class="mock" id="mock3">
+  <div class="mock-head">
+    <span class="idx">03</span>
+    <div>
+      <h2>Завіса <span>оксамит перед сеансом</span></h2>
+      <p class="note"><b>Золотий оксамит розсувається</b>, збираючись у складки, екран за ним
+      повільно теплішає — і на розігрітому полотні вискакує зірочка, крутиться, красується.
+      Під кінець циклу завіса сходиться, зал видихає, і все починається знову: маленький
+      сеанс очікування. Найспокійніший і найм'якший із вісімки — чистий CSS, без жодного JS.</p>
+    </div>
+  </div>
+  <div class="stagewrap">
+    <div class="screen" data-shell data-loader="curtain"></div>
+    <dl class="aside">
+      <dt>Арка 13 с</dt><dd>0–1 с закрито → 1–3.5 с розсув (scaleX стискає складки) → екран прогрівається → 5.5–10.5 с зірочка живе на екрані → 11–13 с завіса сходиться.</dd>
+      <dt>Інтерактив</dt><dd>Немає — свідомо споглядальний варіант.</dd>
+      <dt>Механіка</dt><dd>Чотири синхронні CSS-таймлайни по 13 с (завіси, екран, зірка, підпис).</dd>
+    </dl>
+  </div>
+</section>
+
+<!-- ============================================================ 04 -->
+<section class="mock" id="mock4">
+  <div class="mock-head">
+    <span class="idx">04</span>
+    <div>
+      <h2>Фонограма <span>оптична доріжка звуку</span></h2>
+      <p class="note"><b>Край кіноплівки з оптичною доріжкою</b>: хвиля з 44 смужок «читається
+      світлом» і проживає власний саундтрек — тихий вступ, наростання, удар литавр із золотим
+      спалахом рамки, тихе завершення. Лічильник dB підкреслює драму. <b>Ведіть пальцем по
+      доріжці — звук «спухає» під курсором</b>, ніби ви торкнулися плівки.</p>
+    </div>
+  </div>
+  <div class="stagewrap">
+    <div class="screen" data-shell data-loader="wave"></div>
+    <dl class="aside">
+      <dt>Арка 14 с</dt><dd>0–2 с шепіт → 2–6 с крещендо → 6–8 с ритмічні удари → 8–9.5 с пік (панель світиться) → спад → тиша, і з початку.</dd>
+      <dt>Інтерактив</dt><dd><span class="k">Pointer — локальний «сплеск» гучності під курсором.</span></dd>
+      <dt>Механіка</dt><dd>Один rAF, лише scaleY; обвідна гучності — функція від часу циклу.</dd>
+    </dl>
+  </div>
+</section>
+
+<!-- ============================================================ 05 -->
+<section class="mock" id="mock5">
+  <div class="mock-head">
+    <span class="idx">05</span>
+    <div>
+      <h2>Квиток <span>відрив по перфорації</span></h2>
+      <p class="note"><b>Каса друкує квитки з рулону</b>: на кожному — свіжий статус, за дві
+      секунди квиток відривається по перфорації, летить у купку корінців унизу, а рулон
+      видає наступний. Шість квитків — купка виросла — контролер змітає її, і касса заходить
+      на нове коло. Прогрес видно фізично: скільки корінців — стільки прожито. <b>Клік — відірвати
+      негайно.</b></p>
+    </div>
+  </div>
+  <div class="stagewrap">
+    <div class="screen" data-shell data-loader="ticket"></div>
+    <dl class="aside">
+      <dt>Арка 14 с</dt><dd>6 квитків × ~2.2 с: друк → відрив → корінець у купку; лічильник «3 із 6»; наприкінці купку змітає геть.</dd>
+      <dt>Інтерактив</dt><dd><span class="k">Клік — квиток рветься одразу.</span></dd>
+      <dt>Механіка</dt><dd>Маленька стейт-машина на таймаутах; уся фізика відриву — CSS-анімації transform.</dd>
+    </dl>
+  </div>
+</section>
+
+<!-- ============================================================ 06 -->
+<section class="mock" id="mock6">
+  <div class="mock-head">
+    <span class="idx">06</span>
+    <div>
+      <h2>Діапроектор <span>карусель зі слайдами</span></h2>
+      <p class="note"><b>Сімейний вечір із каруселлю слайдів</b>: «тхнк» — слайд падає в рамку
+      розмитим і повільно наводиться на різкість, карусель прокручується на один паз.
+      Четвертий слайд вставлений догори дриґом — секунда розгубленості, і проектор сам його
+      перевертає. Шість слайдів — коло каруселі — і показ іде на новий заїзд.</p>
+    </div>
+  </div>
+  <div class="stagewrap">
+    <div class="screen" data-shell data-loader="slides"></div>
+    <dl class="aside">
+      <dt>Арка 13 с</dt><dd>6 слайдів × ~2.2 с: скидання → фокусування → «тхнк» наступного; гег із перевернутим слайдом на 4-му такті.</dd>
+      <dt>Інтерактив</dt><dd>Немає — гумор замість інтерактиву.</dd>
+      <dt>Механіка</dt><dd>Крокова transition каруселі з пружним изингом; blur лише на маленькому слайді.</dd>
+    </dl>
+  </div>
+</section>
+
+<!-- ============================================================ 07 -->
+<section class="mock" id="mock7">
+  <div class="mock-head">
+    <span class="idx">07</span>
+    <div>
+      <h2>Стереокіно <span>анагліф лайк + дизлайк</span></h2>
+      <p class="note"><b>Дві примари зірочки ✦</b> — червона (дизлайк) і зелена (лайк) — кружляють
+      у протифазі, як кадр без 3D-окулярів. З кожним тактом вони сходяться ближче, і коли
+      нарешті збігаються — спалахує золото і йде пульс-кільце: смак «зійшовся у фокус».
+      <b>Рухайте курсором — шари паралаксять за рукою</b>, ніби ви нахиляєте 3D-окуляри.</p>
+    </div>
+  </div>
+  <div class="stagewrap">
+    <div class="screen" data-shell data-loader="anaglyph"></div>
+    <dl class="aside">
+      <dt>Арка 13 с</dt><dd>Три оберти з розведенням 26 → 16 → 8 px → сходження в нуль → золотий лок із подвійним пульсом → розліт і нове коло.</dd>
+      <dt>Інтерактив</dt><dd><span class="k">Pointer — паралакс шарів у протилежні боки.</span></dd>
+      <dt>Механіка</dt><dd>rAF рухає три span-шари (transform); золотий шар проявляється мірою сходження.</dd>
+    </dl>
+  </div>
+</section>
+
+<!-- ============================================================ 08 -->
+<section class="mock" id="mock8">
+  <div class="mock-head">
+    <span class="idx">08</span>
+    <div>
+      <h2>Розкадровка <span>сториборд малює себе</span></h2>
+      <p class="note"><b>Шість кадрів сториборду</b> замальовуються олівцем один за одним:
+      гори, герой, погоня, серце, вибух — і фінальний золотий ✦. Коли останній штрих готовий,
+      на дошку гепається штамп «У ПРОДАКШН», аркуш витирається — і художник заходить на новий
+      дубль. Уся драматургія — чистий CSS на stroke-dashoffset, нуль JS.</p>
+    </div>
+  </div>
+  <div class="stagewrap">
+    <div class="screen" data-shell data-loader="storyboard"></div>
+    <dl class="aside">
+      <dt>Арка 14 с</dt><dd>Кадри 1–6 малюються по ~1.5 с із паузами → 11.6 с штамп зі scale-ударом → 13.5 с аркуш «стирається» → новий дубль.</dd>
+      <dt>Інтерактив</dt><dd>Немає — це «фонова» опція без відволікання.</dd>
+      <dt>Механіка</dt><dd>SVG з pathLength=1; шість каскадних @keyframes; штамп — transform + opacity.</dd>
+    </dl>
+  </div>
+</section>
+
+</main>
+
+<footer class="footer">
+  pickme.mov · спец-аркуш ШІ-чату №03 · оболонка «Фойє» повторена без змін, різняться лише лоадери ·
+  токени з client/src/index.css · Bebas Neue — лише латиниця й цифри, вся кирилиця — Rubik.
+</footer>
+
+</div>
+
+<script>
+/* ===================== керування темою ===================== */
+(function () {
+  var mocks = document.getElementById('mocks');
+  var bDark = document.getElementById('th-dark');
+  var bLight = document.getElementById('th-light');
+  function setTheme(t) {
+    mocks.setAttribute('data-app-theme', t);
+    bDark.setAttribute('aria-pressed', String(t === 'dark'));
+    bLight.setAttribute('aria-pressed', String(t === 'light'));
+  }
+  bDark.addEventListener('click', function () { setTheme('dark'); });
+  bLight.addEventListener('click', function () { setTheme('light'); });
+  if (location.hash === '#light') setTheme('light');
+})();
+
+var RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+var SLOW = RM ? 2.6 : 1;
+
+/* Єдиний rAF-цикл на всі лоадери */
+var tickers = [];
+var resetters = [];
+requestAnimationFrame(function loop(now) {
+  for (var i = 0; i < tickers.length; i++) tickers[i](now);
+  requestAnimationFrame(loop);
+});
+
+/* ===================== оболонка «Фойє» — одна на всіх ===================== */
+/* Розмітка скопійована з ai-chat-mockups.html №02 і вставляється однаковою
+   у всі вісім екранів; %LOADER% — єдине місце, де екрани різняться. */
+function shellHTML(loader) {
+  return `
+  <div class="appbg"><div class="ghostcard"></div>
+    <div class="nav"><i></i><i></i><div class="diamond"><s>✦</s></div><i></i><i></i></div>
+  </div>
+  <div class="dim"></div>
+  <div class="panelwrap">
+    <section class="panel">
+      <header class="p-head">
+        <span class="p-title">Кіноконсьєрж<small>знає твої 59 лайків</small></span>
+        <button class="p-x" aria-label="Закрити">✕</button>
+      </header>
+      <div class="msgs">
+        <div class="mrow user"><div class="bub">Порадь щось епічне на вечір, від 2000 року, з хорошим рейтингом</div></div>
+        <div class="chips">
+          <span class="chip">Шукаю в каталозі</span>
+          <span class="chip">Читаю твій профіль</span>
+        </div>
+        <div class="mrow ai">
+          <div class="ava"><s>✦</s></div>
+          <div class="bub">Тримай трійку найепічніших — усі після 2000-го, всі з рейтингом 7.5+. Драма, бойовик і фантастика — якраз твої топ-жанри:</div>
+        </div>
+        <div class="cards">
+          <div class="card">
+            <div class="pp" style="--mix:42%"><b>М</b></div>
+            <div class="cb">
+              <div class="ct">Месники: Війна нескінченності</div>
+              <div class="cm">2018 · <b>★ 8.2</b></div>
+              <div class="cw">масштаб, який ти лайкаєш найчастіше</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="pp" style="--mix:26%"><b>В</b></div>
+            <div class="cb">
+              <div class="ct">Вартові галактики</div>
+              <div class="cm">2014 · <b>★ 7.9</b></div>
+              <div class="cw">космос + гумор, схоже на твої суперлайки</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="pp" style="--mix:14%"><b>Л</b></div>
+            <div class="cb">
+              <div class="ct">Лоґан</div>
+              <div class="cm">2017 · <b>★ 7.8</b></div>
+              <div class="cw">епічно, але з драмою — твій жанр №1</div>
+            </div>
+          </div>
+        </div>
+        <div class="mrow user"><div class="bub">відклади Вартових на потім</div></div>
+        <div class="chips"><span class="chip run"><i></i>Додаю в збережене</span></div>
+        ${loader}
+      </div>
+      <footer class="p-foot">
+        <div class="sugg">
+          <button>Щось на вечір</button>
+          <button>Найкраще Нолана</button>
+          <button>Мій топ-жанр</button>
+          <button>Що я зберіг?</button>
+        </div>
+        <div class="inrow">
+          <div class="pill">
+            <input type="text" placeholder="Спитай про кіно…" aria-label="Повідомлення">
+            <button class="mic" aria-label="Голосовий ввід">🎙</button>
+          </div>
+          <button class="send2" aria-label="Надіслати">➤</button>
+        </div>
+      </footer>
+    </section>
+  </div>`;
+}
+
+/* ===================== розмітка вісьмох лоадерів ===================== */
+var LOADER_HTML = {
+  flap: `
+    <div class="ld lda" data-flap title="Клацни — наступна фраза">
+      <div class="brd">
+        <div class="frow"></div>
+        <div class="seat">РЯД <b class="sr">··</b> · МІСЦЕ <b class="sm">··</b></div>
+      </div>
+      <div class="ldcap">табло шукає сеанс</div>
+    </div>`,
+  zoetrope: `
+    <div class="ld ldb" data-zoe title="Наведи — підкрути барабан">
+      <div class="drum">
+        <div class="ringr"></div>
+        <div class="win"><span class="shd"></span><span class="fig">✦</span></div>
+      </div>
+      <div class="side">
+        <span class="ldword" data-words='["Розкручую барабан…","Оживляю картинку…","Ловлю 24 кадри/с…","Кручу, верчу, заплутати хочу…","Ой, слоу-мо…","Зоотроплю…"]'>Розкручую барабан…</span>
+        <span class="rpm">ОБЕРТИ: <b class="rv">0</b> ОБ/ХВ</span>
+      </div>
+    </div>`,
+  curtain: `
+    <div class="ld ldc">
+      <div class="stagebox">
+        <div class="scr"></div>
+        <span class="star">✦</span>
+        <div class="wordwrap"><span class="ldword" data-words='["Прасую оксамит…","Тягну за шнурок…","Шикаю на гальорку…","Гашу світло в залі…","Пускаю спізнілих…","Інтригую…"]'>Прасую оксамит…</span></div>
+        <div class="cur l"></div><div class="cur r"></div>
+        <div class="pelmet"></div>
+      </div>
+      <div class="ldcap">сеанс от-от почнеться</div>
+    </div>`,
+  wave: `
+    <div class="ld ldd" data-wave title="Проведи пальцем по доріжці">
+      <div class="film"><span class="tag">MONO · OPTICAL</span><div class="wave"></div></div>
+      <div class="ldrow">
+        <span class="ldword" data-words='["Читаю доріжку світлом…","Прибираю шипіння…","Викручую бас…","Тримайтесь, литаври!…","Ловлю чистий тон…","Саундтречу…"]'>Читаю доріжку світлом…</span>
+        <span class="db">ПІК: <b class="dv">−42 dB</b></span>
+      </div>
+    </div>`,
+  ticket: `
+    <div class="ld lde" data-ticket title="Клацни — відірвати квиток">
+      <div class="booth">
+        <div class="roll"></div>
+        <div class="pile"></div>
+        <span class="cnt">квиток <b class="ci">1</b> із 6</span>
+      </div>
+      <div class="ldcap">каса друкує</div>
+    </div>`,
+  slides: `
+    <div class="ld ldf" data-slides>
+      <div class="tray"><div class="disc"></div><div class="hub"></div></div>
+      <div class="scrn"><div class="side6"><span class="num">SLIDE 1/6</span></div></div>
+    </div>`,
+  anaglyph: `
+    <div class="ld ldg" data-ana title="Поворуши курсором — паралакс">
+      <div class="fld">
+        <span class="lay r">✦</span><span class="lay g">✦</span><span class="lay au">✦</span>
+        <span class="ringp"></span>
+        <span class="badge">3D</span>
+      </div>
+      <div class="ldcap ldword" data-words='["Розводжу ракурси…","Зводжу ліве з правим…","Протираю 3D-окуляри…","Ловлю глибину кадру…","Майже у фокусі…","Стереоскоплю…"]'>Розводжу ракурси…</div>
+    </div>`,
+  storyboard: `
+    <div class="ld ldh">
+      <div class="board">
+        <div class="frm"><svg viewBox="0 0 4 3">
+          <path style="--kf:sb1" pathLength="1" d="M.2 2.6 L1.4 1.1 L2.1 1.9 L2.9 .9 L3.8 2.6"/>
+          <circle style="--kf:sb1" pathLength="1" cx="3" cy=".7" r=".35"/>
+        </svg><span class="no">SC 1</span></div>
+        <div class="frm"><svg viewBox="0 0 4 3">
+          <circle style="--kf:sb2" pathLength="1" cx="1.6" cy=".8" r=".3"/>
+          <path style="--kf:sb2" pathLength="1" d="M1.6 1.1 L1.7 1.9 M1.7 1.9 L1.1 2.7 M1.7 1.9 L2.4 2.5 M1.55 1.4 L.9 1.9 M1.65 1.4 L2.3 1.2"/>
+          <path style="--kf:sb2" pathLength="1" d="M2.8 1.5 h.6 M2.9 2 h.5"/>
+        </svg><span class="no">SC 2</span></div>
+        <div class="frm"><svg viewBox="0 0 4 3">
+          <path style="--kf:sb3" pathLength="1" d="M.9 2.2 V1.9 L1.5 1.5 H2.4 L2.8 1.9 H3.1 V2.2 Z"/>
+          <circle style="--kf:sb3" pathLength="1" cx="1.4" cy="2.3" r=".25"/>
+          <circle style="--kf:sb3" pathLength="1" cx="2.6" cy="2.3" r=".25"/>
+          <path style="--kf:sb3" pathLength="1" d="M.2 1.7 h.4 M.15 2.1 h.35"/>
+        </svg><span class="no">SC 3</span></div>
+        <div class="frm"><svg viewBox="0 0 4 3">
+          <path style="--kf:sb4" pathLength="1" d="M2 2.6 C.8 1.7 1.1 .7 2 1.25 C2.9 .7 3.2 1.7 2 2.6 Z"/>
+        </svg><span class="no">SC 4</span></div>
+        <div class="frm"><svg viewBox="0 0 4 3">
+          <polyline style="--kf:sb5" pathLength="1" points="2,.4 2.3,1.1 3.2,.8 2.6,1.5 3.5,1.9 2.5,1.9 2.6,2.7 2,2.1 1.4,2.7 1.5,1.9 .5,1.9 1.4,1.5 .8,.8 1.7,1.1 2,.4"/>
+        </svg><span class="no">SC 5</span></div>
+        <div class="frm"><svg viewBox="0 0 4 3">
+          <path class="au" style="--kf:sb6" pathLength="1" d="M2 .5 L2.55 1.5 L2 2.5 L1.45 1.5 Z"/>
+          <path class="au" style="--kf:sb6" pathLength="1" d="M2 .1 V.3 M2 2.7 V2.9 M.9 1.5 H1.15 M2.85 1.5 H3.1"/>
+        </svg><span class="no">SC 6</span></div>
+        <div class="stamp">У продакшн</div>
+      </div>
+      <div class="ldcap ldword" data-words='["Гострю олівець…","Начеркую сцену…","Штрихую тіні…","Викидаю четвертий дубль…","Домальовую вибух…","Розкадровую…"]'>Гострю олівець…</div>
+    </div>`
+};
+
+/* Вставляємо однакову оболонку в усі 8 екранів */
+document.querySelectorAll('[data-shell]').forEach(function (sc) {
+  sc.innerHTML = shellHTML(LOADER_HTML[sc.dataset.loader] || '');
+});
+
+/* Чат живе «зараз»: показуємо низ розмови, де працює лоадер.
+   Повторюємо після завантаження шрифтів — висоти «доїжджають». */
+function snapBottom() {
+  document.querySelectorAll('.msgs').forEach(function (m) { m.scrollTop = m.scrollHeight; });
+}
+snapBottom();
+addEventListener('load', snapBottom);
+setTimeout(snapBottom, 700);
+
+/* ===================== циклер статусних слів ===================== */
+var wordTimers = [];
+document.querySelectorAll('[data-words]').forEach(function (el) {
+  var words;
+  try { words = JSON.parse(el.dataset.words); } catch (e) { return; }
+  var i = 0;
+  el.textContent = words[0];
+  setInterval(function () {
+    i = (i + 1) % words.length;
+    el.classList.remove('swap');
+    void el.offsetWidth;
+    el.classList.add('swap');
+    el.textContent = words[i];
+  }, (2400 + Math.random() * 900) * SLOW);
+  wordTimers.push({ reset: function () { i = 0; el.textContent = words[0]; } });
+});
+
+/* ===================== 01 · табло «Соларі» ===================== */
+(function () {
+  var ld = document.querySelector('[data-flap]');
+  if (!ld) return;
+  var row = ld.querySelector('.frow');
+  var sr = ld.querySelector('.sr');
+  var sm = ld.querySelector('.sm');
+  var W = 14;
+  var tiles = [];
+  for (var i = 0; i < W; i++) {
+    var t = document.createElement('span');
+    t.className = 'tile';
+    t.textContent = ' ';
+    row.appendChild(t);
+    tiles.push(t);
+  }
+  var POOL = 'АБВГДЕЖЗИІКЛМНОПРСТУФХЦЧШЩЮЯ';
+  var PHR = ['ГОРТАЮ АФІШУ', 'ШУКАЮ СЕАНС', 'ГРІЮ ПРОЖЕКТОР', 'ТАСУЮ ЖАНРИ', 'НЕ ПІДГЛЯДАЙТЕ', 'ЩЕ СЕКУНДОЧКУ'];
+  var pi = -1;
+  var subTimers = [];
+  function pad(s) {
+    var l = Math.floor((W - s.length) / 2);
+    return (Array(l + 1).join(' ') + s + Array(W + 1).join(' ')).slice(0, W);
+  }
+  function settle(tile, ch) {
+    var n = 3 + Math.floor(Math.random() * 5);
+    var k = 0;
+    var iv = setInterval(function () {
+      k++;
+      tile.classList.remove('tick');
+      void tile.offsetWidth;
+      tile.classList.add('tick');
+      if (k >= n) {
+        clearInterval(iv);
+        tile.textContent = ch === ' ' ? ' ' : ch;
+      } else {
+        tile.textContent = POOL[Math.floor(Math.random() * POOL.length)];
+      }
+    }, 75 * SLOW);
+    subTimers.push(iv);
+  }
+  function next() {
+    subTimers.forEach(clearInterval);
+    subTimers = [];
+    pi = (pi + 1) % PHR.length;
+    var p = pad(PHR[pi]);
+    tiles.forEach(function (t, i) {
+      subTimers.push(setTimeout(function () { settle(t, p[i]); }, i * 45 * SLOW));
+    });
+    sr.textContent = ('0' + (1 + Math.floor(Math.random() * 12))).slice(-2);
+    sm.textContent = ('0' + (1 + Math.floor(Math.random() * 24))).slice(-2);
+  }
+  setInterval(next, 2500 * SLOW);
+  next();
+  ld.addEventListener('click', next);
+  resetters.push(function () { pi = -1; next(); });
+})();
+
+/* ===================== 02 · зоотроп ===================== */
+(function () {
+  var ld = document.querySelector('[data-zoe]');
+  if (!ld) return;
+  var ring = ld.querySelector('.ringr');
+  var fig = ld.querySelector('.fig');
+  var shd = ld.querySelector('.shd');
+  var rv = ld.querySelector('.rv');
+  var FR = 12, CYCLE = 13;
+  var FRAMES = [], SHADOWS = [];
+  for (var i = 0; i < FR; i++) {
+    var p = i / FR;
+    var y = (9 - 30 * Math.sin(Math.PI * p)).toFixed(1);
+    var ground = (p < .1 || p > .9);
+    var sx = ground ? 1.3 : 1, sy = ground ? .68 : 1;
+    var rot = (p > .3 && p < .7) ? Math.round((p - .5) * 90) : 0;
+    FRAMES.push('translateY(' + y + 'px) scale(' + sx + ',' + sy + ') rotate(' + rot + 'deg)');
+    var sh = (1 - .55 * Math.sin(Math.PI * p));
+    SHADOWS.push('translateX(-50%) scaleX(' + sh.toFixed(2) + ')');
+  }
+  var t0 = null, last = 0;
+  var frameFloat = 0, angle = 0, lastFi = -1, boost = 1, boostT = 1, lastRpm = 0;
+  ld.addEventListener('pointerenter', function () { boostT = 2.2; });
+  ld.addEventListener('pointerleave', function () { boostT = 1; });
+  tickers.push(function (now) {
+    if (t0 === null) { t0 = now; last = now; }
+    var dt = Math.max(0, Math.min(.05, (now - last) / 1000));
+    last = now;
+    var t = (((now - t0) / 1000) / SLOW) % CYCLE;
+    var fps;
+    if (t < 4) fps = 3 + 21 * Math.pow(t / 4, 1.6);
+    else if (t < 9) fps = 24;
+    else if (t < 9.5) fps = 24 - 34 * (t - 9);
+    else if (t < 11.5) fps = 7;
+    else fps = 7 - 4 * ((t - 11.5) / 1.5);
+    boost += (boostT - boost) * .08;
+    frameFloat += fps * boost * dt / SLOW;
+    angle = (angle + fps * boost * dt * 30 / SLOW) % 360;
+    ring.style.transform = 'rotate(' + angle.toFixed(1) + 'deg)';
+    var fi = Math.floor(frameFloat) % FR;
+    if (fi !== lastFi) {
+      lastFi = fi;
+      fig.style.transform = FRAMES[fi];
+      shd.style.transform = SHADOWS[fi];
+    }
+    if (now - lastRpm > 220) {
+      lastRpm = now;
+      rv.textContent = String(Math.round(fps * boost * 5));
+    }
+  });
+  resetters.push(function () { t0 = null; frameFloat = 0; angle = 0; });
+})();
+
+/* ===================== 04 · фонограма ===================== */
+(function () {
+  var ld = document.querySelector('[data-wave]');
+  if (!ld) return;
+  var wv = ld.querySelector('.wave');
+  var film = ld.querySelector('.film');
+  var dv = ld.querySelector('.dv');
+  var N = 44, bars = [];
+  for (var i = 0; i < N; i++) {
+    var b = document.createElement('i');
+    wv.appendChild(b);
+    bars.push(b);
+  }
+  var t0 = null, px = -1, lastDb = 0, CYCLE = 14;
+  ld.addEventListener('pointermove', function (e) {
+    var r = wv.getBoundingClientRect();
+    px = (e.clientX - r.left) / r.width;
+  });
+  ld.addEventListener('pointerleave', function () { px = -1; });
+  function env(t) {
+    if (t < 2) return .1;
+    if (t < 6) return .1 + .45 * ((t - 2) / 4);
+    if (t < 8) return .55 + .35 * Math.pow(Math.max(0, Math.sin(2 * Math.PI * (t - 6) * 1.5)), 3);
+    if (t < 9.5) return .6 + .4 * ((t - 8) / 1.5);
+    if (t < 12) return 1 - .72 * ((t - 9.5) / 2.5);
+    return .28 - .2 * ((t - 12) / 2);
+  }
+  tickers.push(function (now) {
+    if (t0 === null) t0 = now;
+    var t = (((now - t0) / 1000) / SLOW) % CYCLE;
+    var e = env(t);
+    film.classList.toggle('peak', e > .85);
+    for (var i = 0; i < N; i++) {
+      var v = e * (0.3 + 0.7 * Math.abs(Math.sin(i * .48 - t * 3.2)) * (0.6 + 0.4 * Math.sin(i * 1.7 + t * 7.3)));
+      if (px >= 0) {
+        var d = i / N - px;
+        v += Math.exp(-(d * d) / .008) * .85;
+      }
+      bars[i].style.transform = 'scaleY(' + Math.min(1, Math.max(.04, v)).toFixed(3) + ')';
+    }
+    if (now - lastDb > 300) {
+      lastDb = now;
+      dv.textContent = '−' + Math.round(42 - 40 * e) + ' dB';
+    }
+  });
+  resetters.push(function () { t0 = null; });
+})();
+
+/* ===================== 05 · квиток ===================== */
+(function () {
+  var ld = document.querySelector('[data-ticket]');
+  if (!ld) return;
+  var booth = ld.querySelector('.booth');
+  var pile = ld.querySelector('.pile');
+  var ci = ld.querySelector('.ci');
+  var WORDS = ['Друкую квиток…', 'Ставлю штамп…', 'Шукаю ваш ряд…', 'Місце біля проходу…', 'Загубив корінець…', 'Тримайте, ваш!'];
+  var idx = 0, cur = null, tearTimer = null, busy = false;
+  function spawn() {
+    cur = document.createElement('div');
+    cur.className = 'tik fresh';
+    cur.innerHTML = '<div class="tw">' + WORDS[idx] + '</div><div class="tn">PICKME · N 00' + (idx + 1) + '</div>';
+    booth.appendChild(cur);
+    ci.textContent = String(idx + 1);
+    busy = false;
+    tearTimer = setTimeout(tear, 2000 * SLOW);
+  }
+  function tear() {
+    if (busy || !cur) return;
+    busy = true;
+    clearTimeout(tearTimer);
+    var t = cur;
+    cur = null;
+    t.classList.remove('fresh');
+    t.classList.add('tear');
+    var done = false;
+    function fin() {
+      if (done) return;
+      done = true;
+      t.remove();
+      var s = document.createElement('s');
+      s.style.left = (10 + Math.random() * 110) + 'px';
+      s.style.transform = 'rotate(' + (Math.random() * 40 - 20).toFixed(0) + 'deg)';
+      pile.appendChild(s);
+      idx++;
+      if (idx >= 6) {
+        pile.classList.add('sweep');
+        setTimeout(function () {
+          pile.classList.remove('sweep');
+          pile.innerHTML = '';
+          idx = 0;
+          spawn();
+        }, 650 * SLOW);
+      } else {
+        spawn();
+      }
+    }
+    t.addEventListener('animationend', fin, { once: true });
+    setTimeout(fin, 700 * SLOW);
+  }
+  ld.addEventListener('click', tear);
+  spawn();
+  resetters.push(function () {
+    clearTimeout(tearTimer);
+    booth.querySelectorAll('.tik').forEach(function (x) { x.remove(); });
+    pile.innerHTML = '';
+    pile.classList.remove('sweep');
+    idx = 0;
+    cur = null;
+    busy = false;
+    spawn();
+  });
+})();
+
+/* ===================== 06 · діапроектор ===================== */
+(function () {
+  var ld = document.querySelector('[data-slides]');
+  if (!ld) return;
+  var scrn = ld.querySelector('.scrn');
+  var disc = ld.querySelector('.disc');
+  var num = ld.querySelector('.num');
+  var CAP = ['Заряджаю карусель…', 'Наводжу різкість…', 'Дмухаю на лінзу…', 'Ой, догори дриґом…', 'Клац — наступний…', 'Діафільмлю…'];
+  var MIX = [38, 22, 46, 16, 30, 52];
+  var i = -1, rot = 0, cur = null, timers = [];
+  function later(fn, ms) { timers.push(setTimeout(fn, ms)); }
+  function advance() {
+    i = (i + 1) % 6;
+    rot += 30;
+    disc.style.transform = 'rotate(' + rot + 'deg)';
+    scrn.classList.remove('thunk');
+    void scrn.offsetWidth;
+    scrn.classList.add('thunk');
+    if (cur) {
+      var old = cur;
+      old.className = 'slide out';
+      later(function () { old.remove(); }, 450 * SLOW);
+    }
+    var s = document.createElement('div');
+    s.className = 'slide in' + (i === 3 ? ' updown' : '');
+    s.style.setProperty('--sg', MIX[i] + '%');
+    s.innerHTML = '<span class="sw">' + CAP[i] + '</span>';
+    scrn.appendChild(s);
+    cur = s;
+    num.textContent = 'SLIDE ' + (i + 1) + '/6';
+    later(function () { s.classList.remove('in'); s.classList.add('focus'); }, 540 * SLOW);
+    if (i === 3) later(function () { s.classList.remove('updown'); }, 1150 * SLOW);
+    later(advance, 2200 * SLOW);
+  }
+  advance();
+  resetters.push(function () {
+    timers.forEach(clearTimeout);
+    timers = [];
+    scrn.querySelectorAll('.slide').forEach(function (x) { x.remove(); });
+    cur = null;
+    i = -1;
+    rot = 0;
+    disc.style.transform = '';
+    advance();
+  });
+})();
+
+/* ===================== 07 · стереокіно ===================== */
+(function () {
+  var ld = document.querySelector('[data-ana]');
+  if (!ld) return;
+  var fld = ld.querySelector('.fld');
+  var r = ld.querySelector('.lay.r');
+  var g = ld.querySelector('.lay.g');
+  var au = ld.querySelector('.lay.au');
+  var t0 = null;
+  var pdx = 0, pdy = 0, tdx = 0, tdy = 0, locked = false;
+  var CYCLE = 13;
+  ld.addEventListener('pointermove', function (e) {
+    var b = fld.getBoundingClientRect();
+    tdx = ((e.clientX - b.left) / b.width - .5) * 18;
+    tdy = ((e.clientY - b.top) / b.height - .5) * 10;
+  });
+  ld.addEventListener('pointerleave', function () { tdx = 0; tdy = 0; });
+  function sep(t) {
+    if (t < 3) return 26;
+    if (t < 6) return 16;
+    if (t < 9) return 8;
+    if (t < 10.5) { var k = (t - 9) / 1.5; return 8 * (1 - k * k); }
+    if (t < 12.4) return 0;
+    var k2 = (t - 12.4) / .6;
+    return 26 * k2;
+  }
+  tickers.push(function (now) {
+    if (t0 === null) t0 = now;
+    var t = (((now - t0) / 1000) / SLOW) % CYCLE;
+    pdx += (tdx - pdx) * .1;
+    pdy += (tdy - pdy) * .1;
+    var A = sep(t);
+    var w = t * 2.1;
+    var ox = A * Math.cos(w), oy = A * .35 * Math.sin(w);
+    r.style.transform = 'translate(' + (ox + pdx).toFixed(1) + 'px,' + (oy + pdy).toFixed(1) + 'px)';
+    g.style.transform = 'translate(' + (-ox - pdx).toFixed(1) + 'px,' + (-oy - pdy).toFixed(1) + 'px)';
+    var lockAmt = Math.max(0, 1 - A / 8);
+    au.style.opacity = lockAmt.toFixed(2);
+    au.style.transform = 'scale(' + (1 + lockAmt * .25).toFixed(2) + ')';
+    r.style.opacity = (0.72 * (1 - lockAmt * .8)).toFixed(2);
+    g.style.opacity = (0.72 * (1 - lockAmt * .8)).toFixed(2);
+    var isLock = (t >= 10.5 && t < 12.4);
+    if (isLock && !locked) {
+      locked = true;
+      fld.classList.remove('lock');
+      void fld.offsetWidth;
+      fld.classList.add('lock');
+    }
+    if (!isLock && locked) locked = false;
+  });
+  resetters.push(function () { t0 = null; fld.classList.remove('lock'); locked = false; });
+})();
+
+/* ===================== перезапуск усіх лоадерів ===================== */
+document.getElementById('replay').addEventListener('click', function () {
+  document.querySelectorAll('.ld').forEach(function (ld) {
+    if (ld.getAnimations) {
+      ld.getAnimations({ subtree: true }).forEach(function (a) {
+        try { a.currentTime = 0; } catch (e) {}
+      });
+    }
+  });
+  resetters.forEach(function (f) { f(); });
+  wordTimers.forEach(function (w) { w.reset(); });
+});
+</script>
+</body>
+</html>

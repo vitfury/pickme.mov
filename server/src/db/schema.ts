@@ -294,6 +294,9 @@ export const apiKeys = pgTable('api_keys', {
   keyHash: varchar('key_hash', { length: 64 }).notNull(),
   lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
   revokedAt: timestamp('revoked_at', { withTimezone: true }),
+  // Null for keys the user manages by hand. Set for the short-lived keys the
+  // chat mints for the bot container, so a leaked one dies on its own.
+  expiresAt: timestamp('expires_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 }, (table) => [
   uniqueIndex('api_keys_hash_unique').on(table.keyHash),

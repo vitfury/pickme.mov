@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { LikeIcon, DislikeIcon } from '@/components/ui/icons';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '@/api/client';
@@ -220,11 +221,11 @@ export default function Login() {
                   }`}
                 >
                   <span
-                    className={`text-[7rem] drop-shadow-[0_4px_20px_rgba(0,0,0,0.8)] ${
+                    className={`drop-shadow-[0_4px_20px_rgba(0,0,0,0.8)] ${
                       movie.like ? 'text-like' : 'text-dislike'
                     }`}
                   >
-                    {movie.like ? '\u2665' : '\u2715'}
+                    {movie.like ? <LikeIcon size={112} /> : <DislikeIcon size={112} />}
                   </span>
                 </div>
               )}

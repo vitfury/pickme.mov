@@ -4,7 +4,8 @@
     "watchlist": "Favorites",
     "saved": "Saved",
     "search": "Search",
-    "profile": "Profile"
+    "profile": "Profile",
+    "ai": "AI"
   },
   "feed": {
     "movies": "Movies",
@@ -74,13 +75,13 @@
   },
   "saved": {
     "title": "Saved",
-    "watchlist": "Watchlist",
-    "favorites": "Favorites",
-    "emptyWatchlist": "No bookmarks yet",
-    "emptyWatchlistHint": "Tap the bookmark icon on feed cards to save for later."
+    "watchlist": "Watch later",
+    "favorites": "Liked",
+    "emptyWatchlist": "Nothing here yet",
+    "emptyWatchlistHint": "Tap the bookmark on a card or in chat — the film will wait here."
   },
   "favorites": {
-    "title": "Favorites",
+    "title": "Liked",
     "all": "All",
     "unwatched": "Unwatched",
     "watched": "Watched",
@@ -88,8 +89,8 @@
     "sortRating": "Rating",
     "sortYear": "Year",
     "sortTitle": "Title",
-    "empty": "No favorites yet",
-    "emptyHint": "Swipe right on movies you love.",
+    "empty": "Nothing liked yet",
+    "emptyHint": "Swipe right on films you enjoy.",
     "markWatched": "Mark watched",
     "rate": "Rate",
     "remove": "Remove"
@@ -189,5 +190,63 @@
     "stepTry": "3. Try asking:",
     "tryExample": "“I want a superhero action film I haven’t seen, released after 2000 — spectacular, with large-scale battles”",
     "done": "Done"
+  },
+  "chat": {
+    "title": "Assistant",
+    "placeholder": "Tell me what you feel like watching…",
+    "send": "Send",
+    "stop": "Stop",
+    "tools": {
+      "search_titles": "Searching the catalogue",
+      "get_title_details": "Reading details",
+      "list_filters": "Checking filters",
+      "get_my_taste": "Reading your profile",
+      "mark_watched": "Marking as watched",
+      "rate_title": "Recording your rating",
+      "bookmark_title": "Saving for later"
+    },
+    "thinkingWords": [
+      "Rewinding…",
+      "Cinemating…",
+      "Pulling focus…",
+      "Developing the negative…",
+      "Flipping the poster…",
+      "Reading the script…",
+      "Consulting the critics…",
+      "Spinning the reel…",
+      "Listening to the score…",
+      "Assembling the rig…",
+      "Making mischief",
+      "Going wild",
+      "Wandering about",
+      "Frazzled.",
+      "What even is this.",
+      "Curses!",
+      "Rambarhai!",
+      "Total mayhem…",
+      "Dang it…"
+    ],
+    "subtitle": "When you want something with a twist",
+    "suggestions": {
+      "nolan": "Nolan films",
+      "arnold": "Schwarzenegger action",
+      "comedy00": "Comedies of the 2000s",
+      "western": "Oscar-winning westerns",
+      "short": "Under 100 minutes",
+      "kid": "Watch with a kid"
+    },
+    "emptyLead": "Finds films and series by genre, year, cast, awards, or just the mood you are in.",
+    "emptyCan": [
+      "Marks films you have already watched",
+      "Likes and dislikes — which trains your recommendations",
+      "Saves films to Saved, to watch later",
+      "Reads your taste profile to suggest a film you will actually like"
+    ],
+    "error": "Oops, the assistant is taking the day off. Try again a bit later.",
+    "newChat": "New chat",
+    "moreRequest": "Rated these — show me more!",
+    "rateLike": "Like",
+    "rateDislike": "Dislike",
+    "rateSave": "Save for later"
   }
 }

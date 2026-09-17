@@ -1,0 +1,1053 @@
+<title>Острівець ШІ</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap">
+
+<style>
+  /* ============================================================
+     СПЕЦ-АРКУШ: контактний аркуш кадрів нижньої навігації
+     Сторінка навмисно однотемна — темна студійна підкладка, бо
+     оцінюємо темний інтерфейс. Перемикач теми діє на макети.
+     ============================================================ */
+
+  :root {
+    --sheet:      #101016;   /* студійна підкладка — холодний майже-чорний */
+    --sheet-2:    #16161e;
+    --rule:       #26262f;
+    --rule-soft:  #1c1c24;
+    --ink:        #e6e6ec;
+    --ink-2:      #9a9aa8;
+    --ink-3:      #63636f;
+    --gold:       #d4a843;
+    --gold-hi:    #e8c569;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--sheet);
+    color: var(--ink);
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 1280px; margin: 0 auto; padding: 0 24px 80px; }
+
+  /* ---------- Шапка спец-аркуша ---------- */
+
+  .masthead {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 40px 0 20px;
+    border-bottom: 1px solid var(--gold);
+  }
+
+  .masthead h1 {
+    font-family: 'Bebas Neue', Impact, sans-serif;
+    font-size: clamp(38px, 7vw, 64px);
+    line-height: 0.92;
+    letter-spacing: 0.01em;
+    margin: 0;
+    color: var(--ink);
+    text-wrap: balance;
+  }
+  .masthead h1 em { font-style: normal; color: var(--gold); }
+
+  .meta {
+    display: grid;
+    grid-template-columns: auto auto;
+    gap: 2px 16px;
+    font-size: 11px;
+    color: var(--ink-3);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .meta b { color: var(--ink-2); font-weight: 500; }
+
+  .lede {
+    max-width: 62ch;
+    margin: 20px 0 0;
+    color: var(--ink-2);
+    font-size: 13.5px;
+  }
+  .lede strong { color: var(--ink); font-weight: 500; }
+
+  /* ---------- Панель керування ---------- */
+
+  .controls {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-top: 28px;
+    padding: 12px 0;
+    background: linear-gradient(var(--sheet) 72%, transparent);
+  }
+
+  .ctl {
+    appearance: none;
+    border: 1px solid var(--rule);
+    background: var(--sheet-2);
+    color: var(--ink-2);
+    font: inherit;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 7px 14px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: color .15s, border-color .15s, background .15s;
+  }
+  .ctl:hover { color: var(--ink); border-color: var(--ink-3); }
+  .ctl[aria-pressed="true"] {
+    color: #0f0f14;
+    background: var(--gold);
+    border-color: var(--gold);
+  }
+  .ctl:focus-visible { outline: 2px solid var(--gold-hi); outline-offset: 2px; }
+
+  .ctl-hint { color: var(--ink-3); font-size: 11px; margin-left: auto; }
+
+  /* ---------- Сітка кадрів ---------- */
+
+  .sheetgrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+    gap: 1px;
+    background: var(--rule-soft);
+    border: 1px solid var(--rule-soft);
+  }
+
+  .frame {
+    margin: 0;
+    background: var(--sheet);
+    padding: 22px 20px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .frame-head {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .idx {
+    font-family: 'Bebas Neue', Impact, sans-serif;
+    font-size: 26px;
+    line-height: 1;
+    color: var(--gold);
+    letter-spacing: 0.04em;
+  }
+  .frame-head h2 {
+    margin: 0;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+
+  .note {
+    margin: 0;
+    font-size: 11.5px;
+    line-height: 1.55;
+    color: var(--ink-2);
+  }
+  .note b { color: var(--gold); font-weight: 500; }
+
+  .tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 2px; }
+  .tag {
+    font-size: 9.5px;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    padding: 2px 6px;
+  }
+  .tag.hot { color: var(--gold); border-color: color-mix(in srgb, var(--gold) 40%, transparent); }
+
+  /* ============================================================
+     МАКЕТ ЕКРАНА — токени скопійовані з client/src/index.css
+     ============================================================ */
+
+  .screen {
+    --app-bg:        #0a0a0f;
+    --app-surface:   #141420;
+    --app-surface-2: #1e1e30;
+    --app-border:    #2a2a3a;
+    --app-text:      #e8e8ed;
+    --app-muted:     #8a8a9a;
+    --app-gold:      #d4a843;
+    --app-gold-hi:   #e0b84f;
+
+    position: relative;
+    height: 230px;
+    overflow: hidden;
+    background: var(--app-bg);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    font-family: 'Inter', system-ui, sans-serif;
+    isolation: isolate;
+  }
+
+  [data-app-theme="light"] .screen {
+    --app-bg:        #f5f5f7;
+    --app-surface:   #ffffff;
+    --app-surface-2: #eeeef0;
+    --app-border:    #d4d4dc;
+    --app-text:      #1a1a2e;
+    --app-muted:     #6b6b80;
+    --app-gold:      #c4922e;
+    --app-gold-hi:   #b3841f;
+  }
+
+  /* Підкладка: натяк на картку фільму, щоб док читався над контентом */
+  .poster {
+    position: absolute;
+    left: 50%;
+    top: 16px;
+    transform: translateX(-50%);
+    width: 118px;
+    height: 168px;
+    border-radius: 6px;
+    background:
+      linear-gradient(160deg,
+        color-mix(in srgb, var(--app-gold) 22%, var(--app-surface-2)) 0%,
+        var(--app-surface-2) 46%,
+        var(--app-surface) 100%);
+    border: 1px solid var(--app-border);
+  }
+  .poster::after {
+    content: '';
+    position: absolute;
+    inset: auto 12px 14px;
+    height: 6px;
+    border-radius: 2px;
+    background: color-mix(in srgb, var(--app-text) 22%, transparent);
+    box-shadow: 0 -12px 0 color-mix(in srgb, var(--app-text) 14%, transparent);
+  }
+
+  /* ---------- Док ---------- */
+
+  .dock {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    height: 56px;
+    background: color-mix(in srgb, var(--app-surface) 95%, transparent);
+    border-top: 1px solid var(--app-border);
+    backdrop-filter: blur(6px);
+  }
+
+  .tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr 76px 1fr 1fr;
+    align-items: center;
+    height: 100%;
+  }
+
+  .tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    color: var(--app-muted);
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    background: none;
+    border: 0;
+    cursor: default;
+  }
+  .tab.on { color: var(--app-gold); }
+  .tab svg { width: 19px; height: 19px; }
+
+  .slot { display: flex; align-items: center; justify-content: center; height: 100%; }
+
+  /* ---------- Кнопка ШІ: спільна база ---------- */
+
+  .ai {
+    appearance: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    color: #14140f;
+    background: var(--app-gold);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform .18s ease, box-shadow .25s ease, background .2s ease;
+  }
+  .ai:focus-visible { outline: 2px solid var(--app-gold-hi); outline-offset: 3px; }
+  .ai:active { transform: scale(.94); }
+  .ai > svg { width: 26px; height: 26px; }
+
+  /* ---------- Знак: розсип зірочок ----------
+     Чотирипроменева зірка з увігнутими гранями: квадратична крива з
+     контрольною точкою в центрі дає тонкий гострий промінь.          */
+
+  .mk { display: inline-flex; align-items: center; justify-content: center; }
+  .mk svg { width: 27px; height: 27px; fill: currentColor; overflow: visible; }
+
+  .mk--outline svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.4;
+    stroke-linejoin: round;
+  }
+
+  /* Розсип перетинає край диска — заливка кольором диска, обвід кольором бару */
+  .mk--burst svg {
+    width: 36px; height: 36px;
+    transform: translate(9px, -9px);
+    fill: var(--app-gold);
+    stroke: var(--app-bg);
+    stroke-width: 1.5;
+    paint-order: stroke fill;
+  }
+  .frame.is-on .mk--burst svg { fill: var(--app-gold-hi); }
+
+  .v-pill .mk svg { width: 24px; height: 24px; }
+
+  /* ---------- Секція вибору знака ---------- */
+
+  .marks { margin: 34px 0 44px; }
+  .marks h2 {
+    font-family: 'Bebas Neue', Impact, sans-serif;
+    font-size: 30px;
+    letter-spacing: 0.03em;
+    margin: 0 0 4px;
+  }
+  .marks p.note { max-width: 66ch; margin-bottom: 18px; font-size: 12.5px; }
+
+  .markrow {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(178px, 1fr));
+    gap: 1px;
+    background: var(--rule-soft);
+    border: 1px solid var(--rule-soft);
+  }
+  .markcard {
+    background: var(--sheet);
+    padding: 16px 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    border: 0;
+    font: inherit;
+    color: inherit;
+    text-align: center;
+    transition: background .15s;
+  }
+  .markcard:hover { background: var(--sheet-2); }
+  .markcard[aria-pressed="true"] { background: var(--sheet-2); box-shadow: inset 0 0 0 1px var(--gold); }
+  .markcard:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
+
+  .markstage {
+    --app-bg: #0a0a0f;
+    --app-surface: #141420;
+    --app-border: #2a2a3a;
+    --app-gold: #d4a843;
+    --app-gold-hi: #e0b84f;
+    position: relative;
+    width: 100%;
+    height: 78px;
+    background: var(--app-surface);
+    border: 1px solid var(--app-border);
+    border-radius: 4px;
+    overflow: visible;
+  }
+  [data-app-theme="light"] .markstage {
+    --app-bg: #f5f5f7; --app-surface: #ffffff; --app-border: #d4d4dc;
+    --app-gold: #c4922e; --app-gold-hi: #b3841f;
+  }
+  .markstage .ai {
+    position: absolute;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    width: 62px; height: 62px;
+    border-radius: 50%;
+    box-shadow: 0 0 0 5px var(--app-surface);
+    overflow: visible;
+  }
+  .markstage .ai:active { transform: translate(-50%, -50%) scale(.94); }
+
+  .markcard b { font-family: 'Inter', system-ui, sans-serif; font-size: 12.5px; font-weight: 600; }
+  .markcard span.d { font-size: 10.5px; color: var(--ink-3); line-height: 1.45; }
+
+  /* Піднята кнопка — абсолютно по центру доку */
+  .ai.lift {
+    position: absolute;
+    left: 50%;
+    bottom: 14px;
+    transform: translateX(-50%);
+    width: 62px; height: 62px;
+    border-radius: 50%;
+    z-index: 3;
+  }
+  .ai.lift:active { transform: translateX(-50%) scale(.94); }
+
+  /* ============================================================
+     ВАРІАНТИ
+     ============================================================ */
+
+  /* 01 — Диск у вирізі: маска вирізає коло з самого доку */
+  .v-notch .dock {
+    -webkit-mask-image: radial-gradient(circle 40px at 50% 4px, transparent 98%, #000 100%);
+    mask-image: radial-gradient(circle 40px at 50% 4px, transparent 98%, #000 100%);
+  }
+  .v-notch .ai { bottom: 18px; box-shadow: 0 6px 20px color-mix(in srgb, var(--app-gold) 30%, transparent); }
+  .on-state .v-notch .ai,
+  .frame.is-on .v-notch .ai {
+    background: var(--app-gold-hi);
+    box-shadow: 0 0 0 3px var(--app-bg), 0 0 0 5px var(--app-gold), 0 8px 26px color-mix(in srgb, var(--app-gold) 45%, transparent);
+  }
+
+  /* 02 — Піднятий диск: кільце кольору фону відділяє його від бару */
+  .v-raised .ai {
+    bottom: 16px;
+    box-shadow: 0 0 0 5px var(--app-bg), 0 8px 18px rgba(0,0,0,.45);
+  }
+  .frame.is-on .v-raised .ai {
+    background: var(--app-gold-hi);
+    box-shadow: 0 0 0 5px var(--app-bg), 0 0 0 7px color-mix(in srgb, var(--app-gold) 55%, transparent), 0 8px 22px rgba(0,0,0,.5);
+  }
+
+  /* 03 — Квадрат-острів: у межах бару, радіус 6px як у решті системи */
+  .v-inset .ai {
+    width: 52px; height: 42px;
+    border-radius: 6px;
+  }
+  .v-inset .slot {
+    border-left: 1px solid var(--app-border);
+    border-right: 1px solid var(--app-border);
+  }
+  .frame.is-on .v-inset .ai {
+    background: var(--app-gold-hi);
+    box-shadow: 0 0 0 2px var(--app-bg), 0 0 0 4px color-mix(in srgb, var(--app-gold) 50%, transparent);
+  }
+
+  /* 04 — Ромб: повернутий квадрат, найгостріший силует */
+  .v-diamond .ai {
+    width: 52px; height: 52px;
+    border-radius: 8px;
+    bottom: 18px;
+    transform: translateX(-50%) rotate(45deg);
+    box-shadow: 0 0 0 5px var(--app-bg);
+  }
+  .v-diamond .ai:active { transform: translateX(-50%) rotate(45deg) scale(.94); }
+  .v-diamond .ai svg { transform: rotate(-45deg); }
+  .frame.is-on .v-diamond .ai {
+    background: var(--app-gold-hi);
+    box-shadow: 0 0 0 5px var(--app-bg), 0 0 0 7px color-mix(in srgb, var(--app-gold) 55%, transparent);
+  }
+
+  /* 05 — Пілюля з підписом: єдиний варіант, де слово «ШІ» видно завжди */
+  .v-pill .tabs { grid-template-columns: 1fr 1fr 96px 1fr 1fr; }
+  .v-pill .ai {
+    width: 92px; height: 48px;
+    border-radius: 999px;
+    bottom: 18px;
+    gap: 5px;
+    box-shadow: 0 0 0 5px var(--app-bg), 0 8px 18px rgba(0,0,0,.4);
+  }
+  .v-pill .ai > svg { width: 19px; height: 19px; }
+  .frame.is-on .v-pill .ai {
+    background: var(--app-gold-hi);
+    box-shadow: 0 0 0 5px var(--app-bg), 0 0 0 7px color-mix(in srgb, var(--app-gold) 50%, transparent);
+  }
+
+  /* 06 — Кільце: незалите, найлегше за вагою */
+  .v-ring .ai {
+    bottom: 16px;
+    background: var(--app-bg);
+    color: var(--app-gold);
+    box-shadow: inset 0 0 0 3px var(--app-gold), 0 0 0 5px var(--app-bg);
+  }
+  .frame.is-on .v-ring .ai {
+    background: var(--app-gold);
+    color: #14140f;
+    box-shadow: inset 0 0 0 3px var(--app-gold), 0 0 0 5px var(--app-bg),
+                0 0 24px color-mix(in srgb, var(--app-gold) 45%, transparent);
+  }
+
+  /* 07 — Плаваючий острів: бар розірваний, кнопка висить у розриві */
+  .v-float .dock {
+    background: none;
+    border-top: 0;
+    backdrop-filter: none;
+  }
+  .v-float .tabs {
+    position: relative;
+    grid-template-columns: 1fr 1fr 84px 1fr 1fr;
+  }
+  .v-float .tabs::before,
+  .v-float .tabs::after {
+    content: '';
+    position: absolute;
+    top: 0; bottom: 0;
+    background: color-mix(in srgb, var(--app-surface) 95%, transparent);
+    border-top: 1px solid var(--app-border);
+    z-index: -1;
+  }
+  .v-float .tabs::before { left: 0; right: calc(50% + 42px); }
+  .v-float .tabs::after  { right: 0; left: calc(50% + 42px); }
+  .v-float .ai {
+    bottom: 22px;
+    width: 58px; height: 58px;
+    box-shadow: 0 10px 24px rgba(0,0,0,.55);
+  }
+  .frame.is-on .v-float .ai {
+    background: var(--app-gold-hi);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--app-gold) 45%, transparent), 0 10px 26px rgba(0,0,0,.55);
+  }
+
+  /* 08 — Аура: диск з градієнтом і диханням світла */
+  .v-glow .ai {
+    bottom: 16px;
+    background: radial-gradient(circle at 35% 28%, var(--app-gold-hi), var(--app-gold) 68%);
+    box-shadow: 0 0 0 5px var(--app-bg), 0 0 22px color-mix(in srgb, var(--app-gold) 40%, transparent);
+  }
+  .v-glow .ai::before {
+    content: '';
+    position: absolute;
+    inset: -14px;
+    border-radius: 50%;
+    background: radial-gradient(circle, color-mix(in srgb, var(--app-gold) 30%, transparent), transparent 70%);
+    animation: breathe 3.4s ease-in-out infinite;
+    pointer-events: none;
+    z-index: -1;
+  }
+  @keyframes breathe {
+    0%, 100% { opacity: .35; transform: scale(.9); }
+    50%      { opacity: .85; transform: scale(1.12); }
+  }
+  .frame.is-on .v-glow .ai { box-shadow: 0 0 0 5px var(--app-bg), 0 0 0 7px var(--app-gold), 0 0 30px color-mix(in srgb, var(--app-gold) 55%, transparent); }
+
+  /* 09 — Арка: сам бар піднімається куполом посередині */
+  .v-arch .dock { overflow: visible; }
+  .v-arch .dock::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 100%;
+    width: 112px; height: 34px;
+    background: color-mix(in srgb, var(--app-surface) 95%, transparent);
+    border: 1px solid var(--app-border);
+    border-bottom: 0;
+    border-radius: 66px 66px 0 0;
+  }
+  .v-arch .dock::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    top: -1px;
+    width: 110px; height: 2px;
+    background: color-mix(in srgb, var(--app-surface) 95%, transparent);
+  }
+  .v-arch .ai { bottom: 22px; width: 56px; height: 56px; }
+  .frame.is-on .v-arch .ai {
+    background: var(--app-gold-hi);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--app-gold) 35%, transparent);
+  }
+
+  /* 10 — Печатка: подвійне кільце, мова кінонагород */
+  .v-seal .ai {
+    bottom: 16px;
+    width: 60px; height: 60px;
+    box-shadow:
+      inset 0 0 0 3px var(--app-bg),
+      inset 0 0 0 4px color-mix(in srgb, var(--app-gold) 60%, transparent),
+      0 0 0 5px var(--app-bg);
+  }
+  .v-seal .ai > svg { width: 22px; height: 22px; }
+  .v-seal .mk svg { width: 22px; height: 22px; }
+  .frame.is-on .v-seal .ai {
+    background: var(--app-gold-hi);
+    box-shadow:
+      inset 0 0 0 3px var(--app-bg),
+      inset 0 0 0 4px color-mix(in srgb, var(--app-gold) 60%, transparent),
+      0 0 0 5px var(--app-bg),
+      0 0 0 7px var(--app-gold);
+  }
+
+
+  /* ============================================================
+     РОМБ ЗБЛИЗЬКА — чому форма 04 не читається як натискна.
+     Класи з префіксом d-, щоб не зіткнутись із v-notch вище.
+     ============================================================ */
+
+  .diagrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 1px; background: var(--rule-soft);
+    border: 1px solid var(--rule-soft);
+  }
+  @media (max-width: 880px) { .diagrid { grid-template-columns: 1fr; } }
+
+  .fix {
+    font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase;
+    color: var(--gold); border-left: 2px solid var(--gold);
+    padding-left: 9px; margin: -6px 0 0;
+  }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: start; }
+  .cap { font-size: 9px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); margin: 6px 0 0; }
+
+  .diawrap {
+    position: absolute; left: 50%; bottom: 17px;
+    transform: translateX(-50%); z-index: 3; line-height: 0;
+  }
+  .dia {
+    appearance: none; border: 0; padding: 0; cursor: pointer;
+    width: 50px; height: 50px; border-radius: 9px;
+    background: var(--app-gold); color: #14140f;
+    display: flex; align-items: center; justify-content: center;
+    transform: rotate(45deg);
+    transition: transform .16s ease, box-shadow .22s ease, background .2s ease;
+  }
+  .dia:active { transform: rotate(45deg) scale(.9); }
+  .dia:focus-visible { outline: 2px solid var(--app-gold-hi); outline-offset: 4px; }
+  .dia .spin { transform: rotate(-45deg); display: inline-flex; }
+  .dia .spin svg { width: 24px; height: 24px; fill: currentColor; }
+
+  /* A — підпис: ромб входить у граматику підписаних сусідів */
+  .d-label .diawrap { bottom: 21px; }
+  .d-label .dia { width: 44px; height: 44px; border-radius: 8px; }
+  .d-label .spin svg { width: 21px; height: 21px; }
+  .ailabel {
+    position: absolute; left: 50%; bottom: 5px; transform: translateX(-50%);
+    font-size: 9px; font-weight: 500; color: var(--app-gold);
+    z-index: 4; white-space: nowrap;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  .frame.is-on .d-label .dia {
+    background: var(--app-gold-hi);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--app-gold) 45%, transparent);
+  }
+
+  /* B — виріз: бар розступається, ромб фізично зверху */
+  .dock.d-notch {
+    -webkit-mask-image: radial-gradient(circle 44px at 50% 2px, transparent 98%, #000 100%);
+    mask-image: radial-gradient(circle 44px at 50% 2px, transparent 98%, #000 100%);
+  }
+  .d-notch .diawrap { bottom: 15px; filter: drop-shadow(0 7px 11px rgba(0,0,0,.55)); }
+  .frame.is-on .d-notch .dia { background: var(--app-gold-hi); }
+  .frame.is-on .d-notch .diawrap { filter: drop-shadow(0 0 10px color-mix(in srgb, var(--app-gold) 60%, transparent)); }
+
+  /* C — обідок: зазор і кільце роблять клавішу в гнізді */
+  .d-bezel .dia {
+    box-shadow: 0 0 0 5px var(--app-bg), 0 0 0 6.5px color-mix(in srgb, var(--app-gold) 70%, transparent);
+  }
+  .d-bezel .diawrap { filter: drop-shadow(0 5px 9px rgba(0,0,0,.5)); }
+  .frame.is-on .d-bezel .dia {
+    background: var(--app-gold-hi);
+    box-shadow: 0 0 0 5px var(--app-bg), 0 0 0 8px var(--app-gold);
+  }
+
+  /* D — обʼєм: та сама мова, що в кнопок лайк/дизлайк у стрічці */
+  .d-depth .diawrap { filter: drop-shadow(0 8px 12px rgba(0,0,0,.5)); }
+  .d-depth .dia {
+    /* 90deg, а не 135deg — компенсує поворот ромба на 45° */
+    background: linear-gradient(90deg, var(--app-gold-hi), var(--app-gold) 72%);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, #fff 22%, transparent);
+  }
+  .d-depth .dia:active { transform: rotate(45deg) scale(.88); }
+  .frame.is-on .d-depth .dia {
+    background: linear-gradient(90deg, #f2d071, var(--app-gold-hi) 72%);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, #fff 34%, transparent),
+                0 0 0 3px color-mix(in srgb, var(--app-gold) 40%, transparent);
+  }
+
+  /* 2× деталь */
+  .zoom {
+    position: relative; height: 150px; overflow: hidden;
+    border: 1px solid var(--rule); border-radius: 4px; background: #0a0a0f;
+  }
+  [data-app-theme="light"] .zoom { background: #f5f5f7; }
+  .zoom .screen {
+    position: absolute; left: 50%; bottom: 0;
+    width: 300px; height: 230px; border: 0; border-radius: 0;
+    transform: translateX(-50%) scale(2);
+    transform-origin: bottom center;
+  }
+  .zoom .poster { display: none; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+
+  /* ---------- Підсумкова таблиця ---------- */
+
+  .ledger { margin-top: 56px; }
+  .ledger h2 {
+    font-family: 'Bebas Neue', Impact, sans-serif;
+    font-size: 30px;
+    letter-spacing: 0.03em;
+    margin: 0 0 14px;
+    color: var(--ink);
+  }
+  .tablewrap { overflow-x: auto; border: 1px solid var(--rule-soft); }
+  table { border-collapse: collapse; width: 100%; min-width: 640px; font-size: 12px; }
+  th, td { text-align: left; padding: 9px 14px; border-bottom: 1px solid var(--rule-soft); vertical-align: top; }
+  th {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--ink-3);
+    font-weight: 500;
+    background: var(--sheet-2);
+  }
+  td:first-child { color: var(--gold); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  td { color: var(--ink-2); }
+  td b { color: var(--ink); font-weight: 500; }
+  tbody tr:last-child td { border-bottom: 0; }
+
+  .closing {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid var(--gold);
+    max-width: 68ch;
+    color: var(--ink-2);
+    font-size: 12.5px;
+  }
+  .closing b { color: var(--ink); font-weight: 500; }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div>
+      <h1>Острівець <em>ШІ</em></h1>
+      <div class="meta" style="margin-top:14px">
+        <span>Проєкт</span><b>pickme.mov</b>
+        <span>Компонент</span><b>BottomNav → центральний слот</b>
+        <span>Порядок</span><b>Стрічка · Пошук · ШІ · Збережені · Профіль</b>
+      </div>
+    </div>
+    <div class="meta">
+      <span>Кадрів</span><b>10</b>
+      <span>Палітра</span><b>золото #d4a843, без нових акцентів</b>
+      <span>Статус</span><b>на вибір</b>
+    </div>
+  </header>
+
+  <p class="lede">
+    Десять силуетів однієї кнопки в справжніх токенах застосунку. Знак — <strong>розсип зірочок</strong>,
+    однаковий у всіх кадрах, щоб порівнювати форму кнопки, а не іконку. Активні вкладки лишаються тонким
+    золотим контуром, кнопка — залите золото: <strong>filled проти stroked</strong> розділяє їх без другого
+    кольору. Натисни будь-яку кнопку, щоб побачити її активний стан.
+  </p>
+
+  <div class="controls">
+    <button class="ctl" id="langBtn" aria-pressed="false">ENG</button>
+    <button class="ctl" id="themeBtn" aria-pressed="false">Світла тема</button>
+    <button class="ctl" id="allOnBtn" aria-pressed="false">Усі активні</button>
+    <span class="ctl-hint">Клік по кнопці — активний стан окремого кадру</span>
+  </div>
+
+  <section class="marks" id="marks">
+    <h2>Спершу знак</h2>
+    <p class="note">
+      Тільки зірочки, без літер. Кожна — чотири квадратичні криві з контрольною точкою в центрі, тому
+      промені виходять тонкими й гострими, а не як у ромба. Намальовано формулою, не запозичено: жодної
+      атрибуції за собою не тягне. Обери знак — він застосується до всіх десяти кадрів нижче.
+    </p>
+    <div class="markrow" id="markrow"></div>
+  </section>
+
+  <div class="sheetgrid" id="grid"></div>
+
+  <section class="marks" id="diasection">
+    <h2>Ромб зблизька</h2>
+    <p class="note">
+      Форма 04 не читається як натискна з двох причин. Перша — <b>у неї немає підпису</b>, тоді як усі
+      чотири сусіди підписані: око зчитує безіменний елемент у ряду підписаних як орнамент. Друга —
+      <b>вона лежить в одній площині з баром</b>: ні тіні, ні зазору, нічого, що сказало б «я зверху».
+      Показово, що мова натискності в застосунку вже є — кнопки лайк/дизлайк у <code>FeedItem.tsx:212</code>
+      мають <code>shadow-lg shadow-black/40</code> і <code>active:scale-90</code>, а ромб не бере з цього нічого.
+      Кожен кадр нижче лікує щось одне і показаний двічі: 1:1 та 2×.
+    </p>
+    <div class="diagrid" id="diagrid"></div>
+  </section>
+
+  <section class="ledger">
+    <h2>Чим платимо за кожен силует</h2>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th>№</th><th>Варіант</th><th>Робота</th><th>Що може піти не так</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>01</td><td><b>Диск у вирізі</b></td><td>CSS-маска на доку</td><td><code>mask-image</code> зʼїдає <code>border-top</code> — верхню лінію бару доведеться малювати окремо</td></tr>
+          <tr><td>02</td><td><b>Піднятий диск</b></td><td>Одна тінь-кільце</td><td>Нічого. Кільце з <code>--color-bg</code> ламається лише там, де під доком не суцільний фон</td></tr>
+          <tr><td>03</td><td><b>Квадрат-острів</b></td><td>Мінімальна</td><td>Не виступає за бар — «велика і яскрава» тримається лише на кольорі</td></tr>
+          <tr><td>04</td><td><b>Ромб</b></td><td>Поворот + контр-поворот знака</td><td>Кутовий габарит більший за видимий — тап-зона з’їдає сусідні вкладки</td></tr>
+          <tr><td>05</td><td><b>Пілюля «ШІ»</b></td><td>Змінює сітку доку</td><td>Займає 96px — підписи сусідніх вкладок треба вкорочувати</td></tr>
+          <tr><td>06</td><td><b>Кільце</b></td><td>Мінімальна</td><td>Найтихіший варіант; у світлій темі ядро зливається з баром</td></tr>
+          <tr><td>07</td><td><b>Плаваючий острів</b></td><td>Бар з двох сегментів</td><td>Розрив оголює контент під доком — на світлих постерах впаде контраст</td></tr>
+          <tr><td>08</td><td><b>Аура</b></td><td>Градієнт + keyframes</td><td>Вічна анімація в полі зору. Потрібен <code>prefers-reduced-motion</code> і стриманий такт</td></tr>
+          <tr><td>09</td><td><b>Арка</b></td><td>Два псевдоелементи, шов</td><td>Найкрихкіше: стик купола з баром помітний при будь-якій зміні висоти</td></tr>
+          <tr><td>10</td><td><b>Печатка</b></td><td>Вкладені тіні</td><td>Внутрішнє кільце з’їдає площу знака — мітка має бути дрібнішою</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <p class="closing">
+    <b>Про ромб окремо:</b> найкраще 04D плюс підпис із 04A — обʼєм говорить «натисни» тілом кнопки й
+    тією ж мовою, якою застосунок уже говорить у стрічці, а підпис закриває другу половину проблеми.
+    <b>Якщо треба порадити одну форму взагалі</b> — 02. Вона дає точно те, що ти описав (більша за решту, яскрава,
+    фізично розділяє меню на 2+2), коштує один <code>box-shadow</code> і не має жодного крихкого місця.
+    <b>Якщо хочеться, щоб запам’яталось</b> — 01 або 09: там змінюється сам силует бару, а не лише те,
+    що на ньому лежить. <b>Якщо важливо, щоб зрозуміли з першого разу</b> — 05: слово «ШІ» знімає
+    питання «а що ця кнопка робить», ціною ширини.
+  </p>
+
+</div>
+
+<script>
+  /* Зірка будується формулою: чотири квадратичні криві з контрольною
+     точкою рівно в центрі. rx/ry керують шириною та довжиною променів. */
+  const star = (cx, cy, rx, ry) =>
+    `M${cx} ${cy - ry}Q${cx} ${cy} ${cx + rx} ${cy}Q${cx} ${cy} ${cx} ${cy + ry}` +
+    `Q${cx} ${cy} ${cx - rx} ${cy}Q${cx} ${cy} ${cx} ${cy - ry}Z`;
+
+  const svg = paths =>
+    '<svg viewBox="0 0 24 24" aria-hidden="true">'
+    + paths.map(d => `<path d="${d}"/>`).join('') + '</svg>';
+
+  const SHAPES = {
+    trio:  [star(10.2, 13.6, 8.6, 8.6), star(18.6, 5.8, 4.3, 4.3), star(4.6, 5.2, 2.7, 2.7)],
+    duo:   [star(10.6, 14.2, 9.2, 9.2), star(19.0, 6.0, 4.9, 4.9)],
+    sharp: [star(10.2, 13.6, 5.8, 9.8), star(18.6, 5.8, 2.9, 4.9), star(4.6, 5.2, 1.8, 3.1)]
+  };
+
+  const MARKS = {
+    trio:    { shape: 'trio',  name: 'Класична розсип',   d: 'Велика плюс дві менші. Канонічна форма, та сама скрізь.' },
+    duo:     { shape: 'duo',   name: 'Дві зірки',         d: 'Крупніше й спокійніше — краще тримається на 62px.' },
+    sharp:   { shape: 'sharp', name: 'Витягнуті промені', d: 'Вужчі й гостріші. Перегукується з гострими кутами системи.' },
+    outline: { shape: 'trio',  name: 'Контурні',          d: 'Не залиті. Легша вага, рима з іконками вкладок.' },
+    burst:   { shape: 'trio',  name: 'Виривається',       d: 'Розсип перетинає край диска, як у твоєму референсі.' }
+  };
+
+  const LABELS = {
+    uk: { feed: 'Стрічка', search: 'Пошук', saved: 'Збережені', profile: 'Профіль', ai: 'ШІ' },
+    en: { feed: 'Feed', search: 'Search', saved: 'Saved', profile: 'Profile', ai: 'AI' }
+  };
+
+  let LANG = 'uk';
+  let MK = 'trio';
+
+  function mark(kind) {
+    return '<span class="mk mk--' + kind + '">' + svg(SHAPES[MARKS[kind].shape]) + '</span>';
+  }
+
+  const ICONS = {
+    feed: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.2"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/></svg>',
+    search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
+    saved: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>',
+    profile: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'
+  };
+
+  const VARIANTS = [
+    { id: 'notch',   name: 'Диск у вирізі',
+      note: 'Бар <b>розступається</b> перед кнопкою: коло вирізане з самої панелі. Найсильніше відчуття «острівця» — силует бару більше не прямокутник.',
+      tags: ['виступає', 'змінює силует бару'] },
+    { id: 'raised',  name: 'Піднятий диск',
+      note: 'Кнопка лежить <b>поверх</b> рівного бару, відділена кільцем кольору фону. Найпростіша в коді і найпередбачуваніша на всіх екранах.',
+      tags: ['виступає', 'найдешевша'] },
+    { id: 'inset',   name: 'Квадрат-острів',
+      note: 'Лишається в межах бару, радіус 6px — <b>єдиний варіант, що не ламає</b> систему гострих кутів. Роздільники по боках роблять решту роботи.',
+      tags: ['у межах бару', 'на системі'] },
+    { id: 'diamond', name: 'Ромб',
+      note: 'Той самий квадрат, повернутий на 45°. Найгостріший силует у застосунку — <b>перегукується з гранями постерів</b>, але з’їдає тап-зону сусідів.',
+      tags: ['виступає', 'ризик тапів'] },
+    { id: 'pill',    name: 'Пілюля «ШІ»',
+      note: 'Знак плюс слово в Bebas Neue — <b>ніхто не гадає, що всередині</b>. Ціна: 96px ширини і коротші підписи сусідніх вкладок.',
+      tags: ['виступає', 'з підписом'] },
+    { id: 'ring',    name: 'Кільце',
+      note: 'Незалите: товстий золотий обідок, темне ядро. Вага <b>легша за решту</b>, активний стан вмикає заливку — перехід читається одразу.',
+      tags: ['виступає', 'тиха'] },
+    { id: 'float',   name: 'Плаваючий острів',
+      note: 'Бар <b>розірваний на два сегменти</b>, кнопка висить у розриві окремим об’єктом. Максимальний поділ 2+2, але контент просвічує знизу.',
+      tags: ['виступає', 'бар з двох частин'] },
+    { id: 'glow',    name: 'Аура',
+      note: 'Диск із радіальним градієнтом і <b>повільним диханням світла</b>. Найяскравіша в буквальному сенсі — і єдина, що рухається сама собою.',
+      tags: ['виступає', 'анімована'] },
+    { id: 'arch',    name: 'Арка',
+      note: 'Піднімається не кнопка, а <b>сам бар</b>: посередині виростає купол, кнопка сидить у ньому. Найорганічніше зрощення — і найкрихкіша верстка.',
+      tags: ['змінює силует бару', 'крихка'] },
+    { id: 'seal',    name: 'Печатка',
+      note: 'Диск із внутрішнім кільцем — мова <b>кінонагород і сургучу</b>. Найближче до світу застосунку з його «Оскарами» в базі.',
+      tags: ['виступає', 'на тему'] }
+  ];
+
+  function tab(icon, on) {
+    return '<span class="tab' + (on ? ' on' : '') + '">' + ICONS[icon]
+      + '<span>' + LABELS[LANG][icon] + '</span></span>';
+  }
+
+  const grid = document.getElementById('grid');
+  const markrow = document.getElementById('markrow');
+
+  function renderGrid() {
+    const open = new Set([...grid.querySelectorAll('.frame.is-on')].map(f => f.dataset.v));
+    grid.innerHTML = VARIANTS.map((v, i) => {
+      const btn = cls => `<button class="ai${cls}" type="button" aria-label="${LABELS[LANG].ai}">${mark(MK)}</button>`;
+      return `
+      <figure class="frame v-${v.id}${open.has(v.id) ? ' is-on' : ''}" data-v="${v.id}">
+        <div class="frame-head">
+          <span class="idx">${String(i + 1).padStart(2, '0')}</span>
+          <h2>${v.name}</h2>
+        </div>
+        <div class="screen">
+          <div class="poster"></div>
+          <nav class="dock">
+            <div class="tabs">
+              ${tab('feed', true)}
+              ${tab('search', false)}
+              <span class="slot">${v.id === 'inset' ? btn('') : ''}</span>
+              ${tab('saved', false)}
+              ${tab('profile', false)}
+            </div>
+            ${v.id !== 'inset' ? btn(' lift') : ''}
+          </nav>
+        </div>
+        <p class="note">${v.note}</p>
+        <div class="tags">${v.tags.map(t => `<span class="tag${t === 'найдешевша' || t === 'на системі' ? ' hot' : ''}">${t}</span>`).join('')}</div>
+      </figure>`;
+    }).join('');
+  }
+
+  function renderMarks() {
+    markrow.innerHTML = Object.entries(MARKS).map(([k, m]) => `
+      <button class="markcard" type="button" data-mk="${k}" aria-pressed="${k === MK}">
+        <span class="markstage">
+          <span class="ai">${mark(k)}</span>
+        </span>
+        <b>${m.name}</b>
+        <span class="d">${m.d}</span>
+      </button>
+    `).join('');
+  }
+
+  /* ---------- Ромб зблизька ---------- */
+
+  const DIA = [
+    { id: 'label', name: 'З підписом', fix: 'лікує: безіменність',
+      note: 'Під ромбом зʼявляється <b>«ШІ»</b> тим самим 9px кеглем, що й у сусідів. Ромб перестає бути єдиним безпідписним елементом у ряду. Найдешевша правка з чотирьох.' },
+    { id: 'notch', name: 'У вирізі', fix: 'лікує: одну площину',
+      note: 'Бар <b>розступається</b> навколо ромба, під ним справжня тінь. Найпереконливіше «я лежу зверху» — панель фізично поступається місцем. Ціна: маска зʼїдає верхню лінію бару.' },
+    { id: 'bezel', name: 'З обідком', fix: 'лікує: злиття з баром',
+      note: 'Темний зазор і тонке золоте кільце навколо. Ромб стає <b>клавішею у гнізді</b>. Активний стан потовщує кільце, тож підсвітка вбудована в саму форму.' },
+    { id: 'depth', name: 'Обʼємний', fix: 'лікує: пласкість',
+      note: 'Градієнт зі світлом згори-зліва, тінь під кнопкою і <b>просідання на 12% при натисканні</b>. Дослівно та сама мова, що в кнопок лайк/дизлайк у стрічці.' }
+  ];
+
+  const diagrid = document.getElementById('diagrid');
+
+  function diaDock(v) {
+    const sparks = svg(SHAPES[MARKS[MK].shape]);
+    return `
+      <div class="screen">
+        <div class="poster"></div>
+        <nav class="dock d-${v.id}">
+          <div class="tabs">
+            ${tab('feed', true)}${tab('search', false)}<span></span>${tab('saved', false)}${tab('profile', false)}
+          </div>
+          <span class="diawrap">
+            <button class="dia" type="button" aria-label="${LABELS[LANG].ai}"><span class="spin">${sparks}</span></button>
+          </span>
+          ${v.id === 'label' ? `<span class="ailabel">${LABELS[LANG].ai}</span>` : ''}
+        </nav>
+      </div>`;
+  }
+
+  function renderDia() {
+    const open = new Set([...diagrid.querySelectorAll('.frame.is-on')].map(f => f.dataset.v));
+    diagrid.innerHTML = DIA.map((v, i) => `
+      <figure class="frame${open.has(v.id) ? ' is-on' : ''}" data-v="${v.id}">
+        <div class="frame-head">
+          <span class="idx">04${'ABCD'[i]}</span>
+          <h2>${v.name}</h2>
+        </div>
+        <p class="fix">${v.fix}</p>
+        <p class="note">${v.note}</p>
+        <div class="pair">
+          <div>${diaDock(v)}<p class="cap">1:1</p></div>
+          <div><div class="zoom">${diaDock(v)}</div><p class="cap">2× — деталь</p></div>
+        </div>
+      </figure>
+    `).join('');
+  }
+
+  diagrid.addEventListener('click', (e) => {
+    const btn = e.target.closest('.dia');
+    if (!btn) return;
+    btn.closest('.frame').classList.toggle('is-on');
+  });
+
+  renderMarks();
+  renderGrid();
+  renderDia();
+
+  markrow.addEventListener('click', (e) => {
+    const card = e.target.closest('.markcard');
+    if (!card) return;
+    MK = card.dataset.mk;
+    renderMarks();
+    renderGrid();
+    renderDia();
+    syncAllOn();
+  });
+
+  grid.addEventListener('click', (e) => {
+    const btn = e.target.closest('.ai');
+    if (!btn) return;
+    btn.closest('.frame').classList.toggle('is-on');
+  });
+
+  const themeBtn = document.getElementById('themeBtn');
+  themeBtn.addEventListener('click', () => {
+    const light = document.body.dataset.appTheme !== 'light';
+    document.body.dataset.appTheme = light ? 'light' : 'dark';
+    themeBtn.setAttribute('aria-pressed', String(light));
+    themeBtn.textContent = light ? 'Темна тема' : 'Світла тема';
+  });
+
+  const allOnBtn = document.getElementById('allOnBtn');
+  function syncAllOn() {
+    if (allOnBtn.getAttribute('aria-pressed') !== 'true') return;
+    document.querySelectorAll('.frame').forEach(f => f.classList.add('is-on'));
+  }
+  allOnBtn.addEventListener('click', () => {
+    const on = allOnBtn.getAttribute('aria-pressed') !== 'true';
+    allOnBtn.setAttribute('aria-pressed', String(on));
+    document.querySelectorAll('.frame').forEach(f => f.classList.toggle('is-on', on));
+  });
+
+  const langBtn = document.getElementById('langBtn');
+  langBtn.addEventListener('click', () => {
+    LANG = LANG === 'uk' ? 'en' : 'uk';
+    const en = LANG === 'en';
+    langBtn.setAttribute('aria-pressed', String(en));
+    langBtn.textContent = en ? 'УКР' : 'ENG';
+    renderMarks();
+    renderGrid();
+    renderDia();
+    syncAllOn();
+  });
+</script>

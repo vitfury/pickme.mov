@@ -2,7 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import type { Database } from '../db/index.js';
 import { searchTitles, getTitleDetails, listFilters, getTaste } from './queries.js';
-import { markWatched, rateTitle } from './mutations.js';
+import { markWatched, rateTitle, bookmarkTitle } from './mutations.js';
 
 // Compact, not pretty-printed: indentation on a 150-title result set costs
 // thousands of tokens and buys the model nothing.
@@ -123,6 +123,23 @@ export function buildMcpServer(db: Database, userId: number): McpServer {
       },
     },
     async ({ id, opinion }) => json(await rateTitle(db, userId, id, opinion)),
+  );
+
+  server.registerTool(
+    'bookmark_title',
+    {
+      title: 'Save titles for later',
+      description:
+        'Put titles on the user\'s saved list, the same list the bookmark button in the app writes to. ' +
+        'Use this when they want to keep something for later rather than decide on it now — "sounds good, ' +
+        'remind me", "save that one". Set bookmarked=false to take a title back off the list. A title the ' +
+        'user has already watched cannot be bookmarked, because the app clears bookmarks once something is seen.',
+      inputSchema: {
+        ids: z.array(z.number().int()).min(1).max(50),
+        bookmarked: z.boolean().optional().describe('Default true; false removes them from the list'),
+      },
+    },
+    async ({ ids, bookmarked }) => json(await bookmarkTitle(db, userId, ids, bookmarked !== false)),
   );
 
   server.registerTool(

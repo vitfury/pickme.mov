@@ -1,6 +1,7 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useContentDetail } from '@/api/hooks';
+import { useUIStore } from '@/stores/uiStore';
 import { tmdbBackdrop, tmdbPoster } from '@/utils/image';
 import { formatRuntime, formatDate, formatRating } from '@/utils/format';
 import Spinner from '@/components/ui/Spinner';
@@ -8,7 +9,16 @@ import Spinner from '@/components/ui/Spinner';
 export default function ContentDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const setChatOpen = useUIStore((s) => s.setChatOpen);
   const { t } = useTranslation();
+
+  // Якщо сюди прийшли з картки в чаті, «назад» повертає туди, де юзер був,
+  // і знову відчиняє чат — розмова нікуди не дівалась, вона в сторі
+  const goBack = () => {
+    if ((location.state as { fromChat?: boolean } | null)?.fromChat) setChatOpen(true);
+    navigate(-1);
+  };
   const { data: content, isLoading } = useContentDetail(id ? Number(id) : null);
 
   if (isLoading) {
@@ -39,7 +49,7 @@ export default function ContentDetail() {
         <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/50 to-transparent" />
         {/* Back button */}
         <button
-          onClick={() => navigate(-1)}
+          onClick={goBack}
           className="absolute top-4 left-4 z-10 w-9 h-9 flex items-center justify-center rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

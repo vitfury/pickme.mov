@@ -23,9 +23,35 @@ services:
       - TMDB_IMAGE_BASE_URL=https://image.tmdb.org/t/p
       - APP_URL=${APP_URL:-http://localhost:3000}
       - DEFAULT_LOCALE=uk
+      - BOT_URL=http://bot:3002
+      - MCP_INTERNAL_URL=http://app:3000/mcp
     depends_on:
       postgres:
         condition: service_healthy
+    restart: unless-stopped
+
+  # Ізольований контейнер для чат-бота. Тримає лише доступ до LLM: ані
+  # DATABASE_URL, ані JWT_SECRET, ані OAuth сюди не потрапляють. До каталогу
+  # ходить виключно через MCP з ключем, який app карбує на одну розмову, тож
+  # максимум, до чого дотягнеться промпт-інжекція — тули одного користувача.
+  bot:
+    image: pickme-app-base
+    container_name: pickme-bot
+    working_dir: /app/bot
+    command: ["node", "dist/server.js"]
+    expose:
+      - "3002"
+    volumes:
+      - ./bot/dist:/app/bot/dist:ro
+    environment:
+      - NODE_ENV=production
+      - PORT=3002
+      - LLM_BASE_URL=${LLM_BASE_URL}
+      - LLM_MODEL=${LLM_MODEL:-qwen3.6-35b-224k-moe}
+      - CF_ACCESS_CLIENT_ID=${CF_ACCESS_CLIENT_ID}
+      - CF_ACCESS_CLIENT_SECRET=${CF_ACCESS_CLIENT_SECRET}
+    depends_on:
+      - app
     restart: unless-stopped
 
   postgres:

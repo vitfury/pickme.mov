@@ -33,8 +33,18 @@ export default defineConfig({
     allowedHosts: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:3001',
+        // Overridable so the dev server can run on another port when 3001 is taken
+        target: process.env.API_PROXY_TARGET || 'http://localhost:3001',
         changeOrigin: true,
+        // /api/v1/chat streams SSE — buffering it would defeat the point
+        ws: false,
+        configure: (proxy) => {
+          proxy.on('proxyRes', (proxyRes) => {
+            if (proxyRes.headers['content-type']?.includes('text/event-stream')) {
+              proxyRes.headers['cache-control'] = 'no-cache, no-transform';
+            }
+          });
+        },
       },
     },
   },

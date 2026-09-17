@@ -97,6 +97,85 @@ export async function markWatched(
   return results;
 }
 
+export interface BookmarkResult {
+  id: number;
+  status: 'added' | 'removed' | 'unchanged' | 'not_found' | 'already_watched';
+  title?: string;
+}
+
+/**
+ * Put a title aside for later, or take it back off the list.
+ *
+ * A watched title is refused rather than silently bookmarked: the app clears
+ * bookmarks the moment something is marked watched or rated, so adding one
+ * would be undone by the next swipe and look like the app lost it.
+ */
+export async function bookmarkTitle(
+  db: Database,
+  userId: number,
+  ids: number[],
+  bookmarked: boolean,
+): Promise<BookmarkResult[]> {
+  if (ids.length === 0) return [];
+
+  const rows = await db
+    .select({ id: content.id, title: content.titleEn })
+    .from(content)
+    .where(inArray(content.id, ids));
+  const known = new Map(rows.map((r) => [r.id, r]));
+
+  const watched = await db
+    .select({ contentId: userSwipes.contentId })
+    .from(userSwipes)
+    .where(and(
+      eq(userSwipes.userId, userId),
+      inArray(userSwipes.contentId, ids),
+      eq(userSwipes.isWatched, true),
+    ));
+  const watchedSet = new Set(watched.map((w) => w.contentId));
+
+  const existing = await db
+    .select({ contentId: userBookmarks.contentId })
+    .from(userBookmarks)
+    .where(and(eq(userBookmarks.userId, userId), inArray(userBookmarks.contentId, ids)));
+  const existingSet = new Set(existing.map((b) => b.contentId));
+
+  const results: BookmarkResult[] = [];
+
+  for (const id of ids) {
+    const row = known.get(id);
+    if (!row) {
+      results.push({ id, status: 'not_found' });
+      continue;
+    }
+
+    if (bookmarked) {
+      if (watchedSet.has(id)) {
+        results.push({ id, status: 'already_watched', title: row.title });
+        continue;
+      }
+      if (existingSet.has(id)) {
+        results.push({ id, status: 'unchanged', title: row.title });
+        continue;
+      }
+      await db.insert(userBookmarks).values({ userId, contentId: id }).onConflictDoNothing();
+      results.push({ id, status: 'added', title: row.title });
+      continue;
+    }
+
+    if (!existingSet.has(id)) {
+      results.push({ id, status: 'unchanged', title: row.title });
+      continue;
+    }
+    await db
+      .delete(userBookmarks)
+      .where(and(eq(userBookmarks.userId, userId), eq(userBookmarks.contentId, id)));
+    results.push({ id, status: 'removed', title: row.title });
+  }
+
+  return results;
+}
+
 export interface RateResult {
   id: number;
   status: 'recorded' | 'not_found';

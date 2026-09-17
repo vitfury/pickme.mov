@@ -8,9 +8,11 @@ interface UIState {
   theme: Theme;
   locale: Locale;
   filterDrawerOpen: boolean;
+  chatOpen: boolean;
   toggleTheme: () => void;
   setLocale: (locale: Locale) => void;
   setFilterDrawerOpen: (open: boolean) => void;
+  setChatOpen: (open: boolean) => void;
 }
 
 export const useUIStore = create<UIState>()(
@@ -19,6 +21,7 @@ export const useUIStore = create<UIState>()(
       theme: 'dark',
       locale: 'uk',
       filterDrawerOpen: false,
+      chatOpen: false,
 
       toggleTheme: () => {
         const next = get().theme === 'dark' ? 'light' : 'dark';
@@ -28,6 +31,8 @@ export const useUIStore = create<UIState>()(
       setLocale: (locale) => set({ locale }),
 
       setFilterDrawerOpen: (open) => set({ filterDrawerOpen: open }),
+
+      setChatOpen: (open) => set({ chatOpen: open }),
     }),
     {
       name: 'pickme-ui',

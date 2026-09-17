@@ -33,6 +33,45 @@ function processQueue(error: unknown, token: string | null) {
   failedQueue = [];
 }
 
+/**
+ * Обміняти refresh-токен на новий access.
+ *
+ * Живе окремо від перехоплювача, бо не всі запити йдуть через axios: чат
+ * стрімить SSE голим fetch, і йому потрібен той самий механізм. Паралельні
+ * виклики поділяють одну спробу — інакше два запити, що протухли одночасно,
+ * спалили б refresh-токен двічі й розлогінили користувача.
+ */
+export async function refreshAccessToken(): Promise<string | null> {
+  if (isRefreshing) {
+    return new Promise<string>((resolve, reject) => {
+      failedQueue.push({ resolve, reject });
+    }).catch(() => null);
+  }
+
+  const refreshToken = useAuthStore.getState().refreshToken;
+  if (!refreshToken) {
+    useAuthStore.getState().logout();
+    return null;
+  }
+
+  isRefreshing = true;
+  try {
+    const { data } = await axios.post('/api/v1/auth/refresh', { refreshToken });
+    useAuthStore.getState().login(
+      { accessToken: data.accessToken, refreshToken: data.refreshToken },
+      useAuthStore.getState().user!,
+    );
+    processQueue(null, data.accessToken);
+    return data.accessToken as string;
+  } catch (err) {
+    processQueue(err, null);
+    useAuthStore.getState().logout();
+    return null;
+  } finally {
+    isRefreshing = false;
+  }
+}
+
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -52,30 +91,12 @@ api.interceptors.response.use(
       }
 
       originalRequest._retry = true;
-      isRefreshing = true;
 
-      const refreshToken = useAuthStore.getState().refreshToken;
-      if (!refreshToken) {
-        useAuthStore.getState().logout();
-        return Promise.reject(error);
-      }
+      const token = await refreshAccessToken();
+      if (!token) return Promise.reject(error);
 
-      try {
-        const { data } = await axios.post('/api/v1/auth/refresh', { refreshToken });
-        useAuthStore.getState().login(
-          { accessToken: data.accessToken, refreshToken: data.refreshToken },
-          useAuthStore.getState().user!,
-        );
-        processQueue(null, data.accessToken);
-        originalRequest.headers.Authorization = `Bearer ${data.accessToken}`;
-        return api(originalRequest);
-      } catch (refreshError) {
-        processQueue(refreshError, null);
-        useAuthStore.getState().logout();
-        return Promise.reject(refreshError);
-      } finally {
-        isRefreshing = false;
-      }
+      originalRequest.headers.Authorization = `Bearer ${token}`;
+      return api(originalRequest);
     }
 
     return Promise.reject(error);

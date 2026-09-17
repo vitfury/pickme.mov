@@ -3,6 +3,7 @@ RUN apk add --no-cache postgresql16-client
 WORKDIR /app
 COPY package.json package-lock.json ./
 COPY server/package.json ./server/
-RUN npm ci --workspace=server --omit=dev
+COPY bot/package.json ./bot/
+RUN npm ci --workspace=server --workspace=bot --omit=dev
 ENV NODE_ENV=production
 EXPOSE 3000

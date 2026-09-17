@@ -25,7 +25,13 @@ export default async function apiKeyRoutes(app: FastifyInstance) {
           createdAt: apiKeys.createdAt,
         })
         .from(apiKeys)
-        .where(and(eq(apiKeys.userId, request.userId), isNull(apiKeys.revokedAt)))
+        // expiresAt is null for keys the user made; the chat's own short-lived
+        // keys are an implementation detail and never shown in the list.
+        .where(and(
+          eq(apiKeys.userId, request.userId),
+          isNull(apiKeys.revokedAt),
+          isNull(apiKeys.expiresAt),
+        ))
         .orderBy(desc(apiKeys.createdAt));
 
       return {

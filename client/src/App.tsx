@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/uiStore';
 import ProtectedRoute from '@/components/layout/ProtectedRoute';
@@ -17,10 +18,25 @@ import AuthCallback from '@/pages/AuthCallback';
 export default function App() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const theme = useUIStore((s) => s.theme);
+  const { i18n } = useTranslation();
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
+
+  // i18n визначає мову сам — по localStorage, а на першому заході по мові
+  // браузера. uiStore при цьому мав власний дефолт, і вони розходились:
+  // інтерфейс англійською, а в сторі «uk», тож перемикач у профілі підсвічував
+  // не ту кнопку, а бот відповідав не тією мовою. Джерело правди одне — i18n.
+  useEffect(() => {
+    const sync = (lng: string) => {
+      const locale = lng.startsWith('uk') ? 'uk' : 'en';
+      if (useUIStore.getState().locale !== locale) useUIStore.getState().setLocale(locale);
+    };
+    sync(i18n.language);
+    i18n.on('languageChanged', sync);
+    return () => { i18n.off('languageChanged', sync); };
+  }, [i18n]);
 
   return (
     <Routes>

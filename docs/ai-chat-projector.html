@@ -1,0 +1,999 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Проєктор: п’ять мінімалістичних лоадерів — pickme.mov</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500&family=Oswald:wght@400;500;600&family=Rubik:wght@400;500;600;700&display=swap">
+<style>
+/* ============================================================
+   СПЕЦ-АРКУШ №3: вісім лоадерів для обраної оболонки «ФОЙЄ».
+   Оболонка чату (бульбашки, чипи, пігулка вводу, ромб-аватар)
+   скопійована з ai-chat-mockups.html №02 і НЕ змінюється —
+   між вісьмома екранами відрізняється лише лоадер.
+   ============================================================ */
+
+:root {
+  --sheet:     #101016;
+  --sheet-2:   #16161e;
+  --rule:      #26262f;
+  --rule-soft: #1c1c24;
+  --ink:       #e6e6ec;
+  --ink-2:     #9a9aa8;
+  --ink-3:     #63636f;
+  --gold:      #d4a843;
+  --gold-hi:   #e8c569;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--sheet);
+  color: var(--ink);
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px 90px; }
+
+/* ---------- Шапка ---------- */
+
+.masthead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 42px 0 20px;
+  border-bottom: 1px solid var(--gold);
+}
+.masthead h1 {
+  font-family: 'Oswald', Impact, sans-serif;
+  font-weight: 500;
+  font-size: clamp(34px, 6vw, 58px);
+  line-height: 0.98;
+  letter-spacing: 0.015em;
+  text-transform: uppercase;
+  margin: 0;
+}
+.masthead h1 em { font-style: normal; color: var(--gold); }
+.meta {
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 2px 16px;
+  font-size: 11px;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.meta b { color: var(--ink-2); font-weight: 500; }
+.lede { max-width: 66ch; margin: 18px 0 0; color: var(--ink-2); font-size: 13.5px; }
+.lede strong { color: var(--ink); font-weight: 500; }
+
+/* ---------- Панель керування ---------- */
+
+.controls {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 26px;
+  padding: 12px 0;
+  background: linear-gradient(var(--sheet) 72%, transparent);
+}
+.ctl {
+  appearance: none;
+  border: 1px solid var(--rule);
+  background: var(--sheet-2);
+  color: var(--ink-2);
+  font: inherit;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 7px 14px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: color .15s, border-color .15s, background .15s;
+}
+.ctl:hover { color: var(--ink); border-color: var(--ink-3); }
+.ctl[aria-pressed="true"] { color: #0f0f14; background: var(--gold); border-color: var(--gold); }
+.ctl:focus-visible { outline: 2px solid var(--gold-hi); outline-offset: 2px; }
+.ctl-hint { color: var(--ink-3); font-size: 11px; margin-left: auto; }
+
+/* ---------- Секції макетів ---------- */
+
+.mock { margin-top: 54px; border-top: 1px solid var(--rule-soft); padding-top: 26px; }
+.mock-head { display: flex; gap: 16px; align-items: flex-start; margin-bottom: 20px; }
+.idx {
+  font-family: 'Bebas Neue', Impact, sans-serif;
+  font-size: 42px;
+  line-height: 0.9;
+  color: var(--gold);
+  min-width: 52px;
+}
+.mock-head h2 {
+  margin: 0 0 6px;
+  font-family: 'Oswald', sans-serif;
+  font-weight: 500;
+  font-size: 24px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.mock-head h2 span { color: var(--ink-3); font-size: 15px; letter-spacing: 0.06em; margin-left: 10px; }
+.note { margin: 0; max-width: 72ch; font-size: 12px; line-height: 1.65; color: var(--ink-2); }
+.note b { color: var(--gold); font-weight: 500; }
+
+.stagewrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 26px;
+  align-items: flex-start;
+}
+.aside {
+  flex: 1 1 220px;
+  max-width: 340px;
+  font-size: 11.5px;
+  color: var(--ink-3);
+  line-height: 1.7;
+  padding-top: 6px;
+}
+.aside dt { color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.07em; font-size: 10px; margin-top: 14px; }
+.aside dd { margin: 2px 0 0; }
+.aside .k { color: var(--gold); }
+
+/* ============================================================
+   ЕКРАН — токени скопійовані з client/src/index.css
+   ============================================================ */
+
+.screen {
+  --app-bg:        #0a0a0f;
+  --app-surface:   #141420;
+  --app-surface-2: #1e1e30;
+  --app-border:    #2a2a3a;
+  --app-text:      #e8e8ed;
+  --app-muted:     #8a8a9a;
+  --app-gold:      #d4a843;
+  --app-gold-hi:   #e0b84f;
+  --app-like:      #4ade80;
+  --app-dislike:   #f87171;
+  --app-overlay:   rgba(10, 10, 15, 0.85);
+
+  position: relative;
+  flex: 0 0 auto;
+  width: min(392px, 100%);
+  height: 700px;
+  overflow: hidden;
+  background: var(--app-bg);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  font-family: 'Rubik', system-ui, sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--app-text);
+  isolation: isolate;
+}
+[data-app-theme="light"] .screen {
+  --app-bg:        #f5f5f7;
+  --app-surface:   #ffffff;
+  --app-surface-2: #eeeef0;
+  --app-border:    #d4d4dc;
+  --app-text:      #1a1a2e;
+  --app-muted:     #6b6b80;
+  --app-gold:      #c4922e;
+  --app-gold-hi:   #b3841f;
+  --app-like:      #22c55e;
+  --app-dislike:   #ef4444;
+  --app-overlay:   rgba(245, 245, 247, 0.85);
+}
+
+/* Підкладка: натяк на стрічку карток + нижня навігація з ромбом */
+.appbg { position: absolute; inset: 0; }
+.appbg .ghostcard {
+  position: absolute;
+  left: 50%; top: 44px;
+  transform: translateX(-50%);
+  width: 210px; height: 300px;
+  border-radius: 8px;
+  border: 1px solid var(--app-border);
+  background: linear-gradient(160deg,
+    color-mix(in srgb, var(--app-gold) 18%, var(--app-surface-2)),
+    var(--app-surface) 70%);
+}
+.appbg .nav {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 54px;
+  background: var(--app-surface);
+  border-top: 1px solid var(--app-border);
+  display: grid;
+  grid-template-columns: 1fr 1fr 70px 1fr 1fr;
+  align-items: center;
+}
+.appbg .nav i {
+  justify-self: center;
+  width: 18px; height: 18px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--app-muted) 45%, transparent);
+}
+.appbg .diamond {
+  justify-self: center;
+  align-self: center;
+  width: 40px; height: 40px;
+  transform: rotate(45deg) translateY(-6px);
+  border-radius: 7px;
+  background: var(--app-gold);
+  box-shadow: 0 0 0 3px var(--app-bg), 0 0 0 4.5px var(--app-gold);
+  display: flex; align-items: center; justify-content: center;
+}
+.appbg .diamond s { transform: rotate(-45deg); text-decoration: none; color: #14140f; font-size: 15px; }
+.dim { position: absolute; inset: 0; background: var(--app-overlay); }
+
+/* Панель «Фойє» — оболонка з макета №02, без змін */
+.panelwrap { position: absolute; inset: 0; padding: 8.5%; }
+.panel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: color-mix(in srgb, var(--app-gold) 5%, var(--app-surface-2));
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  box-shadow: 0 24px 60px -12px rgba(0,0,0,.55), 0 4px 16px rgba(0,0,0,.3);
+  overflow: hidden;
+  font-family: 'Rubik', system-ui, sans-serif;
+}
+.p-head {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid color-mix(in srgb, var(--app-gold) 30%, var(--app-border));
+}
+.p-title { font-weight: 600; font-size: 13px; letter-spacing: 0.02em; }
+.p-title small { display: block; font-weight: 400; font-size: 10.5px; color: var(--app-muted); }
+.p-x {
+  appearance: none; border: 0; background: none;
+  color: var(--app-muted); font-size: 15px; line-height: 1;
+  cursor: pointer; padding: 4px 6px; border-radius: 4px;
+}
+.p-x:hover { color: var(--app-text); background: color-mix(in srgb, var(--app-text) 8%, transparent); }
+.msgs {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  scrollbar-width: thin;
+}
+.msgs > * { flex-shrink: 0; }
+.p-foot { flex: 0 0 auto; padding: 10px 12px 12px; border-top: 1px solid var(--app-border); }
+
+.ava {
+  width: 26px; height: 26px;
+  flex: 0 0 auto;
+  transform: rotate(45deg);
+  border-radius: 6px;
+  background: var(--app-gold);
+  display: flex; align-items: center; justify-content: center;
+  margin-top: 2px;
+}
+.ava s { transform: rotate(-45deg); text-decoration: none; font-size: 12px; color: #14140f; }
+.mrow { display: flex; gap: 9px; align-items: flex-start; }
+.mrow.user { justify-content: flex-end; }
+.bub {
+  max-width: 78%;
+  padding: 9px 13px;
+  border-radius: 16px;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+.user .bub {
+  background: var(--app-gold);
+  color: #17130a;
+  border-bottom-right-radius: 5px;
+  font-weight: 500;
+}
+.ai .bub {
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-top-left-radius: 5px;
+}
+.chips { display: flex; flex-wrap: wrap; gap: 6px; padding-left: 35px; }
+.chip {
+  font-size: 10.5px;
+  color: var(--app-gold);
+  border: 1px solid color-mix(in srgb, var(--app-gold) 45%, transparent);
+  background: color-mix(in srgb, var(--app-gold) 9%, transparent);
+  border-radius: 20px;
+  padding: 3px 10px;
+}
+.chip::before { content: '✓ '; }
+.chip.run::before { content: ''; }
+.chip.run i {
+  display: inline-block;
+  width: 5px; height: 5px;
+  margin-right: 5px;
+  border-radius: 50%;
+  background: var(--app-gold);
+  animation: blink 1s ease infinite;
+}
+@keyframes blink { 50% { opacity: .2; } }
+
+/* Картки-постери */
+.cards { display: flex; flex-direction: column; gap: 8px; padding-left: 35px; }
+.card {
+  display: flex; gap: 10px;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  padding: 8px;
+}
+.card:hover { border-color: color-mix(in srgb, var(--app-gold) 55%, var(--app-border)); }
+.pp {
+  position: relative;
+  flex: 0 0 auto;
+  width: 52px; height: 74px;
+  border-radius: 6px;
+  overflow: hidden;
+  background:
+    linear-gradient(165deg,
+      color-mix(in srgb, var(--app-gold) var(--mix, 30%), var(--app-surface-2)) 0%,
+      var(--app-surface-2) 62%,
+      color-mix(in srgb, var(--app-bg) 70%, var(--app-surface-2)) 100%);
+  border: 1px solid var(--app-border);
+  display: flex; align-items: center; justify-content: center;
+}
+.pp::before {
+  content: '';
+  position: absolute; inset: 3px;
+  border: 1px solid color-mix(in srgb, var(--app-text) 16%, transparent);
+  border-radius: 3px;
+}
+.pp b {
+  font-family: 'Oswald', sans-serif;
+  font-weight: 600;
+  font-size: 21px;
+  color: color-mix(in srgb, var(--app-gold) 80%, var(--app-text));
+  text-shadow: 0 1px 6px rgba(0,0,0,.35);
+}
+.card .cb { min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 2px; }
+.card .ct { font-weight: 600; font-size: 12.5px; }
+.card .cm { font-size: 11px; color: var(--app-muted); }
+.card .cm b { color: var(--app-gold); font-weight: 600; }
+.card .cw { font-size: 10.5px; color: var(--app-muted); font-style: italic; }
+
+.sugg { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none; }
+.sugg button {
+  flex: 0 0 auto;
+  font: inherit;
+  font-size: 11px;
+  color: var(--app-text);
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: 20px;
+  padding: 5px 12px;
+  cursor: pointer;
+}
+.sugg button:hover { border-color: var(--app-gold); color: var(--app-gold); }
+.inrow { display: flex; align-items: center; gap: 8px; }
+.pill {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: 24px;
+  padding: 8px 8px 8px 14px;
+}
+.pill input {
+  flex: 1; min-width: 0;
+  background: none; border: 0; outline: none;
+  color: var(--app-text);
+  font: inherit; font-size: 12.5px;
+}
+.mic {
+  border: 0; background: none;
+  color: var(--app-muted);
+  font-size: 14px; cursor: pointer;
+  padding: 2px 4px;
+}
+.mic:hover { color: var(--app-gold); }
+.send2 {
+  flex: 0 0 auto;
+  width: 38px; height: 38px;
+  border: 0; border-radius: 50%;
+  background: var(--app-gold);
+  color: #17130a;
+  font-size: 15px;
+  cursor: pointer;
+  box-shadow: 0 3px 10px color-mix(in srgb, var(--app-gold) 40%, transparent);
+}
+.send2:hover { background: var(--app-gold-hi); }
+
+/* Спільне для лоадерів */
+.ld { position: relative; }
+.ldword { transition: opacity .2s; }
+.ldword.swap { animation: wordin .45s ease; }
+@keyframes wordin { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.ldcap {
+  font-size: 11px;
+  color: var(--app-muted);
+  text-align: center;
+}
+.ldcap::after {
+  content: '';
+  display: inline-block;
+  width: 4px; height: 4px;
+  margin-left: 6px;
+  border-radius: 50%;
+  background: var(--app-gold);
+  vertical-align: middle;
+  animation: blink 1s ease infinite;
+}
+
+
+/* ============================================================
+   ПРОЄКТОР — спільний скелет усіх п'яти.
+   Один принцип: бабіна ліворуч, промінь посередині, екран
+   праворуч зі словом. Різниця — у тому, ЧИМ намальовано
+   проєктор, ЯК поводиться промінь і ЯК змінюється слово.
+   Мінімалізм тут означає: жодного пилу, жодних зайвих деталей,
+   рівно три елементи в кадрі.
+   ============================================================ */
+
+.pj {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 94px;
+  padding: 4px 2px;
+  margin: 2px 0 2px 42px;      /* під аватар ✦, як у бульбашок */
+  user-select: none;
+}
+
+.pj-reel { position: relative; flex: 0 0 auto; }
+.pj-beam { position: relative; flex: 1 1 auto; height: 100%; min-width: 26px; margin-right: -2px; }
+.pj-scr  { position: relative; flex: 0 0 auto; }
+
+/* Слово на екрані */
+.pj-word {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  font-size: 10.5px;
+  line-height: 1.25;
+  text-align: center;
+  letter-spacing: .01em;
+  text-wrap: balance;
+  font-family: 'Rubik', system-ui, sans-serif;
+}
+
+/* Бабіна: коло, втулка, три спиці. Одна розмітка на всі варіанти. */
+.reel {
+  position: relative;
+  border-radius: 50%;
+  animation: pj-spin 3.4s linear infinite;
+}
+.reel i, .reel b {
+  position: absolute;
+  left: 50%; top: 50%;
+  transform-origin: 50% 50%;
+}
+.reel b {                       /* втулка */
+  width: 5px; height: 5px;
+  margin: -2.5px 0 0 -2.5px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.reel i {                       /* спиця — наскрізна перекладина через центр */
+  width: 1.5px;
+  height: 72%;
+  margin-left: -.75px;
+  background: currentColor;
+  border-radius: 1px;
+}
+@keyframes pj-spin { to { transform: rotate(360deg); } }
+
+/* ---------- 01 · Контур ---------- */
+/* Усе однією волосяною лінією. Промінь — дві лінії, що розходяться. */
+
+.pj1 { color: var(--app-gold); }
+.pj1 .reel {
+  width: 40px; height: 40px;
+  border: 1.4px solid currentColor;
+  color: var(--app-gold);
+}
+.pj1 .pj-beam::before,
+.pj1 .pj-beam::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0;
+  height: 1.4px;
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--app-gold) 70%, transparent),
+    color-mix(in srgb, var(--app-gold) 22%, transparent));
+  animation: pj1-breathe 3.6s ease-in-out infinite;
+}
+.pj1 .pj-beam::before { top: 50%; transform-origin: left center; transform: translateY(-.7px) rotate(-11deg); }
+.pj1 .pj-beam::after  { top: 50%; transform-origin: left center; transform: translateY(-.7px) rotate(11deg); }
+@keyframes pj1-breathe { 0%, 100% { opacity: .5; } 50% { opacity: 1; } }
+
+.pj1 .pj-scr {
+  width: 104px; height: 74px;
+  border: 1.4px solid color-mix(in srgb, var(--app-gold) 65%, transparent);
+  border-radius: 3px;
+}
+.pj1 .pj-word { color: var(--app-text); }
+
+/* ---------- 02 · Заливка ---------- */
+/* Проєктор суцільний, екран світиться: темний текст на золоті. */
+
+.pj2 .reel {
+  width: 38px; height: 38px;
+  background: var(--app-gold);
+  color: var(--app-surface-2);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--app-gold) 30%, transparent);
+}
+.pj2 .reel b { width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px; }
+
+.pj2 .pj-beam::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--app-gold) 34%, transparent),
+    color-mix(in srgb, var(--app-gold) 12%, transparent));
+  clip-path: polygon(0 40%, 100% 4%, 100% 96%, 0 60%);
+  animation: pj2-flick 4.2s ease-in-out infinite;
+}
+@keyframes pj2-flick {
+  0%, 100% { opacity: .75; }
+  42%      { opacity: 1; }
+  47%      { opacity: .62; }
+  52%      { opacity: .95; }
+}
+
+.pj2 .pj-scr {
+  width: 108px; height: 78px;
+  border-radius: 3px;
+  background: var(--app-gold);
+  box-shadow: 0 0 26px color-mix(in srgb, var(--app-gold) 26%, transparent);
+  overflow: hidden;
+}
+.pj2 .pj-word { color: #17150d; font-weight: 500; }
+
+/* ---------- 03 · Дві бабіни ---------- */
+/* Подавальна порожніє, приймальна повніє — прогрес, який видно. */
+
+.pj3 { color: var(--app-gold); }
+.pj3 .pj-reel { display: flex; align-items: center; gap: 4px; width: 78px; justify-content: center; }
+.pj3 .reel { border: 1.3px solid currentColor; }
+.pj3 .rwrap { display: block; transform-origin: 50% 50%; }
+.pj3 .w-feed { animation: pj3-empty 14s linear infinite; }
+.pj3 .w-take { animation: pj3-fill  14s linear infinite; }
+.pj3 .rwrap { display: flex; align-items: center; justify-content: center; width: 36px; }
+.pj3 .r-feed { width: 34px; height: 34px; animation-duration: 2.6s; }
+.pj3 .r-take { width: 34px; height: 34px; animation-duration: 1.5s; }
+@keyframes pj3-empty { 0% { transform: scale(1.08); } 100% { transform: scale(.46); } }
+@keyframes pj3-fill  { 0% { transform: scale(.46); } 100% { transform: scale(1.08); } }
+
+.pj3 .pj-beam::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--app-gold) 15%, transparent);
+  clip-path: polygon(0 44%, 100% 10%, 100% 90%, 0 56%);
+}
+.pj3 .pj-scr {
+  width: 100px; height: 72px;
+  border: 1.3px solid color-mix(in srgb, var(--app-gold) 55%, transparent);
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--app-gold) 7%, transparent);
+  overflow: hidden;
+}
+.pj3 .pj-word { color: var(--app-text); }
+
+/* ---------- 04 · Три промені ---------- */
+/* Найменше елементів з усіх: бабіна, три штрихи, рамка. */
+
+.pj4 { color: var(--app-gold); }
+.pj4 .reel {
+  width: 34px; height: 34px;
+  border: 1.6px solid currentColor;
+  animation-duration: 4.2s;
+}
+
+.pj4 .pj-beam { display: flex; flex-direction: column; justify-content: center; gap: 9px; height: 76px; }
+.pj4 .ray {
+  height: 1.6px;
+  border-radius: 2px;
+  background: currentColor;
+  transform-origin: left center;
+  animation: pj4-ray 2.2s ease-in-out infinite;
+}
+.pj4 .ray:nth-child(1) { transform: rotate(-13deg); animation-delay: 0s;   opacity: .45; }
+.pj4 .ray:nth-child(2) { animation-delay: .18s; opacity: .9; }
+.pj4 .ray:nth-child(3) { transform: rotate(13deg);  animation-delay: .36s; opacity: .45; }
+@keyframes pj4-ray { 0%, 100% { opacity: .3; } 50% { opacity: 1; } }
+
+.pj4 .pj-scr {
+  width: 112px; height: 76px;
+  border: 1.6px solid currentColor;
+  border-radius: 2px;
+}
+.pj4 .pj-word { color: var(--app-text); font-family: 'IBM Plex Mono', monospace; font-size: 10px; }
+.pj4 .pj-word::after {
+  content: '▌';
+  margin-left: 1px;
+  animation: pj4-caret .8s step-end infinite;
+}
+@keyframes pj4-caret { 50% { opacity: 0; } }
+
+/* ---------- 05 · Плівка ---------- */
+/* Від бабіни до лінзи тягнеться стрічка з перфорацією. */
+
+.pj5 { color: var(--app-gold); }
+.pj5 .pj-reel { display: flex; align-items: center; }
+.pj5 .reel {
+  width: 36px; height: 36px;
+  border: 1.3px solid currentColor;
+  animation-duration: 3s;
+}
+
+.pj5 .strip {
+  width: 30px; height: 15px;
+  margin-left: -2px;
+  background:
+    repeating-linear-gradient(90deg,
+      transparent 0 3px,
+      color-mix(in srgb, var(--app-gold) 55%, transparent) 3px 5px,
+      transparent 5px 8px),
+    color-mix(in srgb, var(--app-gold) 12%, transparent);
+  background-size: 8px 4px, auto;
+  background-repeat: repeat-x, no-repeat;
+  background-position: 0 0, 0 0;
+  border-top: 1.2px solid color-mix(in srgb, var(--app-gold) 45%, transparent);
+  border-bottom: 1.2px solid color-mix(in srgb, var(--app-gold) 45%, transparent);
+  animation: pj5-run .5s linear infinite;
+}
+@keyframes pj5-run { to { background-position: -8px 0, 0 0; } }
+
+.pj5 .pj-beam::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--app-gold) 40%, transparent),
+    color-mix(in srgb, var(--app-gold) 8%, transparent));
+  clip-path: polygon(0 46%, 100% 8%, 100% 92%, 0 54%);
+}
+.pj5 .pj-scr {
+  width: 104px; height: 76px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--app-gold) 10%, transparent);
+  box-shadow: inset 0 0 0 1.3px color-mix(in srgb, var(--app-gold) 40%, transparent);
+  overflow: hidden;
+}
+.pj5 .pj-word { color: var(--app-text); animation: pj5-gate 2.7s steps(1) infinite; }
+@keyframes pj5-gate { 0%, 96% { opacity: 1; } 97% { opacity: .55; } 98% { opacity: 1; } 99% { opacity: .7; } }
+
+/* ---------- Переходи слова ---------- */
+
+.sw-fade  { animation: sw-fade  .4s ease; }
+.sw-flip  { animation: sw-flip  .5s ease; }
+.sw-up    { animation: sw-up    .42s cubic-bezier(.2,.8,.2,1); }
+.sw-flick { animation: sw-flick .46s steps(1); }
+
+@keyframes sw-fade { from { opacity: 0; } }
+@keyframes sw-flip { from { transform: rotateX(-88deg); opacity: .2; } }
+@keyframes sw-up   { from { transform: translateY(9px); opacity: 0; } }
+@keyframes sw-flick {
+  0% { opacity: 0; } 20% { opacity: 1; } 32% { opacity: .2; }
+  48% { opacity: 1; } 60% { opacity: .5; } 100% { opacity: 1; }
+}
+
+/* ---------- Reduced motion: уповільнюємо, не вимикаємо ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .reel { animation-duration: 9s; }
+  .pj3 .w-feed, .pj3 .w-take { animation-duration: 36s; }
+  .pj1 .pj-beam::before, .pj1 .pj-beam::after,
+  .pj2 .pj-beam::before, .pj4 .ray { animation-duration: 9s; }
+  .pj5 .strip { animation-duration: 1.6s; }
+  .chip.run i, .ldcap::after { animation-duration: 3s; }
+}
+
+/* ---------- Адаптив ---------- */
+@media (max-width: 720px) {
+  .stagewrap { flex-direction: column; }
+  .aside { max-width: none; }
+  .mock-head { flex-direction: column; gap: 6px; }
+}
+
+.footer {
+  margin-top: 70px;
+  padding-top: 18px;
+  border-top: 1px solid var(--rule);
+  font-size: 11px;
+  color: var(--ink-3);
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <div>
+    <h1>Проєктор <em>×5</em></h1>
+    <p class="lede">Одна ідея в п’яти виконаннях: <strong>бабіна крутиться, промінь світить на екран,
+    слова змінюються на екрані</strong>. Оболонка чату — та сама «Фойє», без жодної зміни.
+    Відрізняється лише те, <strong>чим намальовано проєктор</strong>, як поводиться промінь
+    і як підмінюється слово. Мінімалізм тут означає три елементи в кадрі й жодної порошинки.</p>
+  </div>
+  <div class="meta">
+    <span>Проєкт</span><b>pickme.mov</b>
+    <span>Аркуш</span><b>ШІ-чат / 04</b>
+    <span>Оболонка</span><b>№02 «Фойє»</b>
+    <span>Варіантів</span><b>5</b>
+  </div>
+</header>
+
+<div class="controls">
+  <button class="ctl" id="th-dark" aria-pressed="true">Темна тема</button>
+  <button class="ctl" id="th-light" aria-pressed="false">Світла тема</button>
+  <button class="ctl" id="replay">⟲ Перезапустити</button>
+  <span class="ctl-hint">Цикл слова ~2.5 с, повний оберт бабіни 2.6–4.2 с залежно від варіанта</span>
+</div>
+
+<main id="mocks" data-app-theme="dark">
+
+<section class="mock" id="mock-pj1">
+  <div class="mock-head">
+    <span class="idx">01</span>
+    <div>
+      <h2>Контур <span>волосяна лінія</span></h2>
+      <p class="note">Найтихіший з п’яти. Усе намальовано <b>однією товщиною лінії</b> — бабіна, два промені, рамка екрана. Промені дихають у протифазі з обертанням, слово просто проступає. Нічого не світиться, нічого не блимає: працює тільки рух.</p>
+    </div>
+  </div>
+  <div class="stagewrap">
+    <div class="screen" data-shell data-loader="pj1"></div>
+  </div>
+</section>
+
+<section class="mock" id="mock-pj2">
+  <div class="mock-head">
+    <span class="idx">02</span>
+    <div>
+      <h2>Заливка <span>світло як матеріал</span></h2>
+      <p class="note">Протилежність першому: проєктор <b>суцільний</b>, промінь — градієнтний клин, екран по-справжньому світиться і текст на ньому темний. Лампа ледь мерехтить на 42-й частці циклу, як справжня дуга. Слово перекидається через вісь, ніби кадр змінився.</p>
+    </div>
+  </div>
+  <div class="stagewrap">
+    <div class="screen" data-shell data-loader="pj2"></div>
+  </div>
+</section>
+
+<section class="mock" id="mock-pj3">
+  <div class="mock-head">
+    <span class="idx">03</span>
+    <div>
+      <h2>Дві бабіни <span>видимий прогрес</span></h2>
+      <p class="note">Єдиний, де <b>видно, скільки лишилось</b>: за 14 секунд ліва бабіна худне більш ніж удвічі, а права рівно настільки ж повніє — плівка фізично переходить з однієї на другу. Одинадцята секунда не схожа на другу, бо котушки справді інші. Слово виїжджає знизу.</p>
+    </div>
+  </div>
+  <div class="stagewrap">
+    <div class="screen" data-shell data-loader="pj3"></div>
+  </div>
+</section>
+
+<section class="mock" id="mock-pj4">
+  <div class="mock-head">
+    <span class="idx">04</span>
+    <div>
+      <h2>Три промені <span>мінімум з мінімумів</span></h2>
+      <p class="note">Три елементи в кадрі й жодного зайвого: коло, три штрихи, прямокутник. Промені пульсують по черзі — світло <b>тече</b> зліва направо. Слово друкується моноширинним із кареткою, без трьох крапок: їх замінює сам курсор.</p>
+    </div>
+  </div>
+  <div class="stagewrap">
+    <div class="screen" data-shell data-loader="pj4"></div>
+  </div>
+</section>
+
+<section class="mock" id="mock-pj5">
+  <div class="mock-head">
+    <span class="idx">05</span>
+    <div>
+      <h2>Плівка <span>механіка тракту</span></h2>
+      <p class="note">Від бабіни до лінзи тягнеться <b>стрічка з перфорацією</b>, яка справді біжить. Екран підсвічений зсередини, а слово раз на цикл ледь смикається — так поводиться кадр у неідеальному фільмовому вікні. Найбільш «залізний» з п’яти.</p>
+    </div>
+  </div>
+  <div class="stagewrap">
+    <div class="screen" data-shell data-loader="pj5"></div>
+  </div>
+</section>
+</main>
+
+<p class="footer">pickme.mov · аркуш ШІ-чат / 04 · оболонка «Фойє» незмінна, змінюється лише лоадер</p>
+
+</div>
+<script>
+/* ===================== керування темою ===================== */
+(function () {
+  var mocks = document.getElementById('mocks');
+  var bDark = document.getElementById('th-dark');
+  var bLight = document.getElementById('th-light');
+  function setTheme(t) {
+    mocks.setAttribute('data-app-theme', t);
+    bDark.setAttribute('aria-pressed', String(t === 'dark'));
+    bLight.setAttribute('aria-pressed', String(t === 'light'));
+  }
+  bDark.addEventListener('click', function () { setTheme('dark'); });
+  bLight.addEventListener('click', function () { setTheme('light'); });
+  if (location.hash === '#light') setTheme('light');
+})();
+
+var RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+var SLOW = RM ? 2.6 : 1;
+
+/* Єдиний rAF-цикл на всі лоадери */
+var tickers = [];
+var resetters = [];
+requestAnimationFrame(function loop(now) {
+  for (var i = 0; i < tickers.length; i++) tickers[i](now);
+  requestAnimationFrame(loop);
+});
+
+function shellHTML(loader) {
+  return `
+  <div class="appbg"><div class="ghostcard"></div>
+    <div class="nav"><i></i><i></i><div class="diamond"><s>✦</s></div><i></i><i></i></div>
+  </div>
+  <div class="dim"></div>
+  <div class="panelwrap">
+    <section class="panel">
+      <header class="p-head">
+        <span class="p-title">Кіноконсьєрж<small>знає твої 59 лайків</small></span>
+        <button class="p-x" aria-label="Закрити">✕</button>
+      </header>
+      <div class="msgs">
+        <div class="mrow user"><div class="bub">Порадь щось епічне на вечір, від 2000 року, з хорошим рейтингом</div></div>
+        <div class="chips">
+          <span class="chip">Шукаю в каталозі</span>
+          <span class="chip">Читаю твій профіль</span>
+        </div>
+        <div class="mrow ai">
+          <div class="ava"><s>✦</s></div>
+          <div class="bub">Тримай трійку найепічніших — усі після 2000-го, всі з рейтингом 7.5+. Драма, бойовик і фантастика — якраз твої топ-жанри:</div>
+        </div>
+        <div class="cards">
+          <div class="card">
+            <div class="pp" style="--mix:42%"><b>М</b></div>
+            <div class="cb">
+              <div class="ct">Месники: Війна нескінченності</div>
+              <div class="cm">2018 · <b>★ 8.2</b></div>
+              <div class="cw">масштаб, який ти лайкаєш найчастіше</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="pp" style="--mix:26%"><b>В</b></div>
+            <div class="cb">
+              <div class="ct">Вартові галактики</div>
+              <div class="cm">2014 · <b>★ 7.9</b></div>
+              <div class="cw">космос + гумор, схоже на твої суперлайки</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="pp" style="--mix:14%"><b>Л</b></div>
+            <div class="cb">
+              <div class="ct">Лоґан</div>
+              <div class="cm">2017 · <b>★ 7.8</b></div>
+              <div class="cw">епічно, але з драмою — твій жанр №1</div>
+            </div>
+          </div>
+        </div>
+        <div class="mrow user"><div class="bub">відклади Вартових на потім</div></div>
+        <div class="chips"><span class="chip run"><i></i>Додаю в збережене</span></div>
+        ${loader}
+      </div>
+      <footer class="p-foot">
+        <div class="sugg">
+          <button>Щось на вечір</button>
+          <button>Найкраще Нолана</button>
+          <button>Мій топ-жанр</button>
+          <button>Що я зберіг?</button>
+        </div>
+        <div class="inrow">
+          <div class="pill">
+            <input type="text" placeholder="Спитай про кіно…" aria-label="Повідомлення">
+            <button class="mic" aria-label="Голосовий ввід">🎙</button>
+          </div>
+          <button class="send2" aria-label="Надіслати">➤</button>
+        </div>
+      </footer>
+    </section>
+  </div>`;
+}
+
+/* ===================== розмітка лоадерів ===================== */
+var LOADER_HTML = {"pj1": "<div class=\"ld pj pj1\">\n  <div class=\"pj-reel\"><div class=\"reel \"><b></b><i style=\"transform:translate(-50%,-50%) rotate(0deg)\"></i><i style=\"transform:translate(-50%,-50%) rotate(60deg)\"></i><i style=\"transform:translate(-50%,-50%) rotate(120deg)\"></i></div></div>\n  <div class=\"pj-beam\"></div>\n  <div class=\"pj-scr\"><span class=\"pj-word\" data-words=\"[&quot;Наводжу різкість…&quot;, &quot;Гортаю афішу…&quot;, &quot;Раджуся з критиками…&quot;, &quot;Звіряю з твоїм смаком…&quot;, &quot;Майже готово…&quot;]\" data-sw=\"sw-fade\"></span></div>\n</div>", "pj2": "<div class=\"ld pj pj2\">\n  <div class=\"pj-reel\"><div class=\"reel \"><b></b><i style=\"transform:translate(-50%,-50%) rotate(0deg)\"></i><i style=\"transform:translate(-50%,-50%) rotate(60deg)\"></i><i style=\"transform:translate(-50%,-50%) rotate(120deg)\"></i></div></div>\n  <div class=\"pj-beam\"></div>\n  <div class=\"pj-scr\"><span class=\"pj-word\" data-words=\"[&quot;Розігріваю лампу…&quot;, &quot;Шукаю в каталозі…&quot;, &quot;Оскароманю…&quot;, &quot;Відкидаю передбачуване…&quot;, &quot;Зараз покажу…&quot;]\" data-sw=\"sw-flip\"></span></div>\n</div>", "pj3": "<div class=\"ld pj pj3\">\n  <div class=\"pj-reel\"><span class=\"rwrap w-feed\"><div class=\"reel r-feed\"><b></b><i style=\"transform:translate(-50%,-50%) rotate(0deg)\"></i><i style=\"transform:translate(-50%,-50%) rotate(60deg)\"></i><i style=\"transform:translate(-50%,-50%) rotate(120deg)\"></i></div></span><span class=\"rwrap w-take\"><div class=\"reel r-take\"><b></b><i style=\"transform:translate(-50%,-50%) rotate(0deg)\"></i><i style=\"transform:translate(-50%,-50%) rotate(60deg)\"></i><i style=\"transform:translate(-50%,-50%) rotate(120deg)\"></i></div></span></div>\n  <div class=\"pj-beam\"></div>\n  <div class=\"pj-scr\"><span class=\"pj-word\" data-words=\"[&quot;Перемотую плівку…&quot;, &quot;Дивлюсь, що ти любиш…&quot;, &quot;Відкидаю переглянуте…&quot;, &quot;Лишилось трохи…&quot;, &quot;Домотую…&quot;]\" data-sw=\"sw-up\"></span></div>\n</div>", "pj4": "<div class=\"ld pj pj4\">\n  <div class=\"pj-reel\"><div class=\"reel \"><b></b><i style=\"transform:translate(-50%,-50%) rotate(0deg)\"></i><i style=\"transform:translate(-50%,-50%) rotate(60deg)\"></i><i style=\"transform:translate(-50%,-50%) rotate(120deg)\"></i></div></div>\n  <div class=\"pj-beam\"><span class=\"ray\"></span><span class=\"ray\"></span><span class=\"ray\"></span></div>\n  <div class=\"pj-scr\"><span class=\"pj-word\" data-words=\"[&quot;Кіноманю&quot;, &quot;Шукаю&quot;, &quot;Звіряю рейтинги&quot;, &quot;Думаю&quot;, &quot;Готую відповідь&quot;]\" data-sw=\"type\"></span></div>\n</div>", "pj5": "<div class=\"ld pj pj5\">\n  <div class=\"pj-reel\"><div class=\"reel \"><b></b><i style=\"transform:translate(-50%,-50%) rotate(0deg)\"></i><i style=\"transform:translate(-50%,-50%) rotate(60deg)\"></i><i style=\"transform:translate(-50%,-50%) rotate(120deg)\"></i></div><span class=\"strip\"></span></div>\n  <div class=\"pj-beam\"></div>\n  <div class=\"pj-scr\"><span class=\"pj-word\" data-words=\"[&quot;Проявляю негатив…&quot;, &quot;Мружуся на субтитри…&quot;, &quot;Спойлерю сам собі…&quot;, &quot;Тягну з архіву…&quot;, &quot;Ось воно…&quot;]\" data-sw=\"sw-flick\"></span></div>\n</div>"};
+
+document.querySelectorAll('[data-shell]').forEach(function (sc) {
+  sc.innerHTML = shellHTML(LOADER_HTML[sc.dataset.loader] || '');
+});
+
+function snapBottom() {
+  document.querySelectorAll('.msgs').forEach(function (m) { m.scrollTop = m.scrollHeight; });
+}
+snapBottom();
+addEventListener('load', snapBottom);
+setTimeout(snapBottom, 700);
+
+/* ===================== слова на екрані ===================== */
+/* Один цикл на всі п'ять; перехід задає сам елемент через data-sw,
+   бо саме він відрізняє варіанти між собою. */
+var cyclers = [];
+
+document.querySelectorAll('.pj-word').forEach(function (el) {
+  var words;
+  try { words = JSON.parse(el.dataset.words); } catch (e) { return; }
+
+  var mode = el.dataset.sw || 'sw-fade';
+  var i = 0;
+  var typeTimer = null;
+
+  function show(text) {
+    if (mode !== 'type') {
+      el.classList.remove(mode);
+      void el.offsetWidth;          /* перезапуск анімації */
+      el.classList.add(mode);
+      el.textContent = text;
+      return;
+    }
+    /* Друкарська машинка: символ за ~45 мс, каретка живе в ::after */
+    clearInterval(typeTimer);
+    var n = 0;
+    el.textContent = '';
+    typeTimer = setInterval(function () {
+      n++;
+      el.textContent = text.slice(0, n);
+      if (n >= text.length) clearInterval(typeTimer);
+    }, 45 * SLOW);
+  }
+
+  show(words[0]);
+  var period = (2500 + Math.random() * 600) * SLOW;
+  setInterval(function () {
+    i = (i + 1) % words.length;
+    show(words[i]);
+  }, period);
+
+  cyclers.push(function () { i = 0; show(words[0]); });
+});
+
+/* ===================== перезапуск ===================== */
+document.getElementById('replay').addEventListener('click', function () {
+  cyclers.forEach(function (fn) { fn(); });
+  /* Кільцеві анімації перезапускаємо зняттям і поверненням класу */
+  document.querySelectorAll('.pj').forEach(function (pj) {
+    var cls = pj.className;
+    pj.className = 'ld pj';
+    void pj.offsetWidth;
+    pj.className = cls;
+  });
+});
+
+</script>
+</body>
+</html>
