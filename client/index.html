@@ -5,7 +5,10 @@
     <!-- interactive-widget: на Android екранна клавіатура стискає layout viewport,
          тож фіксована панель чату сама підбирається над нею. iOS цього ще не вміє —
          там те саме робить visualViewport у useVisualViewport.ts. -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" />
+    <!-- maximum-scale=1 прибирає авто-зум Safari при фокусі на інпуті зі шрифтом
+         <16px — саме він «підзумлював» UI при відкритті чату. user-scalable=no
+         фіксує статичний масштаб і для пінча (у PWA поважається строго). -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content" />
     <meta name="theme-color" content="#0a0a0f" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
