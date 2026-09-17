@@ -71,7 +71,6 @@ export default function ChatSheet() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.18 }}
-            onClick={() => setOpen(false)}
             className="fixed inset-0 z-[60] bg-overlay"
             style={{ touchAction: 'none' }}
           />
