@@ -623,7 +623,8 @@ body {
    кожного боку. Через vh/vw так не вийшло б: 10vw і 10vh — різні числа.
    max() потрібен лише там, де виріз екрана вимагає більшого просвіту. */
 .chat-inset {
-  padding: max(10%, env(safe-area-inset-top, 0px))
+  /* Зверху +10px понад safe-area: панель вилазила в блюр-смугу статус-бара */
+  padding: max(10%, calc(env(safe-area-inset-top, 0px) + 10px))
            max(10%, env(safe-area-inset-right, 0px))
            max(10%, env(safe-area-inset-bottom, 0px))
            max(10%, env(safe-area-inset-left, 0px));
