@@ -31,7 +31,11 @@ export function useVisualViewport(active: boolean): ViewportBox | null {
       return;
     }
 
-    const read = () => setBox({ height: vv.height, offsetTop: vv.offsetTop });
+    // Округлення принципове: visualViewport на iOS віддає дробові значення
+    // (типу 553.5), а дробовий translateY на обгортці змушує Safari
+    // растеризувати всю панель між фізичними пікселями — все всередині
+    // виглядає розмитим.
+    const read = () => setBox({ height: Math.round(vv.height), offsetTop: Math.round(vv.offsetTop) });
     read();
 
     vv.addEventListener('resize', read);

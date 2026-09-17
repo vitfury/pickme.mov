@@ -78,7 +78,12 @@ export default function ChatSheet() {
             className="chat-inset fixed inset-x-0 top-0 z-[65] flex pointer-events-none"
             style={
               viewport
-                ? { height: viewport.height, transform: `translateY(${viewport.offsetTop}px)` }
+                ? {
+                    height: viewport.height,
+                    // transform лише коли є реальний зсув: постійний translateY(0)
+                    // все одно тримав би окремий растровий шар на весь чат
+                    transform: viewport.offsetTop ? `translateY(${viewport.offsetTop}px)` : undefined,
+                  }
                 : { height: '100%' }
             }
           >
