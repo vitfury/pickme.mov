@@ -212,11 +212,11 @@ export default function FeedItem({ card, onSwipe, onNavigate, onVerticalDrag, on
         <div className="absolute right-4 top-4 z-20 pointer-events-auto flex flex-col gap-2" onPointerDown={(e) => e.stopPropagation()}>
           <button
             onClick={(e) => { e.stopPropagation(); onToggleBookmark?.(); }}
-            className="w-14 h-14 rounded-full bg-black/50 backdrop-blur-md border border-white/30
+            className="w-12 h-12 rounded-full bg-black/50 backdrop-blur-md border border-white/30
               flex items-center justify-center text-white active:scale-90 transition-all
               shadow-lg shadow-black/40"
           >
-            <svg width="40" height="40" viewBox="0 0 24 24" fill={isBookmarked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill={isBookmarked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
             </svg>
           </button>
