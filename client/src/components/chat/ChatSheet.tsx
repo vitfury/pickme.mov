@@ -8,10 +8,9 @@ import Thinking from './Thinking';
 import TitleCard from './TitleCard';
 
 /* Підказки під полем вводу: кожна — готовий запит, який показує, що саме
-   асистент вміє. Режисер, актор плюс жанр, жанр плюс десятиліття, нагороди,
-   хронометраж і суб'єктивний підбір — разом вони окреслюють увесь діапазон.
-   Тексти живуть в i18n. */
-const SUGGESTIONS = ['nolan', 'arnold', 'comedy00', 'western', 'short', 'kid'] as const;
+   асистент вміє. Жанр плюс десятиліття, нагороди, хронометраж і суб'єктивний
+   підбір — чотири штуки, щоб на телефоні лягали у два ряди. Тексти в i18n. */
+const SUGGESTIONS = ['comedy00', 'western', 'short', 'kid'] as const;
 
 export default function ChatSheet() {
   const { t } = useTranslation();
