@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { useUIStore } from '@/stores/uiStore';
 import { useFeedStore } from '@/stores/feedStore';
-import { useGenres, useProviders, useCertifications, useCountries, useSearch } from '@/api/hooks';
+import { useGenres, useCertifications, useCountries, useSearch } from '@/api/hooks';
 import Chip from '@/components/ui/Chip';
 import RangeSlider from '@/components/ui/RangeSlider';
 import Button from '@/components/ui/Button';
@@ -22,7 +22,6 @@ export default function FilterDrawer() {
   const isSeries = contentType === 'series';
 
   const { data: genresData, isLoading: genresLoading } = useGenres();
-  const { data: providersData } = useProviders();
   const { data: certsData } = useCertifications();
   const { data: countriesData } = useCountries();
 
@@ -48,14 +47,6 @@ export default function FilterDrawer() {
     setLocal({
       ...local,
       genres: current.includes(id) ? current.filter((g) => g !== id) : [...current, id],
-    });
-  };
-
-  const toggleProvider = (id: number) => {
-    const current = local.providers || [];
-    setLocal({
-      ...local,
-      providers: current.includes(id) ? current.filter((p) => p !== id) : [...current, id],
     });
   };
 
@@ -207,38 +198,6 @@ export default function FilterDrawer() {
                   </div>
                 </section>
 
-                {/* Providers */}
-                {providersData && providersData.providers.length > 0 && (
-                  <section>
-                    <h3 className="text-sm font-semibold text-text-muted uppercase tracking-wide mb-2">
-                      {t('filters.providers')}
-                    </h3>
-                    <div className="flex flex-wrap gap-2">
-                      {providersData.providers.map((p) => (
-                        <button
-                          key={p.id}
-                          onClick={() => toggleProvider(p.id)}
-                          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs transition-colors ${
-                            local.providers?.includes(p.id)
-                              ? 'bg-accent/15 border border-accent'
-                              : 'bg-surface-light border border-border'
-                          }`}
-                        >
-                          {p.logoPath && (
-                            <img
-                              src={`https://image.tmdb.org/t/p/w45${p.logoPath}`}
-                              alt=""
-                              className="w-5 h-5 rounded object-cover"
-                            />
-                          )}
-                          <span className={local.providers?.includes(p.id) ? 'text-accent' : 'text-text-muted'}>
-                            {p.name}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  </section>
-                )}
 
                 {/* Certification */}
                 {certsData && certsData.certifications.length > 0 && (
