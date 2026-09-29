@@ -16,8 +16,18 @@ try {
 }
 const buildTime = new Date().toISOString();
 
+// Кладе в збірку version.json з міткою цієї збірки — за ним відкритий PWA
+// дізнається, що вийшла нова версія (див. src/utils/autoUpdate.ts)
+const versionFile = {
+  name: 'version-file',
+  apply: 'build' as const,
+  generateBundle(this: { emitFile: (f: { type: 'asset'; fileName: string; source: string }) => void }) {
+    this.emitFile({ type: 'asset', fileName: 'version.json', source: JSON.stringify({ build: buildTime }) });
+  },
+};
+
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [react(), tailwindcss(), versionFile],
   define: {
     __APP_VERSION__: JSON.stringify(`1.0.0-${gitHash}`),
     __BUILD_TIME__: JSON.stringify(buildTime),
