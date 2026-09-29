@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
+  <!-- Людина без фото в TMDB. Тло дає bg-surface-light самого <img>, тут лише силует,
+       приглушений так, щоб читатися і в темній, і в світлій темі. -->
+  <g fill="#8a8a9a" fill-opacity="0.55">
+    <circle cx="50" cy="38" r="17" />
+    <path d="M18 92c2-18 15-30 32-30s30 12 32 30z" />
+  </g>
+</svg>
