@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/uiStore';
-import { useUserStats, useResetPreferences, useUpdateProfile } from '@/api/hooks';
+import { useUserStats, useResetPreferences, useUpdateProfile, useMe } from '@/api/hooks';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import Spinner from '@/components/ui/Spinner';
@@ -13,6 +13,7 @@ import i18n from '@/i18n/config';
 export default function Profile() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { data: me } = useMe();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const updateUser = useAuthStore((s) => s.updateUser);
@@ -79,7 +80,25 @@ export default function Profile() {
           <h1 className="text-lg font-bold">{user?.displayName}</h1>
           <p className="text-xs text-text-muted">{user?.email}</p>
         </div>
+        {me && (
+          <span className={`ml-auto text-[11px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded ${
+            me.tier === 'pro' || me.isAdmin ? 'bg-accent/15 text-accent' : 'bg-surface-light text-text-muted'
+          }`}>
+            {me.tier === 'pro' || me.isAdmin ? 'Pro' : 'Free'}
+          </span>
+        )}
       </div>
+
+      {me?.isAdmin && (
+        <button
+          type="button"
+          onClick={() => navigate('/admin')}
+          className="w-full flex items-center justify-between bg-surface-light border border-border rounded-lg px-4 py-3 text-sm"
+        >
+          <span>{t('admin.open')}</span>
+          <span className="text-text-muted">›</span>
+        </button>
+      )}
 
       {/* Language */}
       <div>

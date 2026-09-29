@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useUIStore } from '@/stores/uiStore';
 import { useChatStore, type ChatMessage } from '@/stores/chatStore';
 import { useVisualViewport } from '@/hooks/useVisualViewport';
+import { useMe } from '@/api/hooks';
 import Thinking from './Thinking';
 import TitleCard from './TitleCard';
 
@@ -22,6 +23,11 @@ export default function ChatSheet() {
   const send = useChatStore((s) => s.send);
   const stop = useChatStore((s) => s.stop);
   const clear = useChatStore((s) => s.clear);
+
+  // Тир тягнемо свіжим з сервера. Поки не відомо — нічого не блокуємо: сервер
+  // однаково відповість 403, і чат покаже ту саму заглушку через errorCode.
+  const { data: me } = useMe();
+  const locked = !!me && !me.isAdmin && me.tier !== 'pro';
 
   const [draft, setDraft] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -48,8 +54,8 @@ export default function ChatSheet() {
   // Фокусуємо якомога раніше, а не після анімації відкриття: мобільні браузери
   // піднімають клавіатуру лише для фокуса, який ще належить тому тапу.
   useEffect(() => {
-    if (open) inputRef.current?.focus();
-  }, [open]);
+    if (open && !locked) inputRef.current?.focus();
+  }, [open, locked]);
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -128,13 +134,14 @@ export default function ChatSheet() {
               </header>
 
               <div ref={scrollRef} className="chat-msgs">
+                {locked && messages.length === 0 && <ProNotice />}
                 {messages.map((message, i) => (
                   <Bubble key={message.id} message={message} isLast={i === messages.length - 1} />
                 ))}
               </div>
 
               <footer className="chat-foot">
-                {messages.length === 0 && (
+                {!locked && messages.length === 0 && (
                   <div className="chat-sugg">
                     {SUGGESTIONS.map((key) => (
                       <button key={key} type="button" onClick={() => submit(t(`chat.suggestions.${key}`))}>
@@ -156,12 +163,13 @@ export default function ChatSheet() {
                         }
                       }}
                       rows={1}
+                      disabled={locked}
                       placeholder={t('chat.placeholder')}
                     />
                   </div>
                   <button
                     onClick={() => (streaming ? stop() : submit())}
-                    disabled={!streaming && !draft.trim()}
+                    disabled={locked || (!streaming && !draft.trim())}
                     aria-label={streaming ? t('chat.stop') : t('chat.send')}
                     className="chat-send"
                   >
@@ -180,6 +188,18 @@ export default function ChatSheet() {
         </>
       )}
     </AnimatePresence>
+  );
+}
+
+/** Заглушка для плану Free: чат відкривається, але писати в нього не можна */
+function ProNotice() {
+  const { t } = useTranslation();
+  return (
+    <div className="chat-pro">
+      <span className="chat-pro__badge">Pro</span>
+      <p className="chat-pro__title">{t('chat.proOnly')}</p>
+      <p className="chat-pro__hint">{t('chat.proOnlyHint')}</p>
+    </div>
   );
 }
 
@@ -353,7 +373,7 @@ function Bubble({ message, isLast }: { message: ChatMessage; isLast: boolean }) 
         {phase === 'shown' && message.errorCode && (
           <p className="chat-err">
             <span aria-hidden="true">🎬</span>
-            {t('chat.error')}
+            {message.errorCode === 'pro_required' ? t('chat.proOnly') : t('chat.error')}
           </p>
         )}
       </div>

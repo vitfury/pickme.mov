@@ -239,6 +239,15 @@
     "moreRequest": "Rated these — show me more!",
     "rateLike": "Like",
     "rateDislike": "Dislike",
-    "rateSave": "Save for later"
+    "rateSave": "Save for later",
+    "proOnly": "Sorry, the AI assistant is not available on the Free plan.",
+    "proOnlyHint": "It is part of the Pro plan — ask the admin to enable it."
+  },
+  "admin": {
+    "title": "Users",
+    "open": "Admin: users and plans",
+    "summary": "{{total}} total, {{pro}} on Pro",
+    "swipes_one": "{{count}} swipe",
+    "swipes_other": "{{count}} swipes"
   }
 }

@@ -47,6 +47,9 @@ export const users = pgTable('users', {
   theme: varchar('theme', { length: 10 }).default('dark'),
   maturityScore: smallint('maturity_score').default(0),
   onboardingCompleted: boolean('onboarding_completed').default(false),
+  // 'free' | 'pro'. Pro відкриває ШІ-чат — він їсть GPU локальної моделі,
+  // тож доступ до нього видається вручну з адмінки.
+  tier: varchar('tier', { length: 10 }).notNull().default('free'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 }, (table) => [

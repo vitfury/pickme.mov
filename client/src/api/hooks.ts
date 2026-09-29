@@ -1,6 +1,7 @@
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from './client';
 import type {
+  AdminUser,
   FeedResponse,
   FeedFilters,
   SwipeAction,
@@ -394,6 +395,39 @@ export function useRevokeApiKey() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['api-keys'] });
+    },
+  });
+}
+
+// --- Me / Admin ---
+
+/**
+ * Свіжий профіль з сервера. Тир і адмінство беремо саме звідси, а не з
+ * authStore: там лежить знімок з моменту логіну, і апгрейд до Pro, зроблений
+ * в адмінці, до перелогіну не був би видно.
+ */
+export function useMe() {
+  return useQuery<User>({
+    queryKey: ['me'],
+    queryFn: async () => (await api.get('/users/me')).data,
+    staleTime: 30_000,
+  });
+}
+
+export function useAdminUsers() {
+  return useQuery<{ users: AdminUser[] }>({
+    queryKey: ['admin-users'],
+    queryFn: async () => (await api.get('/admin/users')).data,
+  });
+}
+
+export function useSetTier() {
+  const queryClient = useQueryClient();
+  return useMutation<unknown, Error, { id: number; tier: 'free' | 'pro' }>({
+    mutationFn: async ({ id, tier }) => (await api.patch(`/admin/users/${id}`, { tier })).data,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      queryClient.invalidateQueries({ queryKey: ['me'] });
     },
   });
 }

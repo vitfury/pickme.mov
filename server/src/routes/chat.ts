@@ -1,6 +1,7 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { z } from 'zod';
 import { mintChatKey } from '../services/api-keys.js';
+import { getAccess } from '../services/access.js';
 
 const BOT_URL = process.env.BOT_URL || 'http://bot:3002';
 
@@ -38,6 +39,13 @@ export default async function chatRoutes(app: FastifyInstance) {
     const parsed = bodySchema.safeParse(request.body);
     if (!parsed.success) {
       return reply.status(400).send({ error: 'Invalid request', message: parsed.error.message });
+    }
+
+    // Справжній замок — тут, а не в інтерфейсі: клієнтську заглушку можна
+    // обійти прямим запитом, а цю перевірку ні
+    const access = await getAccess(request.db, request.userId);
+    if (!access?.canChat) {
+      return reply.status(403).send({ code: 'pro_required' });
     }
 
     const apiKey = await mintChatKey(request.db, request.userId);

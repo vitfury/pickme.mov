@@ -14,6 +14,7 @@ import Profile from '@/pages/Profile';
 import Person from '@/pages/Person';
 import ContentDetail from '@/pages/ContentDetail';
 import AuthCallback from '@/pages/AuthCallback';
+import Admin from '@/pages/Admin';
 
 /**
  * Повернення зі сторінки, відкритої з чату, знову відчиняє чат — незалежно
@@ -77,6 +78,7 @@ export default function App() {
           <Route path="/watchlist" element={<Navigate to="/saved" replace />} />
           <Route path="/search" element={<Search />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/admin" element={<Admin />} />
           <Route path="/person/:id" element={<Person />} />
           <Route path="/content/:id" element={<ContentDetail />} />
         </Route>

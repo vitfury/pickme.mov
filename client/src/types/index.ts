@@ -28,6 +28,20 @@ export interface User {
   locale: 'uk' | 'en';
   theme: 'dark' | 'light';
   onboardingCompleted: boolean;
+  /** Приходять лише з /users/me — логін їх не віддає */
+  tier?: 'free' | 'pro';
+  isAdmin?: boolean;
+}
+
+export interface AdminUser {
+  id: number;
+  email: string;
+  displayName: string;
+  avatarUrl: string | null;
+  tier: 'free' | 'pro';
+  isAdmin: boolean;
+  swipes: number;
+  createdAt: string | null;
 }
 
 export interface Genre {

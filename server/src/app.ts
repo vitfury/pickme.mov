@@ -22,6 +22,7 @@ import bookmarkRoutes from './routes/bookmarks.js';
 import apiKeyRoutes from './routes/api-keys.js';
 import mcpRoutes from './routes/mcp.js';
 import chatRoutes from './routes/chat.js';
+import adminRoutes from './routes/admin.js';
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -88,6 +89,7 @@ export async function buildApp(): Promise<FastifyInstance> {
     await api.register(bookmarkRoutes, { prefix: '/bookmarks' });
     await api.register(apiKeyRoutes, { prefix: '/api-keys' });
     await api.register(chatRoutes, { prefix: '/chat' });
+    await api.register(adminRoutes, { prefix: '/admin' });
   }, { prefix: '/api/v1' });
 
   // MCP lives outside /api/v1: it is addressed by clients as a bare endpoint

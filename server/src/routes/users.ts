@@ -10,6 +10,7 @@ import {
   people,
   contentGenres,
 } from '../db/schema.js';
+import { isAdminEmail } from '../services/access.js';
 
 const updateUserSchema = z.object({
   locale: z.enum(['uk', 'en']).optional(),
@@ -45,6 +46,8 @@ export default async function usersRoutes(app: FastifyInstance) {
         locale: u.locale,
         theme: u.theme,
         onboardingCompleted: u.onboardingCompleted,
+        tier: u.tier === 'pro' ? 'pro' : 'free',
+        isAdmin: isAdminEmail(u.email),
       };
     } catch (err) {
       request.log.error({ err, route: 'GET /me', userId: request.userId }, 'Failed to fetch user profile');
