@@ -4,13 +4,13 @@ import { z } from 'zod';
 import {
   users,
   userSwipes,
-  userPreferences,
   content,
   genres,
   people,
   contentGenres,
 } from '../db/schema.js';
 import { isAdminEmail } from '../services/access.js';
+import { getTasteProfile, topEntities } from '../services/taste.js';
 
 const updateUserSchema = z.object({
   locale: z.enum(['uk', 'en']).optional(),
@@ -136,49 +136,24 @@ export default async function usersRoutes(app: FastifyInstance) {
         .from(userSwipes)
         .where(and(eq(userSwipes.userId, request.userId), eq(userSwipes.isWatched, true)));
 
-      // Топи — лише з додатним балом: «улюблене» не може складатися з того,
-      // що людина лише дизлайкала
-      // Top genres
-      const topGenres = await request.db
-        .select({
-          entityId: userPreferences.entityId,
-          rawScore: userPreferences.rawScore,
-          nameEn: genres.nameEn,
-          nameUk: genres.nameUk,
-        })
-        .from(userPreferences)
-        .innerJoin(genres, eq(userPreferences.entityId, genres.id))
-        .where(and(eq(userPreferences.userId, request.userId), eq(userPreferences.entityType, 'genre'), sql`${userPreferences.rawScore} > 0`))
-        .orderBy(desc(userPreferences.rawScore))
-        .limit(5);
-
-      // Top directors
-      const topDirectors = await request.db
-        .select({
-          entityId: userPreferences.entityId,
-          rawScore: userPreferences.rawScore,
-          nameEn: people.nameEn,
-          nameUk: people.nameUk,
-        })
-        .from(userPreferences)
-        .innerJoin(people, eq(userPreferences.entityId, people.id))
-        .where(and(eq(userPreferences.userId, request.userId), eq(userPreferences.entityType, 'director'), sql`${userPreferences.rawScore} > 0`))
-        .orderBy(desc(userPreferences.rawScore))
-        .limit(5);
-
-      // Top actors
-      const topActors = await request.db
-        .select({
-          entityId: userPreferences.entityId,
-          rawScore: userPreferences.rawScore,
-          nameEn: people.nameEn,
-          nameUk: people.nameUk,
-        })
-        .from(userPreferences)
-        .innerJoin(people, eq(userPreferences.entityId, people.id))
-        .where(and(eq(userPreferences.userId, request.userId), eq(userPreferences.entityType, 'actor'), sql`${userPreferences.rawScore} > 0`))
-        .orderBy(desc(userPreferences.rawScore))
-        .limit(5);
+      // Топи — з профілю смаку, тобто рівно з лайків і дизлайків. Людей
+      // показуємо від двох лайків: один фільм ще не робить режисера улюбленим.
+      const profile = await getTasteProfile(request.db, request.userId);
+      const genreTop = topEntities(profile, 'genre', 5);
+      const directorTop = topEntities(profile, 'director', 5, 2);
+      const actorTop = topEntities(profile, 'actor', 5, 2);
+      const genreIds = genreTop.map((t) => t.id as number);
+      const personIds = [...directorTop, ...actorTop].map((t) => t.id as number);
+      const [genreRows, personRows] = await Promise.all([
+        genreIds.length ? request.db.select().from(genres).where(inArray(genres.id, genreIds)) : [],
+        personIds.length ? request.db.select().from(people).where(inArray(people.id, personIds)) : [],
+      ]);
+      const genreName = new Map(genreRows.map((g) => [g.id, locale === 'uk' ? (g.nameUk || g.nameEn) : g.nameEn]));
+      const personName = new Map(personRows.map((p) => [p.id, locale === 'uk' ? (p.nameUk || p.nameEn) : p.nameEn]));
+      const named = (list: typeof genreTop, names: Map<number, string>) =>
+        list
+          .filter((t) => names.has(t.id as number))
+          .map((t) => ({ name: names.get(t.id as number)!, score: t.score, likes: t.likes }));
 
       return {
         totalSwiped: Number(totalSwiped[0]?.count || 0),
@@ -187,101 +162,12 @@ export default async function usersRoutes(app: FastifyInstance) {
         skips: Number(skips[0]?.count || 0),
         watchlistSize: Number(watchlistSize[0]?.count || 0),
         watched: Number(watchedCount[0]?.count || 0),
-        topGenres: topGenres.map((g) => ({
-          genre: locale === 'uk' ? (g.nameUk || g.nameEn) : g.nameEn,
-          score: parseFloat(g.rawScore || '0'),
-        })),
-        topDirectors: topDirectors.map((d) => ({
-          name: locale === 'uk' ? (d.nameUk || d.nameEn) : d.nameEn,
-          score: parseFloat(d.rawScore || '0'),
-        })),
-        topActors: topActors.map((a) => ({
-          name: locale === 'uk' ? (a.nameUk || a.nameEn) : a.nameEn,
-          score: parseFloat(a.rawScore || '0'),
-        })),
+        topGenres: named(genreTop, genreName).map(({ name, ...rest }) => ({ genre: name, ...rest })),
+        topDirectors: named(directorTop, personName),
+        topActors: named(actorTop, personName),
       };
     } catch (err) {
       request.log.error({ err, route: 'GET /me/stats', userId: request.userId }, 'Failed to fetch user stats');
-      throw err;
-    }
-  });
-
-  // GET /users/me/preferences
-  app.get('/me/preferences', async (request: FastifyRequest, reply: FastifyReply) => {
-    try {
-      const user = await request.db
-        .select({ maturityScore: users.maturityScore, locale: users.locale })
-        .from(users)
-        .where(eq(users.id, request.userId))
-        .limit(1);
-
-      const locale = user[0]?.locale || 'uk';
-
-      const allPrefs = await request.db
-        .select()
-        .from(userPreferences)
-        .where(eq(userPreferences.userId, request.userId))
-        .orderBy(desc(userPreferences.rawScore));
-
-      // Group by entity type
-      const grouped: Record<string, any[]> = {
-        genre: [], director: [], actor: [], keyword: [], decade: [], collection: [],
-      };
-
-      // Fetch names for genres, directors, actors
-      const genreIds = allPrefs.filter((p) => p.entityType === 'genre').map((p) => p.entityId);
-      const directorIds = allPrefs.filter((p) => p.entityType === 'director').map((p) => p.entityId);
-      const actorIds = allPrefs.filter((p) => p.entityType === 'actor').map((p) => p.entityId);
-
-      const [genreNames, personNames] = await Promise.all([
-        genreIds.length > 0
-          ? request.db.select().from(genres).where(inArray(genres.id, genreIds))
-          : [],
-        (directorIds.length > 0 || actorIds.length > 0)
-          ? request.db.select().from(people).where(inArray(people.id, [...directorIds, ...actorIds]))
-          : [],
-      ]);
-
-      const genreMap = new Map(genreNames.map((g) => [g.id, locale === 'uk' ? (g.nameUk || g.nameEn) : g.nameEn]));
-      const personMap = new Map(personNames.map((p) => [p.id, locale === 'uk' ? (p.nameUk || p.nameEn) : p.nameEn]));
-
-      for (const pref of allPrefs) {
-        let name = '';
-        switch (pref.entityType) {
-          case 'genre':
-            name = genreMap.get(pref.entityId) || `Genre ${pref.entityId}`;
-            break;
-          case 'director':
-          case 'actor':
-            name = personMap.get(pref.entityId) || `Person ${pref.entityId}`;
-            break;
-          case 'decade':
-            name = `${pref.entityId}s`;
-            break;
-          case 'keyword':
-            name = `Keyword ${pref.entityId}`;
-            break;
-          case 'collection':
-            name = `Collection ${pref.entityId}`;
-            break;
-        }
-
-        if (grouped[pref.entityType]) {
-          grouped[pref.entityType].push({
-            entityId: pref.entityId,
-            name,
-            score: parseFloat(pref.rawScore || '0'),
-            interactions: pref.interactionCount || 0,
-          });
-        }
-      }
-
-      return {
-        maturityScore: user[0]?.maturityScore || 0,
-        preferences: grouped,
-      };
-    } catch (err) {
-      request.log.error({ err, route: 'GET /me/preferences', userId: request.userId }, 'Failed to fetch user preferences');
       throw err;
     }
   });
@@ -292,15 +178,6 @@ export default async function usersRoutes(app: FastifyInstance) {
       await request.db
         .delete(userSwipes)
         .where(eq(userSwipes.userId, request.userId));
-
-      await request.db
-        .delete(userPreferences)
-        .where(eq(userPreferences.userId, request.userId));
-
-      await request.db
-        .update(users)
-        .set({ maturityScore: 0, onboardingCompleted: false })
-        .where(eq(users.id, request.userId));
 
       return reply.status(204).send();
     } catch (err) {

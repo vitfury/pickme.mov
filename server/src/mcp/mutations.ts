@@ -1,7 +1,6 @@
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import { content, userSwipes, userBookmarks } from '../db/schema.js';
 import type { Database } from '../db/index.js';
-import { updatePreferencesForSwipe, reversePreferencesForSwipe } from '../services/preferences.js';
 
 export interface MarkResult {
   id: number;
@@ -211,13 +210,8 @@ export async function rateTitle(
 
   const previous = existing[0]?.action ?? null;
 
-  // Withdraw the old signal before applying the new one, or a flip would
-  // leave both counted
-  if (previous === 'like' || previous === 'dislike') {
-    if (previous === opinion) {
-      return { id, status: 'recorded', title: row.title, opinion, previousOpinion: previous };
-    }
-    await reversePreferencesForSwipe(db, userId, id, previous);
+  if (previous === opinion) {
+    return { id, status: 'recorded', title: row.title, opinion, previousOpinion: previous };
   }
 
   await db
@@ -239,8 +233,6 @@ export async function rateTitle(
         createdAt: new Date(),
       },
     });
-
-  await updatePreferencesForSwipe(db, userId, id, opinion);
 
   await db
     .delete(userBookmarks)

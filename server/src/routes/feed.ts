@@ -1,9 +1,9 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
-import { eq, and, desc, sql } from 'drizzle-orm';
+import { eq, and, desc, sql, inArray } from 'drizzle-orm';
 import { z } from 'zod';
 import { userSwipes, content, users, userBookmarks } from '../db/schema.js';
 import { generateFeed } from '../services/recommendation.js';
-import { updatePreferencesForSwipe, reversePreferencesForSwipe } from '../services/preferences.js';
+import type { Database } from '../db/index.js';
 
 const feedQuerySchema = z.object({
   contentType: z.enum(['movie', 'series', 'animation']).optional().default('movie'),
@@ -73,31 +73,19 @@ export default async function feedRoutes(app: FastifyInstance) {
       // viewing already recorded (e.g. marked through the MCP server).
       const impliesWatched = body.action === 'like' || body.action === 'dislike';
 
-      // Попередня думка про цей тайтл. Без неї повторний свайп додавав би бали
-      // поверх старих: лайк після дизлайку рахувався б обома, а подвійний лайк —
-      // двічі, і профіль смаків поступово набивався б тим, чого не було.
-      const previousRow = await request.db
-        .select({ action: userSwipes.action })
-        .from(userSwipes)
-        .where(and(eq(userSwipes.userId, request.userId), eq(userSwipes.contentId, body.contentId)))
-        .limit(1);
-      const previous = previousRow[0]?.action ?? null;
-      const hadOpinion = previous === 'like' || previous === 'dislike';
-
       // Пропуск нічого не каже про смак — він не має права затерти вже
-      // висловлену думку (разом із її балами у вподобаннях)
-      if (body.action === 'skip' && hadOpinion) {
-        return { success: true, isWatched: true, maturityScore: 0, preferencesUpdated: [] };
-      }
-
-      // Та сама думка вдруге — нічого не змінилось, бали не дублюємо
-      if (impliesWatched && previous === body.action) {
-        return { success: true, isWatched: true, maturityScore: 0, preferencesUpdated: [] };
-      }
-
-      // Думку змінили — спершу знімаємо внесок старої
-      if (impliesWatched && hadOpinion) {
-        await reversePreferencesForSwipe(request.db, request.userId, body.contentId, previous as 'like' | 'dislike');
+      // висловлену думку. Смак рахується з історії оцінок, тож повторний
+      // лайк чи зміна думки просто перезаписують рядок — нічого не дублюється.
+      if (body.action === 'skip') {
+        const previousRow = await request.db
+          .select({ action: userSwipes.action })
+          .from(userSwipes)
+          .where(and(eq(userSwipes.userId, request.userId), eq(userSwipes.contentId, body.contentId)))
+          .limit(1);
+        const previous = previousRow[0]?.action;
+        if (previous === 'like' || previous === 'dislike') {
+          return { success: true, isWatched: true, maturityScore: await opinionCount(request.db, request.userId), preferencesUpdated: [] };
+        }
       }
 
       // Record swipe (upsert)
@@ -126,23 +114,14 @@ export default async function feedRoutes(app: FastifyInstance) {
           },
         });
 
-      // Skip: just record, no preferences/maturity updates
       if (body.action === 'skip') {
         return {
           success: true,
           isWatched: false,
-          maturityScore: 0,
+          maturityScore: await opinionCount(request.db, request.userId),
           preferencesUpdated: [],
         };
       }
-
-      // Update preferences
-      const preferencesUpdated = await updatePreferencesForSwipe(
-        request.db,
-        request.userId,
-        body.contentId,
-        body.action,
-      );
 
       // Watching it settles the question the bookmark was asking
       // Auto-remove bookmark on like/dislike
@@ -155,18 +134,11 @@ export default async function feedRoutes(app: FastifyInstance) {
           ),
         );
 
-      // Get updated maturity score
-      const userRow = await request.db
-        .select({ maturityScore: users.maturityScore })
-        .from(users)
-        .where(eq(users.id, request.userId))
-        .limit(1);
-
       return {
         success: true,
         isWatched: impliesWatched,
-        maturityScore: userRow[0]?.maturityScore || 0,
-        preferencesUpdated,
+        maturityScore: await opinionCount(request.db, request.userId),
+        preferencesUpdated: [],
       };
     } catch (err) {
       request.log.error({ err, route: 'POST /feed/swipe', userId: request.userId, body: request.body }, 'Swipe failed');
@@ -191,17 +163,7 @@ export default async function feedRoutes(app: FastifyInstance) {
 
       const swipe = lastSwipe[0];
 
-      // Reverse preference updates ('skip' and 'watched' carry no opinion)
-      if (swipe.action === 'like' || swipe.action === 'dislike') {
-        await reversePreferencesForSwipe(
-          request.db,
-          request.userId,
-          swipe.contentId,
-          swipe.action,
-        );
-      }
-
-      // Delete the swipe record
+      // Смак виводиться з історії, тож видалення запису — і є відкат
       await request.db
         .delete(userSwipes)
         .where(eq(userSwipes.id, swipe.id));
@@ -242,4 +204,13 @@ export default async function feedRoutes(app: FastifyInstance) {
       throw err;
     }
   });
+}
+
+/** Скільки лайків і дизлайків — міра того, наскільки стрічка вже знає смак */
+async function opinionCount(db: Database, userId: number): Promise<number> {
+  const [row] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(userSwipes)
+    .where(and(eq(userSwipes.userId, userId), inArray(userSwipes.action, ['like', 'dislike'])));
+  return row?.n ?? 0;
 }

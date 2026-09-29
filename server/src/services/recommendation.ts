@@ -4,14 +4,11 @@ import {
   users,
   content,
   userSwipes,
-  userPreferences,
   userBookmarks,
   contentGenres,
   contentPeople,
   contentKeywords,
   contentCollections,
-  entityTypeWeights,
-  entityIdfCache,
   awards,
   contentProviders,
   genres,
@@ -19,6 +16,7 @@ import {
   streamingProviders,
 } from '../db/schema.js';
 import { generateSingleReason } from './reasons.js';
+import { getCatalogue, getTasteProfile, matchFilm, maturity, type Film } from './taste.js';
 import type { FeedCard } from '../types/index.js';
 
 interface FeedFilters {
@@ -43,10 +41,25 @@ interface FeedFilters {
 interface ScoredContent {
   id: number;
   feedScore: number;
-  personalizationScore: number;
-  explorationBonus: number;
-  baseQuality: number;
+  tasteScore: number;
+  novelty: number;
+  qualityRank: number;
   isDiscovery?: boolean;
+}
+
+/** Перцентиль кожного елемента за значенням: 0 — найгірший, 1 — найкращий */
+function percentileRanks<T extends { id: number }>(items: T[], value: (item: T) => number): Map<number, number> {
+  const sorted = [...items].sort((a, b) => value(a) - value(b));
+  const n = Math.max(sorted.length - 1, 1);
+  return new Map(sorted.map((item, i) => [item.id, i / n]));
+}
+
+/** Детермінований псевдовипадковий шум 0..1 для пари (користувач, день, фільм) */
+function hashNoise(userId: number, day: number, contentId: number): number {
+  let h = (userId * 73856093) ^ (day * 19349663) ^ (contentId * 83492791);
+  h = Math.imul(h ^ (h >>> 16), 0x45d9f3b);
+  h = Math.imul(h ^ (h >>> 16), 0x45d9f3b);
+  return ((h ^ (h >>> 16)) >>> 0) / 0xffffffff;
 }
 
 export async function generateFeed(
@@ -57,18 +70,6 @@ export async function generateFeed(
 ): Promise<{ cards: FeedCard[]; remaining: number; maturityScore: number; offset: number }> {
   const limit = Math.min(filters.limit || 20, 50);
   const contentType = filters.contentType || 'movie';
-
-  // Get user maturity
-  const userRow = await db
-    .select({ maturityScore: users.maturityScore })
-    .from(users)
-    .where(eq(users.id, userId))
-    .limit(1);
-
-  const maturityScore = userRow[0]?.maturityScore || 0;
-  const maturity = Math.min(maturityScore / 50, 1.0);
-  const qualityWeight = 0.30 + 0.20 * (1 - maturity);
-  const personalizationWeight = 0.50 * maturity;
 
   // Get content IDs to exclude from feed:
   // - Permanently exclude: anything with an opinion, and anything watched
@@ -141,9 +142,9 @@ export async function generateFeed(
   }
   conditions.push(countryCondition);
 
-  // Fetch unseen content with base quality scores (fetch more than needed for diversity)
+  // Спершу всі фільми, що проходять фільтри, — ранжуємо весь каталог, а не
+  // топ за якістю: інакше смак лише переставляв би ту саму сотню фільмів
   const offset = filters.offset || 0;
-  const fetchLimit = (limit + offset) * 5;
 
   // Sub-filter by genre IDs
   if (filters.genres && filters.genres.length > 0) {
@@ -207,307 +208,127 @@ export async function generateFeed(
     }
   }
 
-  // Re-run with all conditions
-  const unseenContent = await db
-    .select({
-      id: content.id,
-      baseQualityScore: content.baseQualityScore,
-      releaseDate: content.releaseDate,
-    })
-    .from(content)
-    .where(and(...conditions))
-    .orderBy(desc(content.baseQualityScore))
-    .limit(fetchLimit);
 
-  // Fetch a separate pool of Ukrainian movies (they rank low on quality due to
-  // popularity/revenue metrics, so they'd never appear in the main pool naturally)
+  const eligible = await db
+    .select({ id: content.id })
+    .from(content)
+    .where(and(...conditions));
+
+  // Українські фільми — окремим пулом: за популярністю й касою вони майже ніколи
+  // не вигравали б у загальному рейтингу, тож кожна 10-та картка — з цього пулу
   const uaConditions = conditions
     .filter((c) => c !== countryCondition)
     .concat(sql`${content.productionCountries} && ARRAY['UA']::text[]`);
-  const uaPool = await db
-    .select({
-      id: content.id,
-      baseQualityScore: content.baseQualityScore,
-      releaseDate: content.releaseDate,
-    })
+  const uaEligible = await db
+    .select({ id: content.id })
     .from(content)
-    .where(and(...uaConditions))
-    .orderBy(desc(content.baseQualityScore))
-    .limit(20);
+    .where(and(...uaConditions));
 
-  if (unseenContent.length === 0 && uaPool.length === 0) {
-    return { cards: [], remaining: 0, maturityScore, offset: 0 };
+  if (eligible.length === 0 && uaEligible.length === 0) {
+    return { cards: [], remaining: 0, maturityScore: 0, offset: 0 };
   }
 
-  // Get user preferences
-  const prefs = await db
-    .select()
-    .from(userPreferences)
-    .where(eq(userPreferences.userId, userId));
-  const prefMap = new Map(prefs.map((p) => [`${p.entityType}:${p.entityId}`, p]));
+  const [films, profile] = await Promise.all([getCatalogue(db), getTasteProfile(db, userId)]);
+  const maturityScore = profile.likes + profile.dislikes;
+  // Поки оцінок мало, покладаємось на якість; з 30 оцінок смак важить 70%
+  const tasteWeight = 0.7 * maturity(profile);
 
-  // Get entity type weights
-  const typeWeightsRows = await db.select().from(entityTypeWeights);
-  const typeWeightMap = new Map(typeWeightsRows.map((tw) => [tw.entityType, parseFloat(tw.weight)]));
+  const uaIds = new Set(uaEligible.map((r) => r.id));
+  const candidates = [...new Set([...eligible.map((r) => r.id), ...uaIds])]
+    .map((id) => films.get(id))
+    .filter((f): f is Film => f !== undefined);
 
-  // Get IDF cache
-  const idfRows = await db.select().from(entityIdfCache);
-  const idfMap = new Map(idfRows.map((r) => [`${r.entityType}:${r.entityId}`, parseFloat(r.idfWeight)]));
+  // Смак і якість мають різні шкали, тож змішуємо їхні ранги (0..1) серед кандидатів
+  const matches = new Map(candidates.map((f) => [f.id, matchFilm(profile, f)]));
+  const tasteRank = percentileRanks(candidates, (f) => matches.get(f.id)!.score);
+  const qualityRank = percentileRanks(candidates, (f) => f.quality);
 
-  // Get user's top 3 genres for exploration
-  const topGenrePrefs = prefs
-    .filter((p) => p.entityType === 'genre')
-    .sort((a, b) => parseFloat(b.rawScore || '0') - parseFloat(a.rawScore || '0'))
-    .slice(0, 3)
-    .map((p) => p.entityId);
-
-  // Merge main + UA pools for scoring (deduplicate in case of overlap)
-  const allContent = [...unseenContent];
-  const mainIds = new Set(unseenContent.map((c) => c.id));
-  const uaIds = new Set<number>();
-  for (const ua of uaPool) {
-    uaIds.add(ua.id);
-    if (!mainIds.has(ua.id)) allContent.push(ua);
-  }
-
-  // Score each piece of unseen content
-  const contentIds = allContent.map((c) => c.id);
-
-  // Batch fetch all entity links for scoring
-  const [genreLinks, peopleLinks, keywordLinks, collectionLinks] = await Promise.all([
-    contentIds.length > 0
-      ? db.select().from(contentGenres).where(inArray(contentGenres.contentId, contentIds))
-      : [],
-    contentIds.length > 0
-      ? db.select().from(contentPeople).where(inArray(contentPeople.contentId, contentIds))
-      : [],
-    contentIds.length > 0
-      ? db.select().from(contentKeywords).where(inArray(contentKeywords.contentId, contentIds))
-      : [],
-    contentIds.length > 0
-      ? db.select().from(contentCollections).where(inArray(contentCollections.contentId, contentIds))
-      : [],
-  ]);
-
-  // Index entity links by contentId
-  const genreByContent = new Map<number, typeof genreLinks>();
-  for (const gl of genreLinks) {
-    const arr = genreByContent.get(gl.contentId) || [];
-    arr.push(gl);
-    genreByContent.set(gl.contentId, arr);
-  }
-
-  const peopleByContent = new Map<number, typeof peopleLinks>();
-  for (const pl of peopleLinks) {
-    const arr = peopleByContent.get(pl.contentId) || [];
-    arr.push(pl);
-    peopleByContent.set(pl.contentId, arr);
-  }
-
-  const keywordsByContent = new Map<number, typeof keywordLinks>();
-  for (const kl of keywordLinks) {
-    const arr = keywordsByContent.get(kl.contentId) || [];
-    arr.push(kl);
-    keywordsByContent.set(kl.contentId, arr);
-  }
-
-  const collectionsByContent = new Map<number, typeof collectionLinks>();
-  for (const cl of collectionLinks) {
-    const arr = collectionsByContent.get(cl.contentId) || [];
-    arr.push(cl);
-    collectionsByContent.set(cl.contentId, arr);
-  }
-
-  const now = Date.now();
-  const scored: ScoredContent[] = [];
-
-  for (const item of allContent) {
-    let totalSignal = 0;
-
-    let explorationBonus = 0;
-
-    // Genre signals
-    const itemGenres = genreByContent.get(item.id) || [];
-    for (const g of itemGenres) {
-      const pref = prefMap.get(`genre:${g.genreId}`);
-      if (pref) {
-        const rawScore = parseFloat(pref.rawScore || '0');
-        const tw = typeWeightMap.get('genre') || 1.0;
-        const idf = idfMap.get(`genre:${g.genreId}`) || 1.0;
-        const daysSinceUpdate = (now - new Date(pref.lastUpdated!).getTime()) / (1000 * 60 * 60 * 24);
-        const timeDecay = Math.exp(-0.01 * daysSinceUpdate);
-        totalSignal += rawScore * tw * idf * timeDecay;
-
-      } else {
-        // Underexplored genre bonus
-        if (!topGenrePrefs.includes(g.genreId)) {
-          explorationBonus = Math.max(explorationBonus, 0.30);
-        }
-      }
-    }
-
-    // People signals (directors and actors)
-    const itemPeople = peopleByContent.get(item.id) || [];
-    for (const p of itemPeople) {
-      const entityType = p.role === 'director' ? 'director' : p.role === 'actor' ? 'actor' : null;
-      if (!entityType) continue;
-      const pref = prefMap.get(`${entityType}:${p.personId}`);
-      if (pref) {
-        const rawScore = parseFloat(pref.rawScore || '0');
-        const tw = typeWeightMap.get(entityType) || 1.0;
-        const idf = idfMap.get(`${entityType}:${p.personId}`) || 1.0;
-        const daysSinceUpdate = (now - new Date(pref.lastUpdated!).getTime()) / (1000 * 60 * 60 * 24);
-        const timeDecay = Math.exp(-0.01 * daysSinceUpdate);
-        const billingFactor = (entityType === 'actor' && p.billingOrder && p.billingOrder > 3) ? 0.5 : 1.0;
-        totalSignal += rawScore * tw * idf * timeDecay * billingFactor;
-
-      }
-    }
-
-    // Keyword signals
-    const itemKeywords = keywordsByContent.get(item.id) || [];
-    for (const k of itemKeywords) {
-      const pref = prefMap.get(`keyword:${k.keywordId}`);
-      if (pref) {
-        const rawScore = parseFloat(pref.rawScore || '0');
-        const tw = typeWeightMap.get('keyword') || 0.6;
-        const idf = idfMap.get(`keyword:${k.keywordId}`) || 1.0;
-        const daysSinceUpdate = (now - new Date(pref.lastUpdated!).getTime()) / (1000 * 60 * 60 * 24);
-        const timeDecay = Math.exp(-0.01 * daysSinceUpdate);
-        totalSignal += rawScore * tw * idf * timeDecay;
-
-      }
-    }
-
-    // Decade signal
-    if (item.releaseDate) {
-      const year = new Date(item.releaseDate).getFullYear();
-      const decade = Math.floor(year / 10) * 10;
-      const pref = prefMap.get(`decade:${decade}`);
-      if (pref) {
-        const rawScore = parseFloat(pref.rawScore || '0');
-        const tw = typeWeightMap.get('decade') || 0.3;
-        const idf = idfMap.get(`decade:${decade}`) || 1.0;
-        const daysSinceUpdate = (now - new Date(pref.lastUpdated!).getTime()) / (1000 * 60 * 60 * 24);
-        const timeDecay = Math.exp(-0.01 * daysSinceUpdate);
-        totalSignal += rawScore * tw * idf * timeDecay;
-
-      }
-    }
-
-    // Collection signals
-    const itemCollections = collectionsByContent.get(item.id) || [];
-    for (const c of itemCollections) {
-      const pref = prefMap.get(`collection:${c.collectionId}`);
-      if (pref) {
-        const rawScore = parseFloat(pref.rawScore || '0');
-        const tw = typeWeightMap.get('collection') || 0.5;
-        const idf = idfMap.get(`collection:${c.collectionId}`) || 1.0;
-        const daysSinceUpdate = (now - new Date(pref.lastUpdated!).getTime()) / (1000 * 60 * 60 * 24);
-        const timeDecay = Math.exp(-0.01 * daysSinceUpdate);
-        totalSignal += rawScore * tw * idf * timeDecay;
-
-      }
-    }
-
-    const personalizationScore = totalSignal;
-    const baseQuality = parseFloat(item.baseQualityScore || '0');
-    const randomFactor = Math.random() * 0.20 * 0.10;
-
-    const feedScore =
-      baseQuality * qualityWeight +
-      personalizationScore * personalizationWeight +
-      explorationBonus * 0.10 +
-      randomFactor;
-
-    scored.push({ id: item.id, feedScore, personalizationScore, explorationBonus, baseQuality: baseQuality });
-  }
-
-  // Sort by feed score descending
+  // Шум стабільний протягом дня: повторний запит сторінки дає той самий порядок,
+  // а назавтра стрічка трохи перетасовується
+  const day = Math.floor(Date.now() / 86_400_000);
+  const scored: ScoredContent[] = candidates.map((f) => ({
+    id: f.id,
+    feedScore:
+      tasteWeight * tasteRank.get(f.id)! +
+      (1 - tasteWeight) * qualityRank.get(f.id)! +
+      0.05 * hashNoise(userId, day, f.id),
+    tasteScore: matches.get(f.id)!.score,
+    novelty: matches.get(f.id)!.novelty,
+    qualityRank: qualityRank.get(f.id)!,
+  }));
   scored.sort((a, b) => b.feedScore - a.feedScore);
 
-  // Build a pool of discovery candidates: high-quality movies with low personalization
-  // These are movies that are great but the algorithm wouldn't normally surface
-  const discoveryPool = [...scored]
-    .filter((s) => s.baseQuality >= 0.6 && s.personalizationScore < 0.3)
-    .sort((a, b) => b.baseQuality - a.baseQuality);
+  // «Відкриття»: сильні фільми з того, чого профіль ще не знає, — але не те,
+  // що суперечить смаку (інакше «нове» зводилось би до нелюбих жанрів)
+  const eligibleIds = new Set(eligible.map((r) => r.id));
+  const discoveryPool = scored
+    .filter((s) => eligibleIds.has(s.id) && s.qualityRank >= 0.7 && s.tasteScore >= 0 && s.novelty >= 0.5)
+    .sort((a, b) => b.novelty - a.novelty || b.qualityRank - a.qualityRank);
+  let discoveryIdx = 0;
 
-  // Build Ukrainian movie pool (sorted by feed score) for periodic injection
-  const uaScoredPool = scored
-    .filter((s) => uaIds.has(s.id))
-    .sort((a, b) => b.feedScore - a.feedScore);
+  const uaScoredPool = scored.filter((s) => uaIds.has(s.id));
   let uaPoolIdx = 0;
 
-  // Apply session diversity (no 3+ same director/franchise in a row)
+  const mainPool = scored.filter((s) => eligibleIds.has(s.id));
+
+  const directorsOf = (id: number) =>
+    (films.get(id)?.entities ?? []).filter((e) => e.type === 'director').map((e) => e.id as number);
+  const collectionsOf = (id: number) =>
+    (films.get(id)?.entities ?? []).filter((e) => e.type === 'collection').map((e) => e.id as number);
+
+  // Різноманіття: не більше двох фільмів одного режисера чи серії поспіль
   const diverseResults: ScoredContent[] = [];
+  const taken = new Set<number>();
   const recentDirectors: number[] = [];
   const recentCollections: number[] = [];
   let candidateIdx = 0;
 
-  for (let pos = 0; pos < limit && candidateIdx < scored.length; pos++) {
-    // Every 10th card is a Ukrainian movie
-    if (pos > 0 && pos % 10 === 9 && uaPoolIdx < uaScoredPool.length) {
-      const uaCard = uaScoredPool[uaPoolIdx++];
-      if (!diverseResults.includes(uaCard)) {
-        diverseResults.push(uaCard);
+  const take = (s: ScoredContent) => {
+    diverseResults.push(s);
+    taken.add(s.id);
+  };
+
+  for (let pos = 0; diverseResults.length < limit && pos < limit * 3; pos++) {
+    if (pos % 10 === 9) {
+      while (uaPoolIdx < uaScoredPool.length && taken.has(uaScoredPool[uaPoolIdx].id)) uaPoolIdx++;
+      if (uaPoolIdx < uaScoredPool.length) {
+        take(uaScoredPool[uaPoolIdx++]);
         continue;
       }
     }
 
-    // Every 5th card is a discovery pick — a great movie outside the user's bubble
-    if (pos > 0 && pos % 5 === 4) {
-      const discoveryCard = discoveryPool.find((s) => !diverseResults.includes(s));
-      if (discoveryCard) {
-        discoveryCard.isDiscovery = true;
-        diverseResults.push(discoveryCard);
+    if (pos % 5 === 4 && profile.likes + profile.dislikes > 0) {
+      while (discoveryIdx < discoveryPool.length && taken.has(discoveryPool[discoveryIdx].id)) discoveryIdx++;
+      if (discoveryIdx < discoveryPool.length) {
+        const d = discoveryPool[discoveryIdx++];
+        d.isDiscovery = true;
+        take(d);
         continue;
       }
     }
 
-    // Take next candidate, checking diversity
-    let found = false;
-    while (candidateIdx < scored.length) {
-      const candidate = scored[candidateIdx];
-      candidateIdx++;
-
-      if (diverseResults.includes(candidate)) continue;
-
-      // Check director diversity
-      const candidateDirectors = (peopleByContent.get(candidate.id) || [])
-        .filter((p) => p.role === 'director')
-        .map((p) => p.personId);
-
-      const directorConflict = candidateDirectors.some(
-        (d) => recentDirectors.filter((rd) => rd === d).length >= 2,
-      );
-
-      // Check collection diversity
-      const candidateColls = (collectionsByContent.get(candidate.id) || [])
-        .map((c) => c.collectionId);
-
-      const collectionConflict = candidateColls.some(
-        (c) => recentCollections.filter((rc) => rc === c).length >= 2,
-      );
-
-      if (directorConflict || collectionConflict) continue;
-
-      diverseResults.push(candidate);
-
-      // Update recents (keep last 2)
-      for (const d of candidateDirectors) recentDirectors.push(d);
-      if (recentDirectors.length > 2) recentDirectors.shift();
-      for (const c of candidateColls) recentCollections.push(c);
-      if (recentCollections.length > 2) recentCollections.shift();
-
-      found = true;
-      break;
+    let picked: ScoredContent | null = null;
+    let fallback: ScoredContent | null = null;
+    while (candidateIdx < mainPool.length) {
+      const c = mainPool[candidateIdx++];
+      if (taken.has(c.id)) continue;
+      const conflict =
+        directorsOf(c.id).some((d) => recentDirectors.filter((rd) => rd === d).length >= 2) ||
+        collectionsOf(c.id).some((k) => recentCollections.filter((rc) => rc === k).length >= 2);
+      if (!conflict) {
+        picked = c;
+        break;
+      }
+      fallback ??= c;
     }
+    picked ??= fallback;
+    if (!picked) break;
+    take(picked);
 
-    if (!found && candidateIdx < scored.length) {
-      // Fallback: just take the next available
-      const fallback = scored.find((s) => !diverseResults.includes(s));
-      if (fallback) diverseResults.push(fallback);
-    }
+    recentDirectors.push(...directorsOf(picked.id));
+    while (recentDirectors.length > 2) recentDirectors.shift();
+    recentCollections.push(...collectionsOf(picked.id));
+    while (recentCollections.length > 2) recentCollections.shift();
   }
 
   // Hydrate the cards with full data
@@ -628,7 +449,7 @@ export async function generateFeed(
         ? 'Популярний фільм, який може вам сподобатись'
         : 'Popular pick you might enjoy';
     } else {
-      reason = await generateSingleReason(db, userId, c.id, locale);
+      reason = await generateSingleReason(db, userId, c.id, locale, profile);
     }
 
     cards.push({

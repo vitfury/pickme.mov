@@ -22,7 +22,6 @@ import type {
   CreatedApiKey,
   User,
   UserStats,
-  UserPreferences,
 } from '@/types';
 
 // --- Feed ---
@@ -296,16 +295,6 @@ export function useUserStats() {
     queryKey: ['user-stats'],
     queryFn: async () => {
       const { data } = await api.get('/users/me/stats');
-      return data;
-    },
-  });
-}
-
-export function useUserPreferences() {
-  return useQuery<UserPreferences>({
-    queryKey: ['user-preferences'],
-    queryFn: async () => {
-      const { data } = await api.get('/users/me/preferences');
       return data;
     },
   });

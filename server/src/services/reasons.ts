@@ -1,199 +1,144 @@
-import { eq, and, desc, sql } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { Database } from '../db/index.js';
-import {
-  userPreferences,
-  contentGenres,
-  contentPeople,
-  contentKeywords,
-  contentCollections,
-  awards,
-  content,
-  genres,
-  people,
-  collections,
-} from '../db/schema.js';
+import { awards, collections, genres, people } from '../db/schema.js';
+import { getCatalogue, getTasteProfile, type FilmEntity, type TasteProfile } from './taste.js';
 
 const MAX_REASONS = 2;
 
+// 1 лайк, 2 лайки, 5 лайків
+function plural(n: number, one: string, few: string, many: string): string {
+  const m10 = n % 10;
+  const m100 = n % 100;
+  if (m10 === 1 && m100 !== 11) return one;
+  if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return few;
+  return many;
+}
+
+const likesUk = (n: number) => `${n} ${plural(n, 'ваш лайк', 'ваші лайки', 'ваших лайків')}`;
+const likesEn = (n: number) => `${n} of your like${n === 1 ? '' : 's'}`;
+
 /**
- * Generate priority-ordered recommendation reasons for a content item.
- * Returns up to 2 reasons.
+ * Чому цей фільм може сподобатись — до двох причин, у порядку пріоритету.
+ *
+ * Кожна «персональна» причина спирається на реальні лайки з профілю смаку, і
+ * числа в тексті — це кількість лайкнутих фільмів, без цього самого фільму.
  */
 export async function generateReasons(
   db: Database,
   userId: number,
   contentId: number,
   locale: string,
+  profile?: TasteProfile,
 ): Promise<string[]> {
+  const uk = locale === 'uk';
+  const [films, taste] = await Promise.all([
+    getCatalogue(db),
+    profile ? Promise.resolve(profile) : getTasteProfile(db, userId),
+  ]);
+  const film = films.get(contentId);
+  if (!film) return [];
+
+  // Якщо фільм уже лайкнуто, він сам сидить у профілі — не рахуємо його
+  const selfLiked = taste.likedIds.has(contentId) ? 1 : 0;
+  const liked = (key: string) => {
+    const t = taste.entities.get(key);
+    return t && t.score > 0 ? { likes: t.likes - selfLiked, score: t.score } : null;
+  };
+  const best = (type: string, minLikes: number, filter: (e: FilmEntity) => boolean = () => true) => {
+    let top: { id: number | string; likes: number; score: number } | null = null;
+    for (const e of film.entities) {
+      if (e.type !== type || !filter(e)) continue;
+      const l = liked(e.key);
+      if (l && l.likes >= minLikes && (!top || l.score > top.score)) top = { id: e.id, ...l };
+    }
+    return top;
+  };
+  const personName = async (id: number) => {
+    const [p] = await db.select({ nameEn: people.nameEn, nameUk: people.nameUk }).from(people).where(eq(people.id, id));
+    return p ? (uk ? p.nameUk || p.nameEn : p.nameEn) : null;
+  };
+
   const reasons: string[] = [];
 
-  // 1. Director match (raw_score > 2.0)
-  const directorPrefs = await db
-    .select({
-      personId: contentPeople.personId,
-      nameEn: people.nameEn,
-      nameUk: people.nameUk,
-      rawScore: userPreferences.rawScore,
-      interactions: userPreferences.interactionCount,
-    })
-    .from(contentPeople)
-    .innerJoin(people, eq(contentPeople.personId, people.id))
-    .innerJoin(
-      userPreferences,
-      and(
-        eq(userPreferences.userId, userId),
-        eq(userPreferences.entityType, 'director'),
-        eq(userPreferences.entityId, contentPeople.personId),
-      ),
-    )
-    .where(and(eq(contentPeople.contentId, contentId), eq(contentPeople.role, 'director')))
-    .orderBy(desc(userPreferences.rawScore))
-    .limit(1);
-
-  if (directorPrefs.length > 0 && parseFloat(directorPrefs[0].rawScore || '0') > 2.0) {
-    const name = locale === 'uk' ? (directorPrefs[0].nameUk || directorPrefs[0].nameEn) : directorPrefs[0].nameEn;
-    const count = directorPrefs[0].interactions || 0;
-    reasons.push(locale === 'uk'
-      ? `Вам сподобались ${count} інших фільмів від ${name}`
-      : `You liked ${count} other films by ${name}`);
+  // 1. Режисер, чиї фільми лайкали щонайменше двічі
+  const director = best('director', 2);
+  if (director) {
+    const name = await personName(director.id as number);
+    if (name) {
+      reasons.push(uk
+        ? `Режисер ${name} — ${likesUk(director.likes)}`
+        : `Directed by ${name} — ${likesEn(director.likes)}`);
+    }
   }
-  if (reasons.length >= MAX_REASONS) return reasons;
 
-  // 2. Actor match (raw_score > 2.0)
-  const actorPrefs = await db
-    .select({
-      personId: contentPeople.personId,
-      nameEn: people.nameEn,
-      nameUk: people.nameUk,
-      rawScore: userPreferences.rawScore,
-    })
-    .from(contentPeople)
-    .innerJoin(people, eq(contentPeople.personId, people.id))
-    .innerJoin(
-      userPreferences,
-      and(
-        eq(userPreferences.userId, userId),
-        eq(userPreferences.entityType, 'actor'),
-        eq(userPreferences.entityId, contentPeople.personId),
-      ),
-    )
-    .where(and(eq(contentPeople.contentId, contentId), eq(contentPeople.role, 'actor')))
-    .orderBy(desc(userPreferences.rawScore))
-    .limit(1);
-
-  if (actorPrefs.length > 0 && parseFloat(actorPrefs[0].rawScore || '0') > 2.0) {
-    const name = locale === 'uk' ? (actorPrefs[0].nameUk || actorPrefs[0].nameEn) : actorPrefs[0].nameEn;
-    reasons.push(locale === 'uk'
-      ? `У головній ролі ${name}`
-      : `Stars ${name}, who you enjoy`);
-  }
-  if (reasons.length >= MAX_REASONS) return reasons;
-
-  // 3. Genre match (top 3 genres by raw_score)
-  const topGenres = await db
-    .select({ entityId: userPreferences.entityId })
-    .from(userPreferences)
-    .where(and(eq(userPreferences.userId, userId), eq(userPreferences.entityType, 'genre')))
-    .orderBy(desc(userPreferences.rawScore))
-    .limit(3);
-
-  const topGenreIds = topGenres.map((g) => g.entityId);
-  if (topGenreIds.length > 0) {
-    const contentGenreRows = await db
-      .select({ genreId: contentGenres.genreId, nameEn: genres.nameEn, nameUk: genres.nameUk })
-      .from(contentGenres)
-      .innerJoin(genres, eq(contentGenres.genreId, genres.id))
-      .where(eq(contentGenres.contentId, contentId));
-
-    for (const g of contentGenreRows) {
-      if (topGenreIds.includes(g.genreId)) {
-        const name = locale === 'uk' ? (g.nameUk || g.nameEn) : g.nameEn;
-        reasons.push(locale === 'uk'
-          ? `Відповідає вашій любові до жанру «${name}»`
-          : `Matches your love of "${name}" genre`);
-        break;
+  // 2. Актор головної ролі (перші три в титрах), теж щонайменше два лайки
+  if (reasons.length < MAX_REASONS) {
+    const actor = best('actor', 2, (e) => e.lead === true);
+    if (actor) {
+      const name = await personName(actor.id as number);
+      if (name) {
+        reasons.push(uk
+          ? `У головній ролі ${name} — ${likesUk(actor.likes)}`
+          : `Starring ${name} — ${likesEn(actor.likes)}`);
       }
     }
   }
-  if (reasons.length >= MAX_REASONS) return reasons;
 
-  // 4. Award signal
-  const awardRows = await db
-    .select({ won: awards.won })
-    .from(awards)
-    .where(eq(awards.contentId, contentId))
-    .limit(5);
-
-  if (awardRows.length > 0) {
-    const hasWon = awardRows.some((a) => a.won);
-    reasons.push(locale === 'uk'
-      ? (hasWon ? 'Лауреат премії Оскар' : 'Номінант на Оскар')
-      : (hasWon ? 'Academy Award Winner' : 'Oscar-nominated'));
+  // 3. Один із трьох найулюбленіших жанрів (з помітною кількістю лайків)
+  if (reasons.length < MAX_REASONS) {
+    const topGenres = [...taste.entities.entries()]
+      .filter(([, t]) => t.type === 'genre' && t.score > 0 && t.likes >= 3)
+      .sort((a, b) => b[1].score - a[1].score)
+      .slice(0, 3)
+      .map(([key]) => key);
+    const match = film.entities.find((e) => e.type === 'genre' && topGenres.includes(e.key));
+    if (match) {
+      const [g] = await db.select({ nameEn: genres.nameEn, nameUk: genres.nameUk }).from(genres).where(eq(genres.id, match.id as number));
+      if (g) {
+        const name = uk ? g.nameUk || g.nameEn : g.nameEn;
+        reasons.push(uk ? `Відповідає вашій любові до жанру «${name}»` : `Matches your love of "${name}" genre`);
+      }
+    }
   }
-  if (reasons.length >= MAX_REASONS) return reasons;
 
-  // 5. Collection match (raw_score > 1.0)
-  const collectionPrefs = await db
-    .select({
-      collectionId: contentCollections.collectionId,
-      nameEn: collections.nameEn,
-      nameUk: collections.nameUk,
-      rawScore: userPreferences.rawScore,
-    })
-    .from(contentCollections)
-    .innerJoin(collections, eq(contentCollections.collectionId, collections.id))
-    .innerJoin(
-      userPreferences,
-      and(
-        eq(userPreferences.userId, userId),
-        eq(userPreferences.entityType, 'collection'),
-        eq(userPreferences.entityId, contentCollections.collectionId),
-      ),
-    )
-    .where(eq(contentCollections.contentId, contentId))
-    .orderBy(desc(userPreferences.rawScore))
-    .limit(1);
-
-  if (collectionPrefs.length > 0 && parseFloat(collectionPrefs[0].rawScore || '0') > 1.0) {
-    const name = locale === 'uk' ? (collectionPrefs[0].nameUk || collectionPrefs[0].nameEn) : collectionPrefs[0].nameEn;
-    reasons.push(locale === 'uk'
-      ? `З колекції ${name}`
-      : `From the ${name} collection`);
+  // 4. Оскар
+  if (reasons.length < MAX_REASONS) {
+    const awardRows = await db.select({ won: awards.won }).from(awards).where(eq(awards.contentId, contentId)).limit(5);
+    if (awardRows.length > 0) {
+      const hasWon = awardRows.some((a) => a.won);
+      reasons.push(uk
+        ? (hasWon ? 'Лауреат премії Оскар' : 'Номінант на Оскар')
+        : (hasWon ? 'Academy Award Winner' : 'Oscar-nominated'));
+    }
   }
-  if (reasons.length >= MAX_REASONS) return reasons;
 
-  // 6. Keyword match (2+ keyword matches)
-  const keywordMatches = await db
-    .select({ count: sql<number>`count(*)` })
-    .from(contentKeywords)
-    .innerJoin(
-      userPreferences,
-      and(
-        eq(userPreferences.userId, userId),
-        eq(userPreferences.entityType, 'keyword'),
-        eq(userPreferences.entityId, contentKeywords.keywordId),
-      ),
-    )
-    .where(eq(contentKeywords.contentId, contentId));
-
-  if (keywordMatches[0] && Number(keywordMatches[0].count) >= 2) {
-    reasons.push(locale === 'uk'
-      ? 'Схожі теми з фільмами, які вам сподобались'
-      : 'Similar themes to movies you\'ve liked');
+  // 5. Серія, з якої вже щось лайкали
+  if (reasons.length < MAX_REASONS) {
+    const coll = best('collection', 1);
+    if (coll) {
+      const [c] = await db.select({ nameEn: collections.nameEn, nameUk: collections.nameUk }).from(collections).where(eq(collections.id, coll.id as number));
+      if (c) {
+        const name = uk ? c.nameUk || c.nameEn : c.nameEn;
+        reasons.push(uk ? `З колекції ${name} — ${likesUk(coll.likes)}` : `From the ${name} collection — ${likesEn(coll.likes)}`);
+      }
+    }
   }
-  if (reasons.length >= MAX_REASONS) return reasons;
 
-  // 7. High quality fallback
-  const contentRow = await db
-    .select({ baseQualityScore: content.baseQualityScore })
-    .from(content)
-    .where(eq(content.id, contentId))
-    .limit(1);
+  // 6. Кілька спільних тем із лайкнутими фільмами
+  if (reasons.length < MAX_REASONS) {
+    const shared = film.entities.filter((e) => {
+      if (e.type !== 'keyword') return false;
+      const l = liked(e.key);
+      return l !== null && l.likes >= 2;
+    });
+    if (shared.length >= 2) {
+      reasons.push(uk ? 'Схожі теми з фільмами, які вам сподобались' : 'Similar themes to movies you\'ve liked');
+    }
+  }
 
-  if (contentRow[0] && parseFloat(contentRow[0].baseQualityScore || '0') > 0.7) {
-    reasons.push(locale === 'uk'
-      ? 'Високий рейтинг на TMDB та IMDb'
-      : 'Highly rated on TMDB & IMDb');
+  // 7. Просто дуже добре оцінений (приблизно верхні 10% каталогу)
+  if (reasons.length < MAX_REASONS && film.quality > 0.5) {
+    reasons.push(uk ? 'Високий рейтинг на TMDB та IMDb' : 'Highly rated on TMDB & IMDb');
   }
 
   return reasons;
@@ -207,7 +152,8 @@ export async function generateSingleReason(
   userId: number,
   contentId: number,
   locale: string,
+  profile?: TasteProfile,
 ): Promise<string | null> {
-  const reasons = await generateReasons(db, userId, contentId, locale);
+  const reasons = await generateReasons(db, userId, contentId, locale, profile);
   return reasons[0] || null;
 }

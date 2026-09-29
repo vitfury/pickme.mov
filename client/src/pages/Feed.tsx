@@ -78,10 +78,17 @@ export default function Feed() {
     return () => observer.disconnect();
   }, [scrollY]);
 
-  // Flat card list
+  // Flat card list. Кожна сторінка — найкращі ще не оцінені фільми на момент
+  // запиту, тож картки, які вже є в стрічці, але ще не свайпнуті, можуть
+  // прийти знову — лишаємо перше входження.
   const allCards = useMemo(() => {
     if (!data?.pages) return [];
-    return data.pages.flatMap((page) => page.cards);
+    const seen = new Set<number>();
+    return data.pages.flatMap((page) => page.cards).filter((card) => {
+      if (seen.has(card.id)) return false;
+      seen.add(card.id);
+      return true;
+    });
   }, [data?.pages]);
 
   // 3-card render window: [prev, current, next]

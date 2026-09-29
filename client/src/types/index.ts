@@ -233,29 +233,12 @@ export interface UserStats {
   skips: number;
   watchlistSize: number;
   watched: number;
-  topGenres: { genre: string; score: number }[];
-  topDirectors: { name: string; score: number }[];
-  topActors: { name: string; score: number }[];
+  topGenres: { genre: string; score: number; likes: number }[];
+  topDirectors: { name: string; score: number; likes: number }[];
+  topActors: { name: string; score: number; likes: number }[];
 }
 
-export interface UserPreferences {
-  maturityScore: number;
-  preferences: {
-    genre: PreferenceEntity[];
-    director: PreferenceEntity[];
-    actor: PreferenceEntity[];
-    keyword: PreferenceEntity[];
-    decade: PreferenceEntity[];
-    collection: PreferenceEntity[];
-  };
-}
 
-export interface PreferenceEntity {
-  entityId: number;
-  name: string;
-  score: number;
-  interactions: number;
-}
 
 
 export interface AuthTokens {

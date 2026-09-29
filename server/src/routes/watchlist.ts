@@ -2,7 +2,6 @@ import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { eq, and, desc, asc, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { content, users, userSwipes } from '../db/schema.js';
-import { reversePreferencesForSwipe } from '../services/preferences.js';
 
 // "Favorites" is not a list of its own — it is the set of titles the user liked.
 // The like is the single record of both the opinion and the viewing, so there is
@@ -128,8 +127,7 @@ export default async function watchlistRoutes(app: FastifyInstance) {
         return reply.status(404).send({ error: 'Not in favorites' });
       }
 
-      // Withdrawing the like withdraws the taste signal it created
-      await reversePreferencesForSwipe(request.db, request.userId, contentId, 'like');
+      // Смак виводиться з історії — без запису про лайк зникає і його внесок
       await request.db.delete(userSwipes).where(eq(userSwipes.id, existing[0].id));
 
       return { success: true };

@@ -11,9 +11,9 @@ import {
   contentProviders,
   awards,
   userSwipes,
-  userPreferences,
 } from '../db/schema.js';
 import type { Database } from '../db/index.js';
+import { getTasteProfile, topEntities } from '../services/taste.js';
 
 export type SeenFilter = 'exclude_watched' | 'only_watched' | 'exclude_any_swipe' | 'all';
 
@@ -428,22 +428,17 @@ export async function listFilters(db: Database) {
 }
 
 export async function getTaste(db: Database, userId: number) {
-  // entity_type distinguishes actors from directors, so people are two lists
+  // Смак виводиться з лайків і дизлайків — ті самі числа, що бачить людина в профілі
+  const profile = await getTasteProfile(db, userId);
   const topFor = async (entityType: 'genre' | 'actor' | 'director' | 'keyword', limit: number) => {
+    const top = topEntities(profile, entityType, limit, entityType === 'genre' ? 1 : 2);
+    if (top.length === 0) return [];
     const table = entityType === 'genre' ? genres : entityType === 'keyword' ? keywords : people;
-    const rows = await db.execute(sql`
-      SELECT e.name_en AS name, p.raw_score::float AS score, p.interaction_count AS interactions
-      FROM ${userPreferences} p
-      JOIN ${table} e ON e.id = p.entity_id
-      WHERE p.user_id = ${userId} AND p.entity_type = ${entityType} AND p.raw_score > 0
-      ORDER BY p.raw_score DESC
-      LIMIT ${limit}
-    `);
-    return (rows.rows as any[]).map((r) => ({
-      name: r.name,
-      score: Number(Number(r.score).toFixed(3)),
-      interactions: r.interactions,
-    }));
+    const rows = await db.select({ id: table.id, name: table.nameEn }).from(table).where(inArray(table.id, top.map((t) => t.id as number)));
+    const names = new Map(rows.map((r) => [r.id, r.name]));
+    return top
+      .filter((t) => names.has(t.id as number))
+      .map((t) => ({ name: names.get(t.id as number)!, score: Number(t.score.toFixed(3)), likes: t.likes, dislikes: t.dislikes }));
   };
 
   const counts = await db.execute(sql`

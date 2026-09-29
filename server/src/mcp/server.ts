@@ -147,7 +147,8 @@ export function buildMcpServer(db: Database, userId: number): McpServer {
     {
       title: 'Get the user\'s taste profile',
       description:
-        'What the app has learned from the user\'s swipes: highest-scoring genres, people and keywords, ' +
+        'What the app has learned from the user\'s likes and dislikes: favourite genres, people and keywords ' +
+        '(score is -1..1, how consistently they liked titles with it; likes/dislikes are real title counts), ' +
         'counts of likes, dislikes and titles watched, plus their 30 most recent opinions. Read this ' +
         'before recommending, to ground your picks in what they actually like.',
       inputSchema: {},
