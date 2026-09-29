@@ -21,6 +21,9 @@ export default async function authRoutes(app: FastifyInstance) {
       auth: oauth2.GOOGLE_CONFIGURATION,
     },
     startRedirectPath: '/google',
+    // Без prompt Google мовчки логінить під уже активною в браузері сесією —
+    // список акаунтів не з'являється, і зайти під іншим неможливо
+    callbackUriParams: { prompt: 'select_account' },
     callbackUri: process.env.GOOGLE_CALLBACK_URL || 'http://localhost:3001/api/v1/auth/google/callback',
   });
 
