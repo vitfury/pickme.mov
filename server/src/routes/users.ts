@@ -136,6 +136,8 @@ export default async function usersRoutes(app: FastifyInstance) {
         .from(userSwipes)
         .where(and(eq(userSwipes.userId, request.userId), eq(userSwipes.isWatched, true)));
 
+      // Топи — лише з додатним балом: «улюблене» не може складатися з того,
+      // що людина лише дизлайкала
       // Top genres
       const topGenres = await request.db
         .select({
@@ -146,7 +148,7 @@ export default async function usersRoutes(app: FastifyInstance) {
         })
         .from(userPreferences)
         .innerJoin(genres, eq(userPreferences.entityId, genres.id))
-        .where(and(eq(userPreferences.userId, request.userId), eq(userPreferences.entityType, 'genre')))
+        .where(and(eq(userPreferences.userId, request.userId), eq(userPreferences.entityType, 'genre'), sql`${userPreferences.rawScore} > 0`))
         .orderBy(desc(userPreferences.rawScore))
         .limit(5);
 
@@ -160,7 +162,7 @@ export default async function usersRoutes(app: FastifyInstance) {
         })
         .from(userPreferences)
         .innerJoin(people, eq(userPreferences.entityId, people.id))
-        .where(and(eq(userPreferences.userId, request.userId), eq(userPreferences.entityType, 'director')))
+        .where(and(eq(userPreferences.userId, request.userId), eq(userPreferences.entityType, 'director'), sql`${userPreferences.rawScore} > 0`))
         .orderBy(desc(userPreferences.rawScore))
         .limit(5);
 
@@ -174,7 +176,7 @@ export default async function usersRoutes(app: FastifyInstance) {
         })
         .from(userPreferences)
         .innerJoin(people, eq(userPreferences.entityId, people.id))
-        .where(and(eq(userPreferences.userId, request.userId), eq(userPreferences.entityType, 'actor')))
+        .where(and(eq(userPreferences.userId, request.userId), eq(userPreferences.entityType, 'actor'), sql`${userPreferences.rawScore} > 0`))
         .orderBy(desc(userPreferences.rawScore))
         .limit(5);
 

@@ -435,7 +435,7 @@ export async function getTaste(db: Database, userId: number) {
       SELECT e.name_en AS name, p.raw_score::float AS score, p.interaction_count AS interactions
       FROM ${userPreferences} p
       JOIN ${table} e ON e.id = p.entity_id
-      WHERE p.user_id = ${userId} AND p.entity_type = ${entityType}
+      WHERE p.user_id = ${userId} AND p.entity_type = ${entityType} AND p.raw_score > 0
       ORDER BY p.raw_score DESC
       LIMIT ${limit}
     `);

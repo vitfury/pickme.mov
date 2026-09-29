@@ -73,6 +73,33 @@ export default async function feedRoutes(app: FastifyInstance) {
       // viewing already recorded (e.g. marked through the MCP server).
       const impliesWatched = body.action === 'like' || body.action === 'dislike';
 
+      // Попередня думка про цей тайтл. Без неї повторний свайп додавав би бали
+      // поверх старих: лайк після дизлайку рахувався б обома, а подвійний лайк —
+      // двічі, і профіль смаків поступово набивався б тим, чого не було.
+      const previousRow = await request.db
+        .select({ action: userSwipes.action })
+        .from(userSwipes)
+        .where(and(eq(userSwipes.userId, request.userId), eq(userSwipes.contentId, body.contentId)))
+        .limit(1);
+      const previous = previousRow[0]?.action ?? null;
+      const hadOpinion = previous === 'like' || previous === 'dislike';
+
+      // Пропуск нічого не каже про смак — він не має права затерти вже
+      // висловлену думку (разом із її балами у вподобаннях)
+      if (body.action === 'skip' && hadOpinion) {
+        return { success: true, isWatched: true, maturityScore: 0, preferencesUpdated: [] };
+      }
+
+      // Та сама думка вдруге — нічого не змінилось, бали не дублюємо
+      if (impliesWatched && previous === body.action) {
+        return { success: true, isWatched: true, maturityScore: 0, preferencesUpdated: [] };
+      }
+
+      // Думку змінили — спершу знімаємо внесок старої
+      if (impliesWatched && hadOpinion) {
+        await reversePreferencesForSwipe(request.db, request.userId, body.contentId, previous as 'like' | 'dislike');
+      }
+
       // Record swipe (upsert)
       await request.db
         .insert(userSwipes)
