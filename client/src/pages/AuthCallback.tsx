@@ -31,7 +31,7 @@ export default function AuthCallback() {
     api.get<User>('/users/me')
       .then(({ data }) => {
         login({ accessToken, refreshToken }, data);
-        navigate(data.onboardingCompleted ? '/' : '/onboarding', { replace: true });
+        navigate('/', { replace: true });
       })
       .catch(() => {
         useAuthStore.getState().logout();

@@ -23,7 +23,6 @@ import type {
   User,
   UserStats,
   UserPreferences,
-  OnboardingSeed,
 } from '@/types';
 
 // --- Feed ---
@@ -266,44 +265,6 @@ export function usePersonFilmography(id: number | null) {
   });
 }
 
-// --- Onboarding ---
-
-export function useOnboardingGenres() {
-  return useQuery<{ genres: Genre[] }>({
-    queryKey: ['onboarding-genres'],
-    queryFn: async () => {
-      const { data } = await api.get('/onboarding/genres');
-      return data;
-    },
-  });
-}
-
-export function useOnboardingSeeds() {
-  return useQuery<{ seeds: OnboardingSeed[] }>({
-    queryKey: ['onboarding-seeds'],
-    queryFn: async () => {
-      const { data } = await api.get('/onboarding/seeds');
-      return data;
-    },
-  });
-}
-
-export function useCompleteOnboarding() {
-  const queryClient = useQueryClient();
-  return useMutation<
-    { success: boolean; maturityScore: number; message: string },
-    Error,
-    { selectedGenres: number[]; movieRatings: { contentId: number; action: SwipeAction }[] }
-  >({
-    mutationFn: async (body) => {
-      const { data } = await api.post('/onboarding/complete', body);
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user'] });
-    },
-  });
-}
 
 // --- User ---
 

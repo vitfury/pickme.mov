@@ -146,18 +146,6 @@
     "yourRating": "Your rating",
     "trailerQuery": "trailer"
   },
-  "onboarding": {
-    "genreTitle": "Pick 3-5 genres",
-    "genreSubtitle": "What genres do you enjoy?",
-    "next": "Next",
-    "back": "Back",
-    "rateTitle": "Rate these movies",
-    "rateSubtitle": "Like or dislike? This helps us personalize your feed.",
-    "rateProgress": "{{current}} / {{total}}",
-    "readyTitle": "Your feed is ready!",
-    "readySubtitle": "We've prepared personalized recommendations based on your taste.",
-    "startSwiping": "Start swiping"
-  },
   "login": {
     "title": "pickme.mov",
     "subtitle": "Discover movies. Swipe. Watch.",

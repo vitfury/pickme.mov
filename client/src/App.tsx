@@ -6,7 +6,6 @@ import { useUIStore } from '@/stores/uiStore';
 import ProtectedRoute from '@/components/layout/ProtectedRoute';
 import PageShell from '@/components/layout/PageShell';
 import Login from '@/pages/Login';
-import Onboarding from '@/pages/Onboarding';
 import Feed from '@/pages/Feed';
 import Saved from '@/pages/Saved';
 import Search from '@/pages/Search';
@@ -71,7 +70,7 @@ export default function App() {
         element={isAuthenticated ? <Navigate to="/" replace /> : <Login />}
       />
       <Route element={<ProtectedRoute />}>
-        <Route path="/onboarding" element={<Onboarding />} />
+        <Route path="/onboarding" element={<Navigate to="/" replace />} />
         <Route element={<PageShell />}>
           <Route path="/" element={<Feed />} />
           <Route path="/saved" element={<Saved />} />

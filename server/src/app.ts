@@ -16,7 +16,6 @@ import searchRoutes from './routes/search.js';
 import filtersRoutes from './routes/filters.js';
 import peopleRoutes from './routes/people.js';
 import usersRoutes from './routes/users.js';
-import onboardingRoutes from './routes/onboarding.js';
 import contentRoutes from './routes/content.js';
 import bookmarkRoutes from './routes/bookmarks.js';
 import apiKeyRoutes from './routes/api-keys.js';
@@ -84,7 +83,6 @@ export async function buildApp(): Promise<FastifyInstance> {
     await api.register(filtersRoutes, { prefix: '/filters' });
     await api.register(peopleRoutes, { prefix: '/people' });
     await api.register(usersRoutes, { prefix: '/users' });
-    await api.register(onboardingRoutes, { prefix: '/onboarding' });
     await api.register(contentRoutes, { prefix: '/content' });
     await api.register(bookmarkRoutes, { prefix: '/bookmarks' });
     await api.register(apiKeyRoutes, { prefix: '/api-keys' });

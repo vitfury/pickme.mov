@@ -44,9 +44,8 @@ export default function Profile() {
 
   const handleReset = async () => {
     await resetPreferences.mutateAsync();
-    updateUser({ onboardingCompleted: false });
     setResetModalOpen(false);
-    navigate('/onboarding', { replace: true });
+    navigate('/', { replace: true });
   };
 
   const handleExport = () => {

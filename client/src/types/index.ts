@@ -257,13 +257,6 @@ export interface PreferenceEntity {
   interactions: number;
 }
 
-export interface OnboardingSeed {
-  id: number;
-  title: string;
-  posterPath: string | null;
-  releaseDate: string;
-  genres: string[];
-}
 
 export interface AuthTokens {
   accessToken: string;

@@ -146,18 +146,6 @@
     "yourRating": "Ваша оцінка",
     "trailerQuery": "трейлер"
   },
-  "onboarding": {
-    "genreTitle": "Оберіть 3-5 жанрів",
-    "genreSubtitle": "Які жанри вам подобаються?",
-    "next": "Далі",
-    "back": "Назад",
-    "rateTitle": "Оцініть ці фільми",
-    "rateSubtitle": "Подобається чи ні? Це допоможе нам підібрати фільми для вас.",
-    "rateProgress": "{{current}} / {{total}}",
-    "readyTitle": "Ваша стрічка готова!",
-    "readySubtitle": "Ми підготували персональні рекомендації на основі ваших вподобань.",
-    "startSwiping": "Почати"
-  },
   "login": {
     "title": "pickme.mov",
     "subtitle": "Відкривай фільми. Свайпай. Дивись.",
