@@ -136,15 +136,27 @@ export default function Feed() {
 
   // --- Navigation ---
 
+  // Наступна десятка — коли відреагували на 7-му картку поточної (лишилось 3).
+  // Чекаємо, поки сервер запише цю реакцію: інакше десятка рахувалась би без неї.
+  const loadingMoreRef = useRef(false);
+  const loadMoreAfter = useCallback((index: number, pending?: Promise<unknown>) => {
+    if (index < allCards.length - 4 || !hasNextPage || isFetchingNextPage || loadingMoreRef.current) return;
+    loadingMoreRef.current = true;
+    (pending ?? Promise.resolve())
+      .then(() => fetchNextPage())
+      .finally(() => { loadingMoreRef.current = false; });
+  }, [allCards.length, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
   const goNext = useCallback(() => {
     if (!canNavigate()) return;
     if (currentIndex >= allCards.length - 1) return;
 
     const currentCard = allCards[currentIndex];
     let hadApiAction = false;
+    let pending: Promise<unknown> | undefined;
     if (currentCard && !actedOnRef.current.has(currentCard.id)) {
       actedOnRef.current.add(currentCard.id);
-      swipeMutation.mutate({ contentId: currentCard.id, action: 'skip' });
+      pending = swipeMutation.mutateAsync({ contentId: currentCard.id, action: 'skip' }).catch(() => {});
       hadApiAction = true;
     }
 
@@ -156,11 +168,8 @@ export default function Feed() {
     setCanUndo(true);
 
     animateToIndex(currentIndex + 1);
-
-    if (currentIndex >= allCards.length - 4 && hasNextPage && !isFetchingNextPage) {
-      fetchNextPage();
-    }
-  }, [currentIndex, allCards, swipeMutation, hasNextPage, isFetchingNextPage, fetchNextPage, animateToIndex, canNavigate]);
+    loadMoreAfter(currentIndex, pending);
+  }, [currentIndex, allCards, swipeMutation, loadMoreAfter, animateToIndex, canNavigate]);
 
   const goPrev = useCallback(() => {
     if (!canNavigate()) return;
@@ -182,7 +191,7 @@ export default function Feed() {
       if (action === 'skip') return;
 
       actedOnRef.current.add(card.id);
-      swipeMutation.mutate({ contentId: card.id, action });
+      const pending = swipeMutation.mutateAsync({ contentId: card.id, action }).catch(() => {});
 
       if (currentIndex < allCards.length - 1) {
         historyRef.current.push({
@@ -193,13 +202,10 @@ export default function Feed() {
         setCanUndo(true);
 
         animateToIndex(currentIndex + 1);
-
-        if (currentIndex >= allCards.length - 4 && hasNextPage && !isFetchingNextPage) {
-          fetchNextPage();
-        }
       }
+      loadMoreAfter(currentIndex, pending);
     },
-    [currentIndex, allCards.length, swipeMutation, hasNextPage, isFetchingNextPage, fetchNextPage, animateToIndex],
+    [currentIndex, allCards.length, swipeMutation, loadMoreAfter, animateToIndex],
   );
 
   // --- Undo ---

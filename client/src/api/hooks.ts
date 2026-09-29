@@ -52,6 +52,8 @@ export function useFeed(filters: FeedFilters) {
   });
 }
 
+export const FEED_PAGE_SIZE = 10;
+
 export function useFeedInfinite(filters: FeedFilters) {
   return useInfiniteQuery<FeedResponse>({
     queryKey: ['feed-infinite', filters],
@@ -72,6 +74,9 @@ export function useFeedInfinite(filters: FeedFilters) {
       if (filters.collectionId) params.collectionId = String(filters.collectionId);
       if (filters.awards) params.awards = filters.awards;
       params.offset = String(pageParam);
+      // Малі сторінки: кожна наступна десятка рахується вже з урахуванням
+      // свіжих реакцій, тож стрічка підлаштовується швидко
+      params.limit = String(FEED_PAGE_SIZE);
       const { data } = await api.get('/feed', { params });
       return data;
     },
