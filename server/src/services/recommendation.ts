@@ -93,9 +93,16 @@ export async function generateFeed(
       sql`${userSwipes.createdAt} >= NOW() - INTERVAL '30 days'`,
     ));
 
+  // Збережене «подивитись пізніше» вже знайдене — стрічці нема чого його пропонувати
+  const bookmarked = await db
+    .select({ contentId: userBookmarks.contentId })
+    .from(userBookmarks)
+    .where(eq(userBookmarks.userId, userId));
+
   const swipedIds = [
     ...permanentSwipes.map((r) => r.contentId),
     ...recentSkips.map((r) => r.contentId),
+    ...bookmarked.map((r) => r.contentId),
   ];
 
   // Build base query conditions for unseen content
