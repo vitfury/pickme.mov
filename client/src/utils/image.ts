@@ -16,7 +16,7 @@ export function tmdbBackdrop(path: string | null, size: BackdropSize = 'w1280'):
 }
 
 export function tmdbProfile(path: string | null, size: ProfileSize = 'w185'): string {
-  if (!path) return '/profile-placeholder.svg';
+  if (!path) return '/avatar-placeholder.svg';
   return `${TMDB_BASE}/${size}${path}`;
 }
 

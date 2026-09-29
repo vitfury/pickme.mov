@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 300" preserveAspectRatio="xMidYMid slice">
+  <!-- Фільм без постера в TMDB: тло + приглушена кіноплівка по центру -->
+  <rect width="200" height="300" fill="#1e1e30" />
+  <g fill="none" stroke="#8a8a9a" stroke-opacity="0.55" stroke-width="5" stroke-linejoin="round">
+    <rect x="68" y="118" width="64" height="64" rx="6" />
+    <path d="M84 118v64M116 118v64M68 150h64" />
+  </g>
+</svg>

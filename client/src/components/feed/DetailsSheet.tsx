@@ -126,7 +126,7 @@ export default function DetailsSheet({ card, onClose }: DetailsSheetProps) {
                         src={
                           d.photoPath
                             ? `https://image.tmdb.org/t/p/w185${d.photoPath}`
-                            : '/profile-placeholder.svg'
+                            : '/avatar-placeholder.svg'
                         }
                         alt={d.name}
                         className="w-24 h-24 rounded-full object-cover mx-auto bg-surface-light"
@@ -157,7 +157,7 @@ export default function DetailsSheet({ card, onClose }: DetailsSheetProps) {
                         src={
                           actor.photoPath
                             ? `https://image.tmdb.org/t/p/w185${actor.photoPath}`
-                            : '/profile-placeholder.svg'
+                            : '/avatar-placeholder.svg'
                         }
                         alt={actor.name}
                         className="w-24 h-24 rounded-full object-cover mx-auto bg-surface-light"

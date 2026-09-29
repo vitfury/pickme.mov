@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" preserveAspectRatio="xMidYMid slice">
+  <!-- Фільм без кадру-фону в TMDB -->
+  <rect width="320" height="180" fill="#1e1e30" />
+  <g fill="none" stroke="#8a8a9a" stroke-opacity="0.55" stroke-width="5" stroke-linejoin="round">
+    <rect x="128" y="58" width="64" height="64" rx="6" />
+    <path d="M144 58v64M176 58v64M128 90h64" />
+  </g>
+</svg>
