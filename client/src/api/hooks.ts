@@ -1,3 +1,4 @@
+import { useFeedStore } from '@/stores/feedStore';
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from './client';
 import type {
@@ -77,6 +78,13 @@ export function useFeedInfinite(filters: FeedFilters) {
     initialPageParam: 0,
     getNextPageParam: (lastPage) =>
       lastPage.remaining > 0 ? lastPage.offset : undefined,
+    // Уже завантажені картки не перезапитуємо: сервер щоразу віддає свіжий
+    // рейтинг без оцінених фільмів, і перезапит зсунув би список під пальцем.
+    // Нова стрічка — лише при зміні фільтрів (інший ключ) або перезавантаженні.
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
   });
 }
 
@@ -147,9 +155,9 @@ export function useToggleBookmark() {
       return data;
     },
     onSuccess: () => {
+      // Стрічку не перезавантажуємо: вона сама тримає стан закладки на картці,
+      // а перезапит перебудував би список і зсунув поточну картку
       queryClient.invalidateQueries({ queryKey: ['bookmarks'] });
-      queryClient.invalidateQueries({ queryKey: ['feed'] });
-      queryClient.invalidateQueries({ queryKey: ['feed-infinite'] });
     },
   });
 }
@@ -308,8 +316,9 @@ export function useResetPreferences() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-stats'] });
-      queryClient.invalidateQueries({ queryKey: ['user-preferences'] });
-      queryClient.invalidateQueries({ queryKey: ['feed'] });
+      // Історію стерто — стрічка починається заново, з першої картки
+      queryClient.removeQueries({ queryKey: ['feed-infinite'] });
+      useFeedStore.getState().clearSwiped();
     },
   });
 }
