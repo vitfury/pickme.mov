@@ -48,6 +48,13 @@ chmod +x scripts/docker-entrypoint.sh
 echo "==> Restarting containers..."
 docker compose up -d
 
+# app і bot беруть код з bind-mount (server/dist, bot/dist). Нова збірка не
+# міняє конфіг контейнера, тож `up -d` вважає, що все актуально, і лишає
+# процеси зі старим кодом у пам'яті. Перезапуск обов'язковий — інакше серверні
+# зміни й міграції до проду просто не доїжджають.
+echo "==> Restarting app and bot to load the new build..."
+docker compose restart app bot
+
 # nginx bind-mounts nginx/default.conf as a single file. git rewrites that file
 # with a new inode on pull, and the container keeps the old one, so a config
 # change is invisible to `up -d` and even to `nginx -s reload` — the container
